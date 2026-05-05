@@ -355,12 +355,11 @@ function updateReport() {
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
 
   const fc = n(refs.fcFrom);
-  const tc = n(refs.tcNow);
+  const tc = fc;
   const ph = n(refs.phFrom);
   const ta = n(refs.taFrom);
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
-  const phos = n(refs.phosphatesNow);
   const salt = n(refs.saltFrom);
 
   refs.rFc.textContent = `${round2(fc)} ppm`;
@@ -369,7 +368,6 @@ function updateReport() {
   refs.rTa.textContent = `${Math.round(ta)} ppm`;
   refs.rCh.textContent = `${Math.round(ch)} ppm`;
   refs.rCya.textContent = `${Math.round(cya)} ppm`;
-  refs.rPhos.textContent = `${Math.round(phos)} ppb`;
   refs.rSalt.textContent = `${Math.round(salt)} ppm`;
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
@@ -378,7 +376,6 @@ function updateReport() {
   refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
   refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
   refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
-  refs.idealPhos.textContent = '0-100 ppb';
   refs.idealSalt.textContent = exactTarget(Math.round(n(refs.saltTo)), ' ppm');
 
   const [fcMin, fcMax] = parseRange(refs.fcTargetRange.textContent, n(refs.fcTo), n(refs.fcTo));
@@ -394,16 +391,15 @@ function updateReport() {
   refs.sTa.textContent = statusMark(ta, taMin, taMax);
   refs.sCh.textContent = statusMark(ch, chMin, chMax);
   refs.sCya.textContent = statusMark(cya, cyaMin, cyaMax);
-  refs.sPhos.textContent = statusMark(phos, 0, 100);
   refs.sSalt.textContent = salt > 0 || n(refs.saltTo) > 0 ? statusMark(salt, saltMin, saltMax) : 'N/A';
 
-  [refs.sFc, refs.sTc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sPhos, refs.sSalt].forEach(syncAttentionRow);
+  [refs.sFc, refs.sTc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
   refs.issueLowChlorine.checked = fc < 2;
   refs.issueHighPh.checked = ph > 7.6;
   refs.issueHighCya.checked = cya > 50;
   refs.issueAlgae.checked = fc < 2 || cya > 80;
-  refs.issuePhosphates.checked = phos > 100;
+  refs.issuePhosphates.checked = false;
 
   const fcPlan = cleanResult(refs.fcResult.textContent);
   const phPlan = cleanResult(refs.phResult.textContent);
