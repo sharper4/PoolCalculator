@@ -406,16 +406,6 @@ select:focus {
   padding: 0.2rem 0.28rem;
 }
 
-.report-value-input {
-  min-height: 1.55rem;
-  width: 5.2rem;
-  border-radius: 6px;
-  border: 1px solid #bdd2ee;
-  padding: 0.12rem 0.25rem;
-  font: inherit;
-  font-size: 0.76rem;
-}
-
 .report-table th {
   background: #edf5ff;
   text-align: left;
@@ -454,6 +444,27 @@ select:focus {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.2rem 0.6rem;
+}
+
+.chemical-checklist {
+  list-style: none;
+  padding-left: 0;
+}
+
+.chemical-checklist li {
+  margin: 0.12rem 0;
+}
+
+.chemical-checklist label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.chemical-checklist input {
+  width: auto;
+  min-height: auto;
+  margin-top: 0.1rem;
 }
 
 .report-contact {
@@ -577,13 +588,6 @@ body.report-mode {
   .report-table th,
   .report-table td {
     padding: 0.12rem 0.2rem;
-  }
-
-  .report-value-input {
-    min-height: 1.05rem;
-    width: 4.4rem;
-    font-size: 0.72rem;
-    padding: 0.02rem 0.16rem;
   }
 
   .check-row {

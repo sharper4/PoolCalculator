@@ -8,6 +8,8 @@ const refs = {
   customerName: document.getElementById('customer-name'),
   customerAddress: document.getElementById('customer-address'),
   technicianName: document.getElementById('technician-name'),
+  tcNow: document.getElementById('tc-now'),
+  phosphatesNow: document.getElementById('phosphates-now'),
   weatherConditions: document.getElementById('weather-conditions'),
 
   fcFrom: document.getElementById('fc-from'),
@@ -81,13 +83,21 @@ const refs = {
   rTechnician: document.getElementById('r-technician'),
   rWeather: document.getElementById('r-weather'),
   rFc: document.getElementById('r-fc'),
-  rTcInput: document.getElementById('r-tc-input'),
+  rTc: document.getElementById('r-tc'),
   rPh: document.getElementById('r-ph'),
   rTa: document.getElementById('r-ta'),
   rCh: document.getElementById('r-ch'),
   rCya: document.getElementById('r-cya'),
-  rPhosInput: document.getElementById('r-phos-input'),
+  rPhos: document.getElementById('r-phos'),
   rSalt: document.getElementById('r-salt'),
+  idealFc: document.getElementById('ideal-fc'),
+  idealTc: document.getElementById('ideal-tc'),
+  idealPh: document.getElementById('ideal-ph'),
+  idealTa: document.getElementById('ideal-ta'),
+  idealCh: document.getElementById('ideal-ch'),
+  idealCya: document.getElementById('ideal-cya'),
+  idealPhos: document.getElementById('ideal-phos'),
+  idealSalt: document.getElementById('ideal-salt'),
   sFc: document.getElementById('s-fc'),
   sTc: document.getElementById('s-tc'),
   sPh: document.getElementById('s-ph'),
@@ -300,9 +310,32 @@ function setChemList(items) {
   refs.rChemList.innerHTML = '';
   items.forEach((item) => {
     const li = document.createElement('li');
-    li.textContent = item;
+    const label = document.createElement('label');
+    const box = document.createElement('input');
+    const text = document.createElement('span');
+    box.type = 'checkbox';
+    text.textContent = item;
+    label.append(box, text);
+    li.appendChild(label);
     refs.rChemList.appendChild(li);
   });
+}
+
+function parseRange(text, fallbackMin, fallbackMax) {
+  const match = text.match(/(\d+(?:\.\d+)?)\s*(?:to|-)+\s*(\d+(?:\.\d+)?)/i);
+  if (match) {
+    return [Number(match[1]), Number(match[2])];
+  }
+  const single = text.match(/(\d+(?:\.\d+)?)/);
+  if (single) {
+    const value = Number(single[1]);
+    return [value, value];
+  }
+  return [fallbackMin, fallbackMax];
+}
+
+function exactTarget(value, unit = '') {
+  return `${value}${unit}`.trim();
 }
 
 function updateReport() {
@@ -316,29 +349,47 @@ function updateReport() {
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
 
   const fc = n(refs.fcFrom);
-  const tc = n(refs.rTcInput);
+  const tc = n(refs.tcNow);
   const ph = n(refs.phFrom);
   const ta = n(refs.taFrom);
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
-  const phos = n(refs.rPhosInput);
+  const phos = n(refs.phosphatesNow);
   const salt = n(refs.saltFrom);
 
   refs.rFc.textContent = `${round2(fc)} ppm`;
+  refs.rTc.textContent = `${round2(tc)} ppm`;
   refs.rPh.textContent = `${round2(ph)}`;
   refs.rTa.textContent = `${Math.round(ta)} ppm`;
   refs.rCh.textContent = `${Math.round(ch)} ppm`;
   refs.rCya.textContent = `${Math.round(cya)} ppm`;
+  refs.rPhos.textContent = `${Math.round(phos)} ppb`;
   refs.rSalt.textContent = `${Math.round(salt)} ppm`;
 
-  refs.sFc.textContent = statusMark(fc, 2, 4);
-  refs.sTc.textContent = statusMark(tc, 2, 4);
-  refs.sPh.textContent = statusMark(ph, 7.2, 7.6);
-  refs.sTa.textContent = statusMark(ta, 80, 120);
-  refs.sCh.textContent = statusMark(ch, 200, 400);
-  refs.sCya.textContent = statusMark(cya, 30, 50);
+  refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
+  refs.idealTc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
+  refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)));
+  refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
+  refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
+  refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
+  refs.idealPhos.textContent = '0-100 ppb';
+  refs.idealSalt.textContent = exactTarget(Math.round(n(refs.saltTo)), ' ppm');
+
+  const [fcMin, fcMax] = parseRange(refs.fcTargetRange.textContent, n(refs.fcTo), n(refs.fcTo));
+  const [phMin, phMax] = parseRange(refs.phTargetRange.textContent, n(refs.phTo), n(refs.phTo));
+  const [taMin, taMax] = parseRange(refs.taTargetRange.textContent, n(refs.taTo), n(refs.taTo));
+  const [chMin, chMax] = parseRange(refs.chTargetRange.textContent, n(refs.chTo), n(refs.chTo));
+  const [cyaMin, cyaMax] = parseRange(refs.cyaTargetRange.textContent, n(refs.cyaTo), n(refs.cyaTo));
+  const [saltMin, saltMax] = parseRange(refs.saltTargetRange.textContent, n(refs.saltTo), n(refs.saltTo));
+
+  refs.sFc.textContent = statusMark(fc, fcMin, fcMax);
+  refs.sTc.textContent = statusMark(tc, fcMin, fcMax);
+  refs.sPh.textContent = statusMark(ph, phMin, phMax);
+  refs.sTa.textContent = statusMark(ta, taMin, taMax);
+  refs.sCh.textContent = statusMark(ch, chMin, chMax);
+  refs.sCya.textContent = statusMark(cya, cyaMin, cyaMax);
   refs.sPhos.textContent = statusMark(phos, 0, 100);
-  refs.sSalt.textContent = salt > 0 ? statusMark(salt, 2700, 3400) : 'N/A';
+  refs.sSalt.textContent = salt > 0 || n(refs.saltTo) > 0 ? statusMark(salt, saltMin, saltMax) : 'N/A';
 
   refs.issueLowChlorine.checked = fc < 2;
   refs.issueHighPh.checked = ph > 7.6;
