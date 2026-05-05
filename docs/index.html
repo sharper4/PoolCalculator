@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>North Texas Elite Pool Care - Pool Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/index-DbcN4hLm.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D5ZeluQ5.css">
+  </head>
+  <body>
+    <div class="orb orb-one" aria-hidden="true"></div>
+    <div class="orb orb-two" aria-hidden="true"></div>
+
+    <main class="layout">
+      <header class="hero panel reveal">
+        <div class="brand-row">
+          <img class="brand-logo" src="/ntx-elite-logo.png" alt="North Texas Elite Pool Care logo" />
+          <h1>Pool Calculator</h1>
+        </div>
+        <p class="hero-copy">
+          Professional water chemistry tools for clean pools and elite service. This calculator includes
+          complete chemistry balancing, CSI, goal ranges, volume estimation, and chemical-effects math.
+        </p>
+      </header>
+
+      <section class="panel controls reveal stagger-1">
+        <div class="grid three">
+          <label>
+            Units
+            <select id="units">
+              <option value="0">U.S.</option>
+              <option value="1">Metric</option>
+              <option value="2">Imperial</option>
+            </select>
+          </label>
+          <label>
+            Pool Size
+            <div class="input-line">
+              <input id="size" type="number" min="0" step="1" value="10000" />
+              <span id="size-unit" class="unit-pill">gallons</span>
+            </div>
+          </label>
+          <label>
+            Temperature
+            <div class="input-line">
+              <input id="temp" type="number" min="0" step="1" value="84" />
+              <span id="temp-unit" class="unit-pill">Fahrenheit</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel reveal stagger-2">
+        <div class="section-head">
+          <h2>Chemistry Targets</h2>
+          <p id="status-top" class="status">Hover-like details are now shown below each result card.</p>
+        </div>
+        <div class="chem-grid">
+          <article class="chem-card fc">
+            <div class="chem-head">
+              <h3>FC</h3>
+              <p id="fc-target-range" class="range-pill">Target range: -- ppm</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="fc-from" type="number" step="0.1" value="4" /></label>
+              <label>Target <input id="fc-to" type="number" step="0.1" value="4" /></label>
+            </div>
+            <label class="check-line"><input id="fc-auto-target" type="checkbox" checked /> Auto-set FC target from CYA</label>
+            <div class="mini-grid">
+              <label>Bleach % <input id="fc-percent" type="number" step="0.1" value="6" /></label>
+              <label>Jug Size
+                <select id="fc-jug"></select>
+              </label>
+              <label>Alt Chlorine
+                <select id="fc-pop"></select>
+              </label>
+            </div>
+            <div id="fc-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ph">
+            <div class="chem-head">
+              <h3>pH</h3>
+              <p id="ph-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ph-from" type="number" step="0.1" value="7.5" /></label>
+              <label>Target <input id="ph-to" type="number" step="0.1" value="7.5" /></label>
+            </div>
+            <div class="mini-grid">
+              <label>Acid Strength
+                <select id="ma-pop"></select>
+              </label>
+            </div>
+            <p class="note">pH math depends on current TA and Borate; large pH shifts are approximate.</p>
+            <div id="ph-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ta">
+            <div class="chem-head">
+              <h3>TA</h3>
+              <p id="ta-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ta-from" type="number" step="1" value="100" /></label>
+              <label>Target <input id="ta-to" type="number" step="1" value="100" /></label>
+            </div>
+            <div id="ta-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ch">
+            <div class="chem-head">
+              <h3>CH</h3>
+              <p id="ch-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ch-from" type="number" step="1" value="260" /></label>
+              <label>Target <input id="ch-to" type="number" step="1" value="260" /></label>
+            </div>
+            <label>Fill Water CH <input id="ch-fill" type="number" step="1" value="0" /></label>
+            <div id="ch-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card cya">
+            <div class="chem-head">
+              <h3>CYA</h3>
+              <p id="cya-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="cya-from" type="number" step="1" value="40" /></label>
+              <label>Target <input id="cya-to" type="number" step="1" value="40" /></label>
+            </div>
+            <div id="cya-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card salt">
+            <div class="chem-head">
+              <h3>Salt</h3>
+              <p id="salt-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="salt-from" type="number" step="1" value="0" /></label>
+              <label>Target <input id="salt-to" type="number" step="1" value="0" /></label>
+            </div>
+            <div id="salt-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card bor">
+            <div class="chem-head">
+              <h3>Borate</h3>
+              <p id="bor-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="bor-from" type="number" step="1" value="0" /></label>
+              <label>Target <input id="bor-to" type="number" step="1" value="0" /></label>
+            </div>
+            <label>Borate Product
+              <select id="bor-pop"></select>
+            </label>
+            <div id="bor-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card csi">
+            <h3>CSI</h3>
+            <div id="csi-result" class="result-block"></div>
+            <p class="note">Less than -0.6 suggests corrosive conditions. Greater than 0.6 suggests scaling risk.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel reveal stagger-3">
+        <div class="section-head">
+          <h2>Suggested Levels</h2>
+        </div>
+        <div class="grid three">
+          <label>Goal Source
+            <select id="from-pop"></select>
+          </label>
+          <label>Primary Chlorine
+            <select id="chlorine-pop"></select>
+          </label>
+          <label>Pool Surface
+            <select id="surface-pop"></select>
+          </label>
+        </div>
+        <div id="goal-result" class="result-block"></div>
+      </section>
+
+      <section class="grid two reveal stagger-4">
+        <article class="panel">
+          <h2>Pool Volume Estimator</h2>
+          <div class="grid four">
+            <label>Width <input id="sz-wid" type="number" step="0.1" value="0" /></label>
+            <label>Length <input id="sz-len" type="number" step="0.1" value="0" /></label>
+            <label>Avg Depth <input id="sz-deep" type="number" step="0.1" value="0" /></label>
+            <label>Shape
+              <select id="sz-pop"></select>
+            </label>
+          </div>
+          <p id="sz-result" class="result-inline"></p>
+        </article>
+
+        <article class="panel">
+          <h2>Effects of Adding Chemicals</h2>
+          <div class="grid three">
+            <label>Amount <input id="eff-oz" type="number" step="1" value="0" /></label>
+            <label>Unit <input id="eff-unit" type="text" value="oz" readonly /></label>
+            <label>Chemical
+              <select id="eff-pop"></select>
+            </label>
+          </div>
+          <p id="eff-result" class="result-inline"></p>
+        </article>
+      </section>
+
+      <footer class="panel foot reveal stagger-5">
+        <p>
+          Tips: Add less than the full amount first, circulate, retest, then fine-tune. Powder volumes vary by manufacturer.
+        </p>
+      </footer>
+    </main>
+
+  </body>
+</html>
