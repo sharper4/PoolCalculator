@@ -362,6 +362,20 @@ function syncAttentionRow(statusCell) {
 }
 
 function setRangeState(card, value, min, max) {
+  const hasNow = (raw) => String(raw ?? '').trim() !== '';
+  if (
+    (card === refs.fcCard && !hasNow(refs.fcFrom.value))
+    || (card === refs.phCard && !hasNow(refs.phFrom.value))
+    || (card === refs.taCard && !hasNow(refs.taFrom.value))
+    || (card === refs.chCard && !hasNow(refs.chFrom.value))
+    || (card === refs.cyaCard && !hasNow(refs.cyaFrom.value))
+    || (card === refs.saltCard && !hasNow(refs.saltFrom.value))
+    || (card === refs.borCard && !hasNow(refs.borFrom.value))
+  ) {
+    card.classList.remove('within-range', 'out-of-range');
+    return;
+  }
+
   if (!card || !Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) return;
   const inRange = value >= min && value <= max;
   card.classList.toggle('within-range', inRange);
@@ -1053,9 +1067,9 @@ function init() {
   refs.fcPop.value = '0';
   refs.maPop.value = '2';
   refs.borPop.value = '0';
-  refs.fromPop.value = '0';
-  refs.chlorinePop.value = '0';
-  refs.surfacePop.value = '0';
+  refs.fromPop.value = '2';
+  refs.chlorinePop.value = '1';
+  refs.surfacePop.value = '1';
   refs.szPop.value = '0';
   refs.effPop.value = '1';
 
