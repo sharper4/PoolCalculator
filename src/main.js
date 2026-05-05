@@ -321,6 +321,12 @@ function setChemList(items) {
   });
 }
 
+function clearChemicalChecks() {
+  refs.rChemList.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+    box.checked = false;
+  });
+}
+
 function syncAttentionRow(statusCell) {
   const row = statusCell?.parentElement;
   if (!row) return;
@@ -434,6 +440,7 @@ function setReportMode(enabled) {
   document.body.classList.toggle('report-mode', enabled);
   refs.reportView.hidden = !enabled;
   if (enabled) updateReport();
+  if (!enabled) clearChemicalChecks();
 }
 
 async function loadWeather() {
@@ -1013,6 +1020,10 @@ function init() {
   refs.printReport.addEventListener('click', () => {
     setReportMode(true);
     window.print();
+  });
+
+  window.addEventListener('afterprint', () => {
+    clearChemicalChecks();
   });
 
   document.querySelectorAll('input,select').forEach((el) => {
