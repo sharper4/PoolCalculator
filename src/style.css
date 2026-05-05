@@ -346,7 +346,7 @@ select:focus {
 }
 
 .report-logo {
-  height: 2.2rem;
+  height: 3rem;
   width: auto;
   object-fit: contain;
 }
@@ -491,13 +491,13 @@ body.report-mode {
 
 @page {
   size: Letter portrait;
-  margin: 0.35in;
+  margin: 0.25in;
 }
 
 @media print {
   body {
     background: #fff;
-    font-size: 10pt;
+    font-size: 8.7pt;
   }
 
   .orb,
@@ -527,12 +527,84 @@ body.report-mode {
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-    font-size: 9.2pt;
-    line-height: 1.2;
+    font-size: 8.3pt;
+    line-height: 1.1;
+  }
+
+  .report-header {
+    margin-bottom: 0.2rem;
+    padding-bottom: 0.18rem;
+  }
+
+  .report-logo {
+    height: 2.45rem;
+  }
+
+  .report-header h2 {
+    font-size: 0.82rem;
+  }
+
+  .report-meta {
+    margin-bottom: 0.25rem;
+    gap: 0.08rem 0.4rem;
+  }
+
+  .report-block {
+    margin-top: 0.25rem;
+    padding-top: 0.18rem;
+  }
+
+  .report-block h3 {
+    margin-bottom: 0.1rem;
+    font-size: 0.74rem;
+  }
+
+  .report-two-col {
+    gap: 0.35rem;
   }
 
   .report-table {
-    font-size: 8.9pt;
+    font-size: 7.7pt;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 0.12rem 0.2rem;
+  }
+
+  .report-value-input {
+    min-height: 1.05rem;
+    width: 4.4rem;
+    font-size: 0.72rem;
+    padding: 0.02rem 0.16rem;
+  }
+
+  .check-row {
+    gap: 0.25rem 0.5rem;
+    margin: 0.08rem 0;
+  }
+
+  .check-row label,
+  .check-list label {
+    font-size: 0.7rem;
+    gap: 0.18rem;
+  }
+
+  .check-list {
+    margin-top: 0.08rem;
+    padding-left: 0.72rem;
+  }
+
+  .check-list li,
+  .check-list.static li {
+    margin: 0.02rem 0;
+  }
+
+  #r-insights {
+    line-height: 1.08;
+    font-size: 0.73rem;
+    max-height: 2.1rem;
+    overflow: hidden;
   }
 
   #r-insights,
@@ -540,6 +612,10 @@ body.report-mode {
     border: 0;
     padding: 0;
     min-height: 0;
+  }
+
+  .inline-text {
+    width: 5.8rem;
   }
 }
 
