@@ -162,6 +162,7 @@ const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1,
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
 const manualTargetOverride = {
+  fc: false,
   ta: false,
   ch: false,
   cya: false
@@ -740,7 +741,7 @@ function calcSuggested() {
 
   const fcRangeMin = chlorine === 2 ? swg : min;
   refs.fcTargetRange.textContent = `Target range: ${fcRangeMin}-${targ} ppm`;
-  if (refs.fcAutoTarget.checked) {
+  if (refs.fcAutoTarget.checked && !manualTargetOverride.fc) {
     const fcTarget = fcRangeMin + (targ - fcRangeMin) * (2 / 3);
     writeTargetValue(refs.fcTo, Math.round(fcTarget));
   }
@@ -1033,8 +1034,23 @@ function init() {
   });
 
   refs.fcTo.addEventListener('input', () => {
-    if (!suppressTargetOverrideCapture && refs.fcAutoTarget.checked) {
-      refs.fcAutoTarget.checked = false;
+    if (!suppressTargetOverrideCapture) {
+      manualTargetOverride.fc = true;
+      if (refs.fcAutoTarget.checked) refs.fcAutoTarget.checked = false;
+    }
+  });
+
+  refs.fcTo.addEventListener('change', () => {
+    if (!suppressTargetOverrideCapture) {
+      manualTargetOverride.fc = true;
+      if (refs.fcAutoTarget.checked) refs.fcAutoTarget.checked = false;
+    }
+  });
+
+  refs.fcAutoTarget.addEventListener('change', () => {
+    if (refs.fcAutoTarget.checked) {
+      manualTargetOverride.fc = false;
+      calcAll();
     }
   });
 
