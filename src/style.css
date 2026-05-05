@@ -83,6 +83,13 @@ body {
   gap: 1rem;
 }
 
+.brand-title-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+}
+
 .brand-logo {
   width: min(44vw, 290px);
   height: auto;
@@ -105,7 +112,7 @@ body {
 }
 
 .hero-actions {
-  margin-top: 0.75rem;
+  margin-top: 0;
 }
 
 .action-btn {
@@ -346,7 +353,7 @@ select:focus {
 }
 
 .report-logo {
-  height: 3rem;
+  height: 3.35rem;
   width: auto;
   object-fit: contain;
 }
@@ -537,7 +544,7 @@ body.report-mode {
   }
 
   .report-logo {
-    height: 2.45rem;
+    height: 2.8rem;
   }
 
   .report-header h2 {
@@ -684,6 +691,10 @@ body.report-mode {
   .brand-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .brand-title-actions {
+    align-items: flex-start;
   }
 
   .brand-logo {
