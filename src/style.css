@@ -433,6 +433,13 @@ select:focus {
   color: #153c73;
 }
 
+.check-row input[type='checkbox'],
+.next-steps-grid input[type='checkbox'] {
+  width: auto;
+  min-height: auto;
+  margin: 0;
+}
+
 .check-list {
   margin: 0.2rem 0 0;
   padding-left: 1rem;
@@ -766,6 +773,30 @@ body.report-mode {
 
   .next-steps-grid {
     grid-template-columns: 1fr;
+  }
+
+  .condition-summary-row,
+  .condition-issues-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .condition-summary-row label,
+  .condition-issues-row label {
+    white-space: normal;
+    align-items: flex-start;
+  }
+
+  .condition-issues-row label:last-child {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .condition-issues-row .inline-text {
+    width: 100%;
   }
 
   .brand-row {
