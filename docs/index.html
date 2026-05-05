@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-p1U9GLWB.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BSYFTPxU.css">
+    <script type="module" crossorigin src="./assets/index-CiXaOfNe.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DsjAz0y-.css">
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -313,15 +313,22 @@
 
           <section class="report-block report-two-col">
             <div>
-              <h3>ELITE TREATMENT PLAN</h3>
-              <p><strong>Sanitization (Chlorine):</strong> <span id="r-plan-fc">No adjustment required.</span></p>
-              <p><strong>Water Balance (pH / Alkalinity):</strong> <span id="r-plan-balance">No adjustment required.</span></p>
-              <p><strong>Stabilizer / Calcium Adjustments:</strong> <span id="r-plan-structure">No adjustment required.</span></p>
-              <p><strong>Preventative Treatments:</strong> <span id="r-plan-prevent">Brush, circulate, and retest before next visit.</span></p>
+              <div class="report-title-row">
+                <h3>ELITE TREATMENT PLAN</h3>
+                <p class="report-note-inline">To reach your target, follow these steps:</p>
+              </div>
+              <p id="r-plan-fc-row"><strong>Sanitization (Chlorine):</strong> <span id="r-plan-fc"></span></p>
+              <p id="r-plan-balance-row"><strong>Water Balance (pH / Alkalinity):</strong> <span id="r-plan-balance"></span></p>
+              <p id="r-plan-structure-row"><strong>Stabilizer / Calcium Adjustments:</strong> <span id="r-plan-structure"></span></p>
+              <p id="r-plan-prevent-row"><strong>Preventative Treatments:</strong> <span id="r-plan-prevent"></span></p>
             </div>
             <div>
-              <h3>CHEMICALS APPLIED TODAY</h3>
+              <div class="report-title-row">
+                <h3>ACTIONS TAKEN TODAY</h3>
+                <p class="report-note-inline">to maintain target range for 1 week</p>
+              </div>
               <ul id="r-chem-list" class="check-list chemical-checklist"></ul>
+              <p class="report-note-muted">Only items with a check were completed in today's action plan.</p>
             </div>
           </section>
 
