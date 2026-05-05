@@ -111,9 +111,13 @@ const refs = {
   sPhos: document.getElementById('s-phos'),
   sSalt: document.getElementById('s-salt'),
   rPlanFc: document.getElementById('r-plan-fc'),
+  rPlanFcRow: document.getElementById('r-plan-fc-row'),
   rPlanBalance: document.getElementById('r-plan-balance'),
+  rPlanBalanceRow: document.getElementById('r-plan-balance-row'),
   rPlanStructure: document.getElementById('r-plan-structure'),
+  rPlanStructureRow: document.getElementById('r-plan-structure-row'),
   rPlanPrevent: document.getElementById('r-plan-prevent'),
+  rPlanPreventRow: document.getElementById('r-plan-prevent-row'),
   rChemList: document.getElementById('r-chem-list'),
   issueLowChlorine: document.getElementById('issue-low-chlorine'),
   statusClear: document.getElementById('status-clear'),
@@ -320,6 +324,17 @@ function cleanResult(text) {
   return text.replace(/\s+/g, ' ').trim();
 }
 
+function hasAction(planText, noActionPrefix) {
+  return Boolean(planText) && !planText.startsWith(noActionPrefix);
+}
+
+function setPlanLine(rowEl, valueEl, text) {
+  if (!rowEl || !valueEl) return;
+  const visible = Boolean(text);
+  rowEl.hidden = !visible;
+  valueEl.textContent = visible ? text : '';
+}
+
 function setChemList(items) {
   const checkedMap = new Map();
   refs.rChemList.querySelectorAll('li').forEach((li) => {
@@ -481,10 +496,20 @@ function updateReport() {
   const cyaPlan = cleanResult(refs.cyaResult.textContent);
   const borPlan = cleanResult(refs.borResult.textContent);
 
-  refs.rPlanFc.textContent = fcPlan || 'No adjustment required.';
-  refs.rPlanBalance.textContent = `${phPlan} ${taPlan}`.trim() || 'No adjustment required.';
-  refs.rPlanStructure.textContent = `${cyaPlan} ${chPlan}`.trim() || 'No adjustment required.';
-  refs.rPlanPrevent.textContent = borPlan || 'Brush, circulate, and retest before next visit.';
+  const fcAction = hasAction(fcPlan, 'No FC') ? fcPlan : '';
+  const phAction = hasAction(phPlan, 'No pH') ? phPlan : '';
+  const taAction = hasAction(taPlan, 'No TA') ? taPlan : '';
+  const chAction = hasAction(chPlan, 'No CH') ? chPlan : '';
+  const cyaAction = hasAction(cyaPlan, 'No CYA') ? cyaPlan : '';
+  const borAction = hasAction(borPlan, 'No borate') ? borPlan : '';
+
+  const balanceAction = [phAction, taAction].filter(Boolean).join(' ');
+  const structureAction = [cyaAction, chAction].filter(Boolean).join(' ');
+
+  setPlanLine(refs.rPlanFcRow, refs.rPlanFc, fcAction);
+  setPlanLine(refs.rPlanBalanceRow, refs.rPlanBalance, balanceAction);
+  setPlanLine(refs.rPlanStructureRow, refs.rPlanStructure, structureAction);
+  setPlanLine(refs.rPlanPreventRow, refs.rPlanPrevent, borAction);
 
   const applied = [];
   if (!fcPlan.startsWith('No FC')) applied.push(`FC: ${fcPlan}`);
