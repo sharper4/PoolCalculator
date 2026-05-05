@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-C6u6aWiT.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CmcwFp0F.css">
+    <script type="module" crossorigin src="./assets/index-BeWuo3Pg.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BB24ZmxI.css">
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -47,7 +47,7 @@
             </div>
           </label>
           <label>
-            Temperature
+            Pool Water Temperature
             <div class="input-line">
               <input id="temp" type="number" min="0" step="1" value="84" />
               <span id="temp-unit" class="unit-pill">Fahrenheit</span>
@@ -57,9 +57,11 @@
       </section>
 
       <section class="panel reveal stagger-1">
-        <div class="section-head">
+        <div class="section-head service-head">
           <h2>Service Details</h2>
-          <p class="status">These values are used in the printable customer water report.</p>
+          <label class="service-weather">Current weather conditions (Denton County)
+            <input id="weather-conditions" type="text" value="Loading current weather..." />
+          </label>
         </div>
         <div class="grid three">
           <label>Customer
@@ -70,17 +72,6 @@
           </label>
           <label>Technician
             <input id="technician-name" type="text" value="Scott Harper" />
-          </label>
-        </div>
-        <div class="grid three">
-          <label>Total Chlorine (ppm)
-            <input id="tc-now" type="number" step="0.1" value="0" />
-          </label>
-          <label>Phosphates (ppb)
-            <input id="phosphates-now" type="number" step="1" value="0" />
-          </label>
-          <label>Weather (Denton County)
-            <input id="weather-conditions" type="text" value="Loading current weather..." />
           </label>
         </div>
       </section>
@@ -304,12 +295,12 @@
               </thead>
               <tbody>
                 <tr><td>Free Chlorine</td><td id="r-fc">--</td><td>2.0-4.0 ppm</td><td id="s-fc"></td></tr>
-                <tr><td>Total Chlorine</td><td id="r-tc">--</td><td>2.0-4.0 ppm</td><td id="s-tc"></td></tr>
+                <tr><td>Total Chlorine</td><td><input id="r-tc-input" class="report-value-input" type="number" step="0.1" value="0" /> ppm</td><td>2.0-4.0 ppm</td><td id="s-tc"></td></tr>
                 <tr><td>pH</td><td id="r-ph">--</td><td>7.2-7.6</td><td id="s-ph"></td></tr>
                 <tr><td>Alkalinity</td><td id="r-ta">--</td><td>80-120 ppm</td><td id="s-ta"></td></tr>
                 <tr><td>Calcium</td><td id="r-ch">--</td><td>200-400 ppm</td><td id="s-ch"></td></tr>
                 <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td>30-50 ppm</td><td id="s-cya"></td></tr>
-                <tr><td>Phosphates</td><td id="r-phos">--</td><td>0-100 ppb</td><td id="s-phos"></td></tr>
+                <tr><td>Phosphates</td><td><input id="r-phos-input" class="report-value-input" type="number" step="1" value="0" /> ppb</td><td>0-100 ppb</td><td id="s-phos"></td></tr>
                 <tr><td>Salt</td><td id="r-salt">--</td><td>2700-3400 ppm</td><td id="s-salt"></td></tr>
               </tbody>
             </table>
