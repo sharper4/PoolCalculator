@@ -767,6 +767,16 @@ body.report-mode {
 }
 
 @media print {
+  .condition-summary-row input[type='checkbox'],
+  .condition-issues-row input[type='checkbox'],
+  .next-steps-grid input[type='checkbox'] {
+    width: 0.78rem;
+    height: 0.78rem;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+  }
+
   .next-steps-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
