@@ -179,11 +179,13 @@ h3 {
 
 .chem-card.within-range {
   border-color: #1f8f4d;
+  background: #f2fbf5;
   box-shadow: inset 0 0 0 1px rgba(31, 143, 77, 0.2);
 }
 
 .chem-card.out-of-range {
   border-color: #cc3b3f;
+  background: #fff4f5;
   box-shadow: inset 0 0 0 1px rgba(204, 59, 63, 0.2);
 }
 
