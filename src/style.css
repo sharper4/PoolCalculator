@@ -445,6 +445,22 @@ select:focus {
   padding-left: 0;
 }
 
+.condition-summary-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.18rem 0.7rem;
+}
+
+.condition-issues-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.18rem 0.7rem;
+}
+
+.condition-issues-row label:last-child {
+  grid-column: 1 / -1;
+}
+
 .check-row label,
 .check-list label {
   display: inline-flex;
