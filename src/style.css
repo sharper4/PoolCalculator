@@ -138,6 +138,19 @@ h3 {
   margin-bottom: 0.75rem;
 }
 
+.service-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.service-weather {
+  min-width: 320px;
+  max-width: 420px;
+  font-size: 0.82rem;
+}
+
 .status {
   margin-top: 0.35rem;
   color: var(--muted);
@@ -386,6 +399,16 @@ select:focus {
   padding: 0.2rem 0.28rem;
 }
 
+.report-value-input {
+  min-height: 1.55rem;
+  width: 5.2rem;
+  border-radius: 6px;
+  border: 1px solid #bdd2ee;
+  padding: 0.12rem 0.25rem;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
 .report-table th {
   background: #edf5ff;
   text-align: left;
@@ -566,6 +589,16 @@ body.report-mode {
   .report-meta,
   .report-two-col {
     grid-template-columns: 1fr;
+  }
+
+  .service-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .service-weather {
+    min-width: 0;
+    max-width: none;
   }
 
   .next-steps-grid {

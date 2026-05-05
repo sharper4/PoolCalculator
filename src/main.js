@@ -8,8 +8,6 @@ const refs = {
   customerName: document.getElementById('customer-name'),
   customerAddress: document.getElementById('customer-address'),
   technicianName: document.getElementById('technician-name'),
-  tcNow: document.getElementById('tc-now'),
-  phosphatesNow: document.getElementById('phosphates-now'),
   weatherConditions: document.getElementById('weather-conditions'),
 
   fcFrom: document.getElementById('fc-from'),
@@ -83,12 +81,12 @@ const refs = {
   rTechnician: document.getElementById('r-technician'),
   rWeather: document.getElementById('r-weather'),
   rFc: document.getElementById('r-fc'),
-  rTc: document.getElementById('r-tc'),
+  rTcInput: document.getElementById('r-tc-input'),
   rPh: document.getElementById('r-ph'),
   rTa: document.getElementById('r-ta'),
   rCh: document.getElementById('r-ch'),
   rCya: document.getElementById('r-cya'),
-  rPhos: document.getElementById('r-phos'),
+  rPhosInput: document.getElementById('r-phos-input'),
   rSalt: document.getElementById('r-salt'),
   sFc: document.getElementById('s-fc'),
   sTc: document.getElementById('s-tc'),
@@ -318,21 +316,19 @@ function updateReport() {
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
 
   const fc = n(refs.fcFrom);
-  const tc = n(refs.tcNow);
+  const tc = n(refs.rTcInput);
   const ph = n(refs.phFrom);
   const ta = n(refs.taFrom);
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
-  const phos = n(refs.phosphatesNow);
+  const phos = n(refs.rPhosInput);
   const salt = n(refs.saltFrom);
 
   refs.rFc.textContent = `${round2(fc)} ppm`;
-  refs.rTc.textContent = `${round2(tc)} ppm`;
   refs.rPh.textContent = `${round2(ph)}`;
   refs.rTa.textContent = `${Math.round(ta)} ppm`;
   refs.rCh.textContent = `${Math.round(ch)} ppm`;
   refs.rCya.textContent = `${Math.round(cya)} ppm`;
-  refs.rPhos.textContent = `${Math.round(phos)} ppb`;
   refs.rSalt.textContent = `${Math.round(salt)} ppm`;
 
   refs.sFc.textContent = statusMark(fc, 2, 4);
