@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-DbcN4hLm.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-D5ZeluQ5.css">
+    <script type="module" crossorigin src="./assets/index-BMfxJ3Sa.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-w0FlgJ-y.css">
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -19,6 +19,9 @@
         <div class="brand-row">
           <img class="brand-logo" src="./ntx-elite-logo.png" alt="North Texas Elite Pool Care logo" />
           <h1>Pool Calculator</h1>
+        </div>
+        <div class="hero-actions">
+          <button id="open-report" type="button" class="action-btn">Customer Report</button>
         </div>
         <p class="hero-copy">
           Professional water chemistry tools for clean pools and elite service. This calculator includes
@@ -49,6 +52,35 @@
               <input id="temp" type="number" min="0" step="1" value="84" />
               <span id="temp-unit" class="unit-pill">Fahrenheit</span>
             </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel reveal stagger-1">
+        <div class="section-head">
+          <h2>Service Details</h2>
+          <p class="status">These values are used in the printable customer water report.</p>
+        </div>
+        <div class="grid three">
+          <label>Customer
+            <input id="customer-name" type="text" placeholder="Customer name" />
+          </label>
+          <label>Address
+            <input id="customer-address" type="text" placeholder="Service address" />
+          </label>
+          <label>Technician
+            <input id="technician-name" type="text" value="Scott Harper" />
+          </label>
+        </div>
+        <div class="grid three">
+          <label>Total Chlorine (ppm)
+            <input id="tc-now" type="number" step="0.1" value="0" />
+          </label>
+          <label>Phosphates (ppb)
+            <input id="phosphates-now" type="number" step="1" value="0" />
+          </label>
+          <label>Weather (Denton County)
+            <input id="weather-conditions" type="text" value="Loading current weather..." />
           </label>
         </div>
       </section>
@@ -221,6 +253,118 @@
           Tips: Add less than the full amount first, circulate, retest, then fine-tune. Powder volumes vary by manufacturer.
         </p>
       </footer>
+
+      <section id="report-view" class="report-view" hidden>
+        <div class="report-toolbar">
+          <button id="back-to-app" type="button" class="action-btn subtle">Back to Calculator</button>
+          <button id="print-report" type="button" class="action-btn">Print Report</button>
+        </div>
+
+        <article class="report-sheet">
+          <header class="report-header">
+            <h1>NORTH TEXAS ELITE POOL CARE</h1>
+            <p>Clean Pools. Elite Service.</p>
+            <h2>SERVICE WATER REPORT</h2>
+          </header>
+
+          <section class="report-meta">
+            <p><strong>Customer:</strong> <span id="r-customer"></span></p>
+            <p><strong>Address:</strong> <span id="r-address"></span></p>
+            <p><strong>Date:</strong> <span id="r-date"></span></p>
+            <p><strong>Technician:</strong> <span id="r-technician"></span></p>
+            <p><strong>Current weather conditions:</strong> <span id="r-weather"></span></p>
+          </section>
+
+          <section class="report-block">
+            <h3>WATER CONDITION SUMMARY</h3>
+            <div class="check-row">
+              <label><input id="status-clear" type="checkbox" /> Crystal Clear &amp; Balanced</label>
+              <label><input id="status-minor" type="checkbox" checked /> Minor Adjustments Needed</label>
+              <label><input id="status-immediate" type="checkbox" /> Immediate Attention Required</label>
+            </div>
+            <div class="check-row">
+              <label><input id="issue-low-chlorine" type="checkbox" /> Low Chlorine</label>
+              <label><input id="issue-high-ph" type="checkbox" /> High pH</label>
+              <label><input id="issue-high-cya" type="checkbox" /> High Stabilizer</label>
+              <label><input id="issue-algae" type="checkbox" /> Algae Risk</label>
+              <label><input id="issue-phosphates" type="checkbox" /> Phosphates Present</label>
+              <label>Other: <input id="issue-other" class="inline-text" type="text" /></label>
+            </div>
+          </section>
+
+          <section class="report-block">
+            <h3>PRECISION WATER ANALYSIS</h3>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Result</th>
+                  <th>Ideal</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td>2.0-4.0 ppm</td><td id="s-fc"></td></tr>
+                <tr><td>Total Chlorine</td><td id="r-tc">--</td><td>2.0-4.0 ppm</td><td id="s-tc"></td></tr>
+                <tr><td>pH</td><td id="r-ph">--</td><td>7.2-7.6</td><td id="s-ph"></td></tr>
+                <tr><td>Alkalinity</td><td id="r-ta">--</td><td>80-120 ppm</td><td id="s-ta"></td></tr>
+                <tr><td>Calcium</td><td id="r-ch">--</td><td>200-400 ppm</td><td id="s-ch"></td></tr>
+                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td>30-50 ppm</td><td id="s-cya"></td></tr>
+                <tr><td>Phosphates</td><td id="r-phos">--</td><td>0-100 ppb</td><td id="s-phos"></td></tr>
+                <tr><td>Salt</td><td id="r-salt">--</td><td>2700-3400 ppm</td><td id="s-salt"></td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="report-block report-two-col">
+            <div>
+              <h3>ELITE TREATMENT PLAN</h3>
+              <p><strong>Sanitization (Chlorine):</strong> <span id="r-plan-fc">No adjustment required.</span></p>
+              <p><strong>Water Balance (pH / Alkalinity):</strong> <span id="r-plan-balance">No adjustment required.</span></p>
+              <p><strong>Stabilizer / Calcium Adjustments:</strong> <span id="r-plan-structure">No adjustment required.</span></p>
+              <p><strong>Preventative Treatments:</strong> <span id="r-plan-prevent">Brush, circulate, and retest before next visit.</span></p>
+            </div>
+            <div>
+              <h3>CHEMICALS APPLIED TODAY</h3>
+              <ul id="r-chem-list" class="check-list"></ul>
+            </div>
+          </section>
+
+          <section class="report-block">
+            <h3>TECHNICIAN INSIGHTS</h3>
+            <textarea id="r-insights" rows="2">Water chemistry adjusted based on current readings and target levels. Continue circulation and retest as scheduled.</textarea>
+          </section>
+
+          <section class="report-block report-two-col">
+            <div>
+              <h3>NEXT STEPS</h3>
+              <ul class="check-list">
+                <li><label><input type="checkbox" checked /> Pump running 24 hrs</label></li>
+                <li><label><input type="checkbox" checked /> Brush &amp; circulate water</label></li>
+                <li><label><input type="checkbox" checked /> Filter cleaned / backwashed</label></li>
+                <li><label>Retest in: <input id="retest-window" class="inline-text" type="text" value="24 hours" /></label></li>
+              </ul>
+            </div>
+            <div>
+              <h3>THE ELITE DIFFERENCE</h3>
+              <p>We do not just clean pools, we protect your investment.</p>
+              <ul class="check-list static">
+                <li>Precision water chemistry (not guesswork)</li>
+                <li>Pro-grade chemicals &amp; equipment</li>
+                <li>Consistent, reliable weekly service</li>
+                <li>Clear communication every visit</li>
+              </ul>
+            </div>
+          </section>
+
+          <footer class="report-contact">
+            <strong>North Texas Elite Pool Care</strong>
+            <span>Serving Denton &amp; Surrounding Areas</span>
+            <span>Phone: __________________</span>
+            <span>Email: __________________</span>
+          </footer>
+        </article>
+      </section>
     </main>
 
   </body>
