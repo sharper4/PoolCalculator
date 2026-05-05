@@ -321,6 +321,12 @@ function setChemList(items) {
   });
 }
 
+function syncAttentionRow(statusCell) {
+  const row = statusCell?.parentElement;
+  if (!row) return;
+  row.classList.toggle('needs-attention-row', statusCell.textContent === 'Needs attention');
+}
+
 function parseRange(text, fallbackMin, fallbackMax) {
   const match = text.match(/(\d+(?:\.\d+)?)\s*(?:to|-)+\s*(\d+(?:\.\d+)?)/i);
   if (match) {
@@ -390,6 +396,8 @@ function updateReport() {
   refs.sCya.textContent = statusMark(cya, cyaMin, cyaMax);
   refs.sPhos.textContent = statusMark(phos, 0, 100);
   refs.sSalt.textContent = salt > 0 || n(refs.saltTo) > 0 ? statusMark(salt, saltMin, saltMax) : 'N/A';
+
+  [refs.sFc, refs.sTc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sPhos, refs.sSalt].forEach(syncAttentionRow);
 
   refs.issueLowChlorine.checked = fc < 2;
   refs.issueHighPh.checked = ph > 7.6;
