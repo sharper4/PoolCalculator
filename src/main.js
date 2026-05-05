@@ -827,7 +827,7 @@ function calcSuggested() {
   refs.cyaTargetRange.textContent = cyaGoal === 'Not Setup'
     ? `Target: ${i(refs.cyaTo, 40)} ppm`
     : `Target: ${cyaGoal} ppm`;
-  refs.saltTargetRange.textContent = `Target: ${i(refs.saltTo, 0)} ppm`;
+  refs.saltTargetRange.textContent = `Target range: 2700-3400 ppm`;
   refs.borTargetRange.textContent = `Target: ${i(refs.borTo, 0)} ppm`;
 
   refs.goalResult.innerHTML = [
