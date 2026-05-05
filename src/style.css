@@ -731,3 +731,13 @@ body.report-mode {
     width: min(80vw, 320px);
   }
 }
+
+@media print {
+  .next-steps-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .next-steps-grid .retest-item {
+    grid-column: 1 / -1 !important;
+  }
+}
