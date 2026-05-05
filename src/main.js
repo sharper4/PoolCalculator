@@ -5,6 +5,13 @@ const refs = {
   temp: document.getElementById('temp'),
   tempUnit: document.getElementById('temp-unit'),
 
+  customerName: document.getElementById('customer-name'),
+  customerAddress: document.getElementById('customer-address'),
+  technicianName: document.getElementById('technician-name'),
+  tcNow: document.getElementById('tc-now'),
+  phosphatesNow: document.getElementById('phosphates-now'),
+  weatherConditions: document.getElementById('weather-conditions'),
+
   fcFrom: document.getElementById('fc-from'),
   fcTo: document.getElementById('fc-to'),
   fcTargetRange: document.getElementById('fc-target-range'),
@@ -63,7 +70,44 @@ const refs = {
   csiResult: document.getElementById('csi-result'),
   goalResult: document.getElementById('goal-result'),
   szResult: document.getElementById('sz-result'),
-  effResult: document.getElementById('eff-result')
+  effResult: document.getElementById('eff-result'),
+
+  openReport: document.getElementById('open-report'),
+  backToApp: document.getElementById('back-to-app'),
+  printReport: document.getElementById('print-report'),
+  reportView: document.getElementById('report-view'),
+
+  rCustomer: document.getElementById('r-customer'),
+  rAddress: document.getElementById('r-address'),
+  rDate: document.getElementById('r-date'),
+  rTechnician: document.getElementById('r-technician'),
+  rWeather: document.getElementById('r-weather'),
+  rFc: document.getElementById('r-fc'),
+  rTc: document.getElementById('r-tc'),
+  rPh: document.getElementById('r-ph'),
+  rTa: document.getElementById('r-ta'),
+  rCh: document.getElementById('r-ch'),
+  rCya: document.getElementById('r-cya'),
+  rPhos: document.getElementById('r-phos'),
+  rSalt: document.getElementById('r-salt'),
+  sFc: document.getElementById('s-fc'),
+  sTc: document.getElementById('s-tc'),
+  sPh: document.getElementById('s-ph'),
+  sTa: document.getElementById('s-ta'),
+  sCh: document.getElementById('s-ch'),
+  sCya: document.getElementById('s-cya'),
+  sPhos: document.getElementById('s-phos'),
+  sSalt: document.getElementById('s-salt'),
+  rPlanFc: document.getElementById('r-plan-fc'),
+  rPlanBalance: document.getElementById('r-plan-balance'),
+  rPlanStructure: document.getElementById('r-plan-structure'),
+  rPlanPrevent: document.getElementById('r-plan-prevent'),
+  rChemList: document.getElementById('r-chem-list'),
+  issueLowChlorine: document.getElementById('issue-low-chlorine'),
+  issueHighPh: document.getElementById('issue-high-ph'),
+  issueHighCya: document.getElementById('issue-high-cya'),
+  issueAlgae: document.getElementById('issue-algae'),
+  issuePhosphates: document.getElementById('issue-phosphates')
 };
 
 const data = {
@@ -242,6 +286,125 @@ function statusBags(lbs) {
   const rem = Math.max(0, lbs - bags * 40);
   if (bags <= 0) return `${lbs} lbs`;
   return rem > 0 ? `${bags} (40 lb) bags and ${rem} lbs` : `${bags} (40 lb) bags`;
+}
+
+function statusMark(value, min, max) {
+  if (!Number.isFinite(value)) return '--';
+  if (value < min || value > max) return 'Needs attention';
+  return 'OK';
+}
+
+function cleanResult(text) {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function setChemList(items) {
+  refs.rChemList.innerHTML = '';
+  items.forEach((item) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    refs.rChemList.appendChild(li);
+  });
+}
+
+function updateReport() {
+  const today = new Date();
+  const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  refs.rCustomer.textContent = refs.customerName.value || '__________________________';
+  refs.rAddress.textContent = refs.customerAddress.value || '__________________________';
+  refs.rDate.textContent = dateText;
+  refs.rTechnician.textContent = refs.technicianName.value || 'Scott Harper';
+  refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
+
+  const fc = n(refs.fcFrom);
+  const tc = n(refs.tcNow);
+  const ph = n(refs.phFrom);
+  const ta = n(refs.taFrom);
+  const ch = n(refs.chFrom);
+  const cya = n(refs.cyaFrom);
+  const phos = n(refs.phosphatesNow);
+  const salt = n(refs.saltFrom);
+
+  refs.rFc.textContent = `${round2(fc)} ppm`;
+  refs.rTc.textContent = `${round2(tc)} ppm`;
+  refs.rPh.textContent = `${round2(ph)}`;
+  refs.rTa.textContent = `${Math.round(ta)} ppm`;
+  refs.rCh.textContent = `${Math.round(ch)} ppm`;
+  refs.rCya.textContent = `${Math.round(cya)} ppm`;
+  refs.rPhos.textContent = `${Math.round(phos)} ppb`;
+  refs.rSalt.textContent = `${Math.round(salt)} ppm`;
+
+  refs.sFc.textContent = statusMark(fc, 2, 4);
+  refs.sTc.textContent = statusMark(tc, 2, 4);
+  refs.sPh.textContent = statusMark(ph, 7.2, 7.6);
+  refs.sTa.textContent = statusMark(ta, 80, 120);
+  refs.sCh.textContent = statusMark(ch, 200, 400);
+  refs.sCya.textContent = statusMark(cya, 30, 50);
+  refs.sPhos.textContent = statusMark(phos, 0, 100);
+  refs.sSalt.textContent = salt > 0 ? statusMark(salt, 2700, 3400) : 'N/A';
+
+  refs.issueLowChlorine.checked = fc < 2;
+  refs.issueHighPh.checked = ph > 7.6;
+  refs.issueHighCya.checked = cya > 50;
+  refs.issueAlgae.checked = fc < 2 || cya > 80;
+  refs.issuePhosphates.checked = phos > 100;
+
+  const fcPlan = cleanResult(refs.fcResult.textContent);
+  const phPlan = cleanResult(refs.phResult.textContent);
+  const taPlan = cleanResult(refs.taResult.textContent);
+  const chPlan = cleanResult(refs.chResult.textContent);
+  const cyaPlan = cleanResult(refs.cyaResult.textContent);
+  const borPlan = cleanResult(refs.borResult.textContent);
+
+  refs.rPlanFc.textContent = fcPlan || 'No adjustment required.';
+  refs.rPlanBalance.textContent = `${phPlan} ${taPlan}`.trim() || 'No adjustment required.';
+  refs.rPlanStructure.textContent = `${cyaPlan} ${chPlan}`.trim() || 'No adjustment required.';
+  refs.rPlanPrevent.textContent = borPlan || 'Brush, circulate, and retest before next visit.';
+
+  const applied = [];
+  if (!fcPlan.startsWith('No FC')) applied.push(`FC: ${fcPlan}`);
+  if (!phPlan.startsWith('No pH')) applied.push(`pH: ${phPlan}`);
+  if (!taPlan.startsWith('No TA')) applied.push(`TA: ${taPlan}`);
+  if (!chPlan.startsWith('No CH')) applied.push(`CH: ${chPlan}`);
+  if (!cyaPlan.startsWith('No CYA')) applied.push(`CYA: ${cyaPlan}`);
+  if (!cleanResult(refs.saltResult.textContent).startsWith('No salt')) {
+    applied.push(`Salt: ${cleanResult(refs.saltResult.textContent)}`);
+  }
+  if (!borPlan.startsWith('No borate')) applied.push(`Borate: ${borPlan}`);
+
+  if (!applied.length) {
+    applied.push('No chemicals required today; values already within target range.');
+  }
+  setChemList(applied.slice(0, 5));
+}
+
+function setReportMode(enabled) {
+  document.body.classList.toggle('report-mode', enabled);
+  refs.reportView.hidden = !enabled;
+  if (enabled) updateReport();
+}
+
+async function loadWeather() {
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.2148&longitude=-97.1331&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Weather fetch failed');
+    const payload = await response.json();
+    const current = payload.current;
+    const code = Number(current.weather_code);
+    let label = 'Clear';
+    if (code >= 1 && code <= 3) label = 'Partly Cloudy';
+    else if (code >= 45 && code <= 48) label = 'Fog';
+    else if (code >= 51 && code <= 67) label = 'Rain';
+    else if (code >= 71 && code <= 77) label = 'Snow';
+    else if (code >= 80 && code <= 82) label = 'Rain Showers';
+    else if (code >= 95) label = 'Thunderstorm';
+
+    refs.weatherConditions.value = `${label}, ${Math.round(current.temperature_2m)}F (feels ${Math.round(current.apparent_temperature)}F), wind ${Math.round(current.wind_speed_10m)} mph`;
+  } catch (err) {
+    refs.weatherConditions.value = 'Unable to load live weather automatically';
+  }
 }
 
 function calcFC() {
@@ -762,6 +925,7 @@ function calcAll() {
   calcSuggested();
   calcPoolVolume();
   calcEffect();
+  updateReport();
 }
 
 function init() {
@@ -785,6 +949,21 @@ function init() {
   refs.szPop.value = '0';
   refs.effPop.value = '1';
 
+  refs.openReport.addEventListener('click', () => {
+    setReportMode(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  refs.backToApp.addEventListener('click', () => {
+    setReportMode(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  refs.printReport.addEventListener('click', () => {
+    setReportMode(true);
+    window.print();
+  });
+
   document.querySelectorAll('input,select').forEach((el) => {
     el.addEventListener('input', () => {
       if (el === refs.units) {
@@ -802,6 +981,9 @@ function init() {
 
   calcUnits();
   calcAll();
+  loadWeather().then(() => {
+    updateReport();
+  });
 }
 
 init();
