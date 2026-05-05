@@ -90,7 +90,6 @@ const refs = {
   rTechnician: document.getElementById('r-technician'),
   rWeather: document.getElementById('r-weather'),
   rFc: document.getElementById('r-fc'),
-  rTc: document.getElementById('r-tc'),
   rPh: document.getElementById('r-ph'),
   rTa: document.getElementById('r-ta'),
   rCh: document.getElementById('r-ch'),
@@ -98,7 +97,6 @@ const refs = {
   rPhos: document.getElementById('r-phos'),
   rSalt: document.getElementById('r-salt'),
   idealFc: document.getElementById('ideal-fc'),
-  idealTc: document.getElementById('ideal-tc'),
   idealPh: document.getElementById('ideal-ph'),
   idealTa: document.getElementById('ideal-ta'),
   idealCh: document.getElementById('ideal-ch'),
@@ -106,7 +104,6 @@ const refs = {
   idealPhos: document.getElementById('ideal-phos'),
   idealSalt: document.getElementById('ideal-salt'),
   sFc: document.getElementById('s-fc'),
-  sTc: document.getElementById('s-tc'),
   sPh: document.getElementById('s-ph'),
   sTa: document.getElementById('s-ta'),
   sCh: document.getElementById('s-ch'),
@@ -399,7 +396,6 @@ function updateReport() {
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
 
   const fc = n(refs.fcFrom);
-  const tc = fc;
   const ph = n(refs.phFrom);
   const ta = n(refs.taFrom);
   const ch = n(refs.chFrom);
@@ -407,7 +403,6 @@ function updateReport() {
   const salt = n(refs.saltFrom);
 
   refs.rFc.textContent = `${round2(fc)} ppm`;
-  refs.rTc.textContent = `${round2(tc)} ppm`;
   refs.rPh.textContent = `${round2(ph)}`;
   refs.rTa.textContent = `${Math.round(ta)} ppm`;
   refs.rCh.textContent = `${Math.round(ch)} ppm`;
@@ -415,7 +410,6 @@ function updateReport() {
   refs.rSalt.textContent = `${Math.round(salt)} ppm`;
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
-  refs.idealTc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
   refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)));
   refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
   refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
@@ -431,14 +425,13 @@ function updateReport() {
   const [borMin, borMax] = parseRange(refs.borTargetRange.textContent, n(refs.borTo), n(refs.borTo));
 
   refs.sFc.textContent = statusMark(fc, fcMin, fcMax);
-  refs.sTc.textContent = statusMark(tc, fcMin, fcMax);
   refs.sPh.textContent = statusMark(ph, phMin, phMax);
   refs.sTa.textContent = statusMark(ta, taMin, taMax);
   refs.sCh.textContent = statusMark(ch, chMin, chMax);
   refs.sCya.textContent = statusMark(cya, cyaMin, cyaMax);
   refs.sSalt.textContent = salt > 0 || n(refs.saltTo) > 0 ? statusMark(salt, saltMin, saltMax) : 'N/A';
 
-  [refs.sFc, refs.sTc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
+  [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
   setRangeState(refs.phCard, ph, phMin, phMax);
