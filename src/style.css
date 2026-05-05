@@ -446,6 +446,17 @@ select:focus {
   margin: 0.08rem 0;
 }
 
+.static-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.08rem 0.8rem;
+  padding-left: 0.9rem;
+}
+
+.static-grid li {
+  margin: 0;
+}
+
 .next-steps-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -669,6 +680,11 @@ body.report-mode {
   .check-list li,
   .check-list.static li {
     margin: 0.02rem 0;
+  }
+
+  .static-grid {
+    gap: 0.04rem 0.55rem;
+    padding-left: 0.78rem;
   }
 
   #r-insights {

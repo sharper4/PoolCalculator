@@ -160,6 +160,12 @@ const data = {
 const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2];
 
 let oldUnit = 0;
+let suppressTargetOverrideCapture = false;
+const manualTargetOverride = {
+  ta: false,
+  ch: false,
+  cya: false
+};
 
 function n(el, fallback = 0) {
   const v = Number.parseFloat(el.value);
@@ -327,6 +333,12 @@ function clearChemicalChecks() {
   });
 }
 
+function writeTargetValue(inputEl, value) {
+  suppressTargetOverrideCapture = true;
+  inputEl.value = String(value);
+  suppressTargetOverrideCapture = false;
+}
+
 function syncAttentionRow(statusCell) {
   const row = statusCell?.parentElement;
   if (!row) return;
@@ -440,7 +452,6 @@ function setReportMode(enabled) {
   document.body.classList.toggle('report-mode', enabled);
   refs.reportView.hidden = !enabled;
   if (enabled) updateReport();
-  if (!enabled) clearChemicalChecks();
 }
 
 async function loadWeather() {
@@ -731,22 +742,22 @@ function calcSuggested() {
   refs.fcTargetRange.textContent = `Target range: ${fcRangeMin}-${targ} ppm`;
   if (refs.fcAutoTarget.checked) {
     const fcTarget = fcRangeMin + (targ - fcRangeMin) * (2 / 3);
-    refs.fcTo.value = String(Math.round(fcTarget));
+    writeTargetValue(refs.fcTo, Math.round(fcTarget));
   }
 
-  if (taRange) {
+  if (taRange && !manualTargetOverride.ta) {
     const taTarget = taRange[0] + (taRange[1] - taRange[0]) * 0.5;
-    refs.taTo.value = String(Math.round(taTarget));
+    writeTargetValue(refs.taTo, Math.round(taTarget));
   }
 
-  if (chRange) {
+  if (chRange && !manualTargetOverride.ch) {
     const chTarget = chRange[0] + (chRange[1] - chRange[0]) * 0.5;
-    refs.chTo.value = String(Math.round(chTarget));
+    writeTargetValue(refs.chTo, Math.round(chTarget));
   }
 
-  if (cyaRange) {
+  if (cyaRange && !manualTargetOverride.cya) {
     const cyaTarget = cyaRange[0] + (cyaRange[1] - cyaRange[0]) * (1 / 3);
-    refs.cyaTo.value = String(Math.round(cyaTarget));
+    writeTargetValue(refs.cyaTo, Math.round(cyaTarget));
   }
 
   refs.phTargetRange.textContent = phGoal === 'Not Setup'
@@ -1018,12 +1029,25 @@ function init() {
   });
 
   refs.printReport.addEventListener('click', () => {
-    setReportMode(true);
     window.print();
   });
 
-  window.addEventListener('afterprint', () => {
-    clearChemicalChecks();
+  refs.fcTo.addEventListener('input', () => {
+    if (!suppressTargetOverrideCapture && refs.fcAutoTarget.checked) {
+      refs.fcAutoTarget.checked = false;
+    }
+  });
+
+  refs.taTo.addEventListener('input', () => {
+    if (!suppressTargetOverrideCapture) manualTargetOverride.ta = true;
+  });
+
+  refs.chTo.addEventListener('input', () => {
+    if (!suppressTargetOverrideCapture) manualTargetOverride.ch = true;
+  });
+
+  refs.cyaTo.addEventListener('input', () => {
+    if (!suppressTargetOverrideCapture) manualTargetOverride.cya = true;
   });
 
   document.querySelectorAll('input,select').forEach((el) => {
