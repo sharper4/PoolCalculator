@@ -14,6 +14,7 @@ const refs = {
 
   fcFrom: document.getElementById('fc-from'),
   fcTo: document.getElementById('fc-to'),
+  fcCard: document.querySelector('.chem-card.fc'),
   fcTargetRange: document.getElementById('fc-target-range'),
   fcAutoTarget: document.getElementById('fc-auto-target'),
   fcPercent: document.getElementById('fc-percent'),
@@ -22,28 +23,34 @@ const refs = {
 
   phFrom: document.getElementById('ph-from'),
   phTo: document.getElementById('ph-to'),
+  phCard: document.querySelector('.chem-card.ph'),
   phTargetRange: document.getElementById('ph-target-range'),
   maPop: document.getElementById('ma-pop'),
 
   taFrom: document.getElementById('ta-from'),
   taTo: document.getElementById('ta-to'),
+  taCard: document.querySelector('.chem-card.ta'),
   taTargetRange: document.getElementById('ta-target-range'),
 
   chFrom: document.getElementById('ch-from'),
   chTo: document.getElementById('ch-to'),
+  chCard: document.querySelector('.chem-card.ch'),
   chTargetRange: document.getElementById('ch-target-range'),
   chFill: document.getElementById('ch-fill'),
 
   cyaFrom: document.getElementById('cya-from'),
   cyaTo: document.getElementById('cya-to'),
+  cyaCard: document.querySelector('.chem-card.cya'),
   cyaTargetRange: document.getElementById('cya-target-range'),
 
   saltFrom: document.getElementById('salt-from'),
   saltTo: document.getElementById('salt-to'),
+  saltCard: document.querySelector('.chem-card.salt'),
   saltTargetRange: document.getElementById('salt-target-range'),
 
   borFrom: document.getElementById('bor-from'),
   borTo: document.getElementById('bor-to'),
+  borCard: document.querySelector('.chem-card.bor'),
   borTargetRange: document.getElementById('bor-target-range'),
   borPop: document.getElementById('bor-pop'),
 
@@ -112,6 +119,9 @@ const refs = {
   rPlanPrevent: document.getElementById('r-plan-prevent'),
   rChemList: document.getElementById('r-chem-list'),
   issueLowChlorine: document.getElementById('issue-low-chlorine'),
+  statusClear: document.getElementById('status-clear'),
+  statusMinor: document.getElementById('status-minor'),
+  statusImmediate: document.getElementById('status-immediate'),
   issueHighPh: document.getElementById('issue-high-ph'),
   issueHighCya: document.getElementById('issue-high-cya'),
   issueAlgae: document.getElementById('issue-algae'),
@@ -314,6 +324,13 @@ function cleanResult(text) {
 }
 
 function setChemList(items) {
+  const checkedMap = new Map();
+  refs.rChemList.querySelectorAll('li').forEach((li) => {
+    const labelText = li.querySelector('span')?.textContent?.trim();
+    const checked = li.querySelector('input[type="checkbox"]')?.checked;
+    if (labelText) checkedMap.set(labelText, Boolean(checked));
+  });
+
   refs.rChemList.innerHTML = '';
   items.forEach((item) => {
     const li = document.createElement('li');
@@ -321,6 +338,7 @@ function setChemList(items) {
     const box = document.createElement('input');
     const text = document.createElement('span');
     box.type = 'checkbox';
+    box.checked = checkedMap.get(item) === true;
     text.textContent = item;
     label.append(box, text);
     li.appendChild(label);
@@ -344,6 +362,13 @@ function syncAttentionRow(statusCell) {
   const row = statusCell?.parentElement;
   if (!row) return;
   row.classList.toggle('needs-attention-row', statusCell.textContent === 'Needs attention');
+}
+
+function setRangeState(card, value, min, max) {
+  if (!card || !Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) return;
+  const inRange = value >= min && value <= max;
+  card.classList.toggle('within-range', inRange);
+  card.classList.toggle('out-of-range', !inRange);
 }
 
 function parseRange(text, fallbackMin, fallbackMax) {
@@ -403,6 +428,7 @@ function updateReport() {
   const [chMin, chMax] = parseRange(refs.chTargetRange.textContent, n(refs.chTo), n(refs.chTo));
   const [cyaMin, cyaMax] = parseRange(refs.cyaTargetRange.textContent, n(refs.cyaTo), n(refs.cyaTo));
   const [saltMin, saltMax] = parseRange(refs.saltTargetRange.textContent, n(refs.saltTo), n(refs.saltTo));
+  const [borMin, borMax] = parseRange(refs.borTargetRange.textContent, n(refs.borTo), n(refs.borTo));
 
   refs.sFc.textContent = statusMark(fc, fcMin, fcMax);
   refs.sTc.textContent = statusMark(tc, fcMin, fcMax);
@@ -414,11 +440,32 @@ function updateReport() {
 
   [refs.sFc, refs.sTc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
-  refs.issueLowChlorine.checked = fc < 2;
-  refs.issueHighPh.checked = ph > 7.6;
-  refs.issueHighCya.checked = cya > 50;
-  refs.issueAlgae.checked = fc < 2 || cya > 80;
+  setRangeState(refs.fcCard, fc, fcMin, fcMax);
+  setRangeState(refs.phCard, ph, phMin, phMax);
+  setRangeState(refs.taCard, ta, taMin, taMax);
+  setRangeState(refs.chCard, ch, chMin, chMax);
+  setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
+  setRangeState(refs.saltCard, salt, saltMin, saltMax);
+  setRangeState(refs.borCard, n(refs.borFrom), borMin, borMax);
+
+  refs.issueLowChlorine.checked = fc < fcMin;
+  refs.issueHighPh.checked = ph > phMax;
+  refs.issueHighCya.checked = cya > cyaMax;
+  refs.issueAlgae.checked = fc < fcMin;
   refs.issuePhosphates.checked = false;
+
+  const outCount = [
+    refs.sFc.textContent,
+    refs.sPh.textContent,
+    refs.sTa.textContent,
+    refs.sCh.textContent,
+    refs.sCya.textContent,
+    refs.sSalt.textContent
+  ].filter((state) => state === 'Needs attention').length;
+
+  refs.statusClear.checked = outCount === 0;
+  refs.statusMinor.checked = outCount > 0 && outCount < 3;
+  refs.statusImmediate.checked = outCount >= 3;
 
   const fcPlan = cleanResult(refs.fcResult.textContent);
   const phPlan = cleanResult(refs.phResult.textContent);
