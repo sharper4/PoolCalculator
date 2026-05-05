@@ -772,11 +772,11 @@ function calcSuggested() {
     cyaRange = [30, 80];
   } else if (from === 2 && chlorine !== 0 && surface !== 0) {
     phGoal = '7.5 to 7.8';
-    taGoal = chlorine === 1 ? '70 to 90+' : chlorine === 2 ? '60 to 80' : '100 to 120+';
+    taGoal = chlorine === 1 ? '70 to 120' : chlorine === 2 ? '60 to 120' : '100 to 120';
     chGoal = surface === 1 ? '250 to 350' : surface === 2 ? '50 to 300' : '220 to 320';
     cyaGoal = chlorine === 2 ? '70 to 80' : '30 to 50';
     phRange = [7.5, 7.8];
-    taRange = chlorine === 1 ? [70, 90] : chlorine === 2 ? [60, 80] : [100, 120];
+    taRange = chlorine === 1 ? [70, 120] : chlorine === 2 ? [60, 120] : [100, 120];
     chRange = surface === 1 ? [250, 350] : surface === 2 ? [50, 300] : [220, 320];
     cyaRange = chlorine === 2 ? [70, 80] : [30, 50];
   } else if (from === 3) {
