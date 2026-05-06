@@ -121,6 +121,7 @@ const refs = {
   sSalt: document.getElementById('s-salt'),
   rTreatmentList: document.getElementById('r-treatment-list'),
   rForecastList: document.getElementById('r-forecast-list'),
+  rInsights: document.getElementById('r-insights'),
   reportTechInsights: document.getElementById('report-tech-insights'),
   reportEliteDifference: document.getElementById('report-elite-difference'),
   statusClear: document.getElementById('status-clear'),
@@ -565,7 +566,7 @@ function updateReport() {
   refs.rCustomer.textContent = refs.customerName.value || '__________________________';
   refs.rAddress.textContent = refs.customerAddress.value || '__________________________';
   refs.rDate.textContent = dateText;
-  refs.rTechnician.textContent = refs.technicianName.value || 'Scott Harper';
+  refs.rTechnician.textContent = refs.technicianName.value || '';
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
   refs.rPoolSize.textContent = `${Math.round(n(refs.size))} ${refs.sizeUnit.textContent}`;
   refs.rPoolTemp.textContent = `${Math.round(n(refs.temp))} ${refs.tempUnit.textContent === 'Celsius' ? 'C' : 'F'}`;
@@ -842,6 +843,12 @@ function updateReport() {
 
   setChecklist(refs.rTreatmentList, treatmentItems);
   setChecklist(refs.rForecastList, forecastItems);
+}
+
+function expandReportInsightsForPrint() {
+  if (!refs.rInsights) return;
+  refs.rInsights.style.height = 'auto';
+  refs.rInsights.style.height = `${refs.rInsights.scrollHeight}px`;
 }
 
 function setReportMode(enabled) {
@@ -1528,8 +1535,15 @@ function init() {
   });
 
   refs.printReport.addEventListener('click', () => {
+    expandReportInsightsForPrint();
     window.print();
   });
+
+  if (refs.rInsights) {
+    refs.rInsights.addEventListener('input', expandReportInsightsForPrint);
+  }
+
+  window.addEventListener('beforeprint', expandReportInsightsForPrint);
 
   refs.fcTo.addEventListener('input', () => {
     if (!suppressTargetOverrideCapture) {
@@ -1582,8 +1596,10 @@ function init() {
   calcUnits();
   applyCustomerSectionsVisibility();
   calcAll();
+  expandReportInsightsForPrint();
   loadWeather().then(() => {
     updateReport();
+    expandReportInsightsForPrint();
   });
 }
 

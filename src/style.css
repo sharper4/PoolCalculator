@@ -764,8 +764,10 @@ body.report-mode {
   #r-insights {
     line-height: 1.08;
     font-size: 0.883rem;
-    max-height: 2.1rem;
-    overflow: hidden;
+    height: auto !important;
+    max-height: none;
+    overflow: visible;
+    resize: none;
   }
 
   #r-insights,
