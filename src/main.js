@@ -539,13 +539,14 @@ function updateReport() {
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
   const salt = n(refs.saltFrom);
+  const saltTested = refs.saltFrom.value.trim() !== '';
 
   refs.rFc.textContent = `${round2(fc)} ppm`;
   refs.rPh.textContent = `${round2(ph)} ppm`;
   refs.rTa.textContent = `${Math.round(ta)} ppm`;
   refs.rCh.textContent = `${Math.round(ch)} ppm`;
   refs.rCya.textContent = `${Math.round(cya)} ppm`;
-  refs.rSalt.textContent = `${Math.round(salt)} ppm`;
+  refs.rSalt.textContent = saltTested ? `${Math.round(salt)} ppm` : 'Not tested';
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
   refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
@@ -567,7 +568,7 @@ function updateReport() {
   refs.sTa.textContent = statusMark(ta, taMin, taMax);
   refs.sCh.textContent = statusMark(ch, chMin, chMax);
   refs.sCya.textContent = statusMark(cya, cyaMin, cyaMax);
-  refs.sSalt.textContent = salt > 0 || n(refs.saltTo) > 0 ? statusMark(salt, saltMin, saltMax) : 'N/A';
+  refs.sSalt.textContent = saltTested ? statusMark(salt, saltMin, saltMax) : 'Not tested';
 
   [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
