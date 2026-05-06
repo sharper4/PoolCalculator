@@ -534,7 +534,7 @@ function updateReport() {
   refs.rTechnician.textContent = refs.technicianName.value || 'Scott Harper';
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
   refs.rPoolSize.textContent = `${Math.round(n(refs.size))} ${refs.sizeUnit.textContent}`;
-  refs.rPoolTemp.textContent = `${Math.round(n(refs.temp))} ${refs.tempUnit.textContent}`;
+  refs.rPoolTemp.textContent = `${Math.round(n(refs.temp))} ${refs.tempUnit.textContent === 'Celsius' ? 'C' : 'F'}`;
 
   const fc = n(refs.fcFrom);
   const ph = n(refs.phFrom);
