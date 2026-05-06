@@ -407,8 +407,10 @@ function parseRange(text, fallbackMin, fallbackMax) {
   return [fallbackMin, fallbackMax];
 }
 
-// Weekly average UV index fetched from Open-Meteo (default 7 = typical North Texas summer)
-let weeklyAvgUV = 7;
+// Weekly average temperature from Open-Meteo forecast (7-day forecast data).
+// Used to project chlorine demand over the week ahead.
+let weeklyAvgTemp = 80; // default 80°F
+let weeklyAvgUV = 7;    // default UV index
 
 function exactTarget(value, unit = '') {
   return `${value}${unit}`.trim();
@@ -606,10 +608,10 @@ function updateReport() {
   //   Temp+UV: Litra Pool Care + Open-Meteo daily uv_index_max
   //   pH rise: Orenda Tech (CO2 off-gassing / Henry's Law)
   const forecastItems = [];
-  const tempF    = parseWeatherTemp();
+  const tempF    = weeklyAvgTemp; // 7-day average for FC demand projection
   const gallons  = getGallons();
   const blPct    = Math.max(0.1, n(refs.fcPercent, 6));
-  const aeration = refs.phAeration ? refs.phAeration.value : 'medium';
+  const aeration = refs.phAeration ? refs.phAeration.value : 'low';
 
   // ── FC ──────────────────────────────────────────────────────────────────
   if (tested.fc) {
@@ -671,8 +673,7 @@ function updateReport() {
       const maMul = mamul[maStrength] || 1.0;
       const maOz  = Math.abs(phTargetStart - ph) * gallons / 784.66 * maMul;
       forecastItems.push(
-        `pH: Add ${fmtOz(maOz)} of muriatic acid today → dose to ${phTargetStart.toFixed(2)}. ` +
-        `Natural off-gassing (+${phRise.toFixed(2)}/week, TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(1)} by next visit (bottom of range: ${phMin}).`
+        `pH: Add ${fmtOz(maOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}. This is LESS than the treatment plan because natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) will bring it to ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
       );
     }
   }
@@ -773,8 +774,8 @@ function setReportMode(enabled) {
 
 async function loadWeather() {
   try {
-    // Include daily uv_index_max for 7-day UV average used in FC forecast
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.2148&longitude=-97.1331&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago';
+    // Include daily temperature and uv_index_max for 7-day averages used in FC forecast
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.2148&longitude=-97.1331&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago';
     const response = await fetch(url);
     if (!response.ok) throw new Error('Weather fetch failed');
     const payload = await response.json();
@@ -790,10 +791,14 @@ async function loadWeather() {
 
     refs.weatherConditions.value = `${label}, ${Math.round(current.temperature_2m)}F (feels ${Math.round(current.apparent_temperature)}F), wind ${Math.round(current.wind_speed_10m)} mph`;
 
-    // Compute 7-day average UV index (used in FC demand forecast)
-    const uvValues = payload.daily?.uv_index_max || [];
+    // Compute 7-day average UV index and temperature (used in FC demand forecast)
+    const uvValues  = payload.daily?.uv_index_max || [];
+    const tempValues = payload.daily?.temperature_2m_max || [];
     if (uvValues.length) {
       weeklyAvgUV = Math.round(uvValues.reduce((a, b) => a + b, 0) / uvValues.length * 10) / 10;
+    }
+    if (tempValues.length) {
+      weeklyAvgTemp = Math.round(tempValues.reduce((a, b) => a + b, 0) / tempValues.length);
     }
   } catch (err) {
     refs.weatherConditions.value = 'Unable to load live weather automatically';
