@@ -539,14 +539,22 @@ function updateReport() {
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
   const salt = n(refs.saltFrom);
-  const saltTested = refs.saltFrom.value.trim() !== '';
+  const tested = {
+    fc: refs.fcFrom.value.trim() !== '',
+    ph: refs.phFrom.value.trim() !== '',
+    ta: refs.taFrom.value.trim() !== '',
+    ch: refs.chFrom.value.trim() !== '',
+    cya: refs.cyaFrom.value.trim() !== '',
+    salt: refs.saltFrom.value.trim() !== '',
+    bor: refs.borFrom.value.trim() !== ''
+  };
 
-  refs.rFc.textContent = `${round2(fc)} ppm`;
-  refs.rPh.textContent = `${round2(ph)} ppm`;
-  refs.rTa.textContent = `${Math.round(ta)} ppm`;
-  refs.rCh.textContent = `${Math.round(ch)} ppm`;
-  refs.rCya.textContent = `${Math.round(cya)} ppm`;
-  refs.rSalt.textContent = saltTested ? `${Math.round(salt)} ppm` : 'Not tested';
+  refs.rFc.textContent = tested.fc ? `${round2(fc)} ppm` : 'Not tested';
+  refs.rPh.textContent = tested.ph ? `${round2(ph)} ppm` : 'Not tested';
+  refs.rTa.textContent = tested.ta ? `${Math.round(ta)} ppm` : 'Not tested';
+  refs.rCh.textContent = tested.ch ? `${Math.round(ch)} ppm` : 'Not tested';
+  refs.rCya.textContent = tested.cya ? `${Math.round(cya)} ppm` : 'Not tested';
+  refs.rSalt.textContent = tested.salt ? `${Math.round(salt)} ppm` : 'Not tested';
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
   refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
@@ -563,12 +571,12 @@ function updateReport() {
   const [saltMin, saltMax] = parseRange(refs.saltTargetRange.textContent, n(refs.saltTo), n(refs.saltTo));
   const [borMin, borMax] = parseRange(refs.borTargetRange.textContent, n(refs.borTo), n(refs.borTo));
 
-  refs.sFc.textContent = statusMark(fc, fcMin, fcMax);
-  refs.sPh.textContent = statusMark(ph, phMin, phMax);
-  refs.sTa.textContent = statusMark(ta, taMin, taMax);
-  refs.sCh.textContent = statusMark(ch, chMin, chMax);
-  refs.sCya.textContent = statusMark(cya, cyaMin, cyaMax);
-  refs.sSalt.textContent = saltTested ? statusMark(salt, saltMin, saltMax) : 'Not tested';
+  refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
+  refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax) : 'Not tested';
+  refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
+  refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
+  refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
+  refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
 
   [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
@@ -602,16 +610,6 @@ function updateReport() {
   const borPlan = cleanResult(refs.borResult.textContent);
 
   const saltPlan = cleanResult(refs.saltResult.textContent);
-  const tested = {
-    fc: refs.fcFrom.value.trim() !== '',
-    ph: refs.phFrom.value.trim() !== '',
-    ta: refs.taFrom.value.trim() !== '',
-    ch: refs.chFrom.value.trim() !== '',
-    cya: refs.cyaFrom.value.trim() !== '',
-    salt: refs.saltFrom.value.trim() !== '',
-    bor: refs.borFrom.value.trim() !== ''
-  };
-
   const fcAction = tested.fc && hasAction(fcPlan, 'No FC') ? `FC: ${fcPlan}` : '';
   const phAction = tested.ph && hasAction(phPlan, 'No pH') ? `pH: ${phPlan}` : '';
   const taAction = tested.ta && hasAction(taPlan, 'No TA') ? `TA: ${taPlan}` : '';
