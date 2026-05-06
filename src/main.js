@@ -535,6 +535,7 @@ function updateReport() {
   const fc = n(refs.fcFrom);
   const ph = n(refs.phFrom);
   const ta = n(refs.taFrom);
+  const taForPhModel = i(refs.taFrom, 100);
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
   const salt = n(refs.saltFrom);
@@ -675,7 +676,7 @@ function updateReport() {
   // Strategy: lower pH today so natural CO2 off-gassing (driven by aeration) brings it
   // to phMax by next visit. Aeration level selected by technician in pH card.
   if (tested.ph) {
-    const phRise = phWeeklyRise(ta, aeration);
+    const phRise = phWeeklyRise(taForPhModel, aeration);
     // Ideal starting point: phMax minus the week's natural rise
     const phTargetStart  = Math.max(7.0, Math.round((phMax - phRise) * 100) / 100);
     const phEndProjected = Math.round((ph + phRise) * 100) / 100;
@@ -693,12 +694,12 @@ function updateReport() {
       // Compute acid doses using the exact same pH-acid model as treatment plan.
       const maStrength = Number(n(refs.maPop));
       const bor = i(refs.borFrom, 0);
-      const forecastOz = muriaticAcidOzForPhDrop(ph, phTargetStart, ta, bor, gallons, maStrength);
+      const forecastOz = muriaticAcidOzForPhDrop(ph, phTargetStart, taForPhModel, bor, gallons, maStrength);
       // Compare rounded recommendation amounts to match what user sees in the UI text.
       const treatmentDisplayedOz = parseDisplayedOz(phPlan);
       const treatmentOz = Number.isFinite(treatmentDisplayedOz)
         ? treatmentDisplayedOz
-        : muriaticAcidOzForPhDrop(ph, n(refs.phTo), ta, bor, gallons, maStrength);
+        : muriaticAcidOzForPhDrop(ph, n(refs.phTo), taForPhModel, bor, gallons, maStrength);
       const forecastRounded = Math.round(forecastOz);
       const treatmentRounded = Math.round(treatmentOz);
       let doseNote = '';
@@ -708,7 +709,7 @@ function updateReport() {
         doseNote = ` This is MORE than today's treatment plan because the forecast targets the high end of the range, accounting for the upward drift.`;
       }
       forecastItems.push(
-        `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
+        `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(taForPhModel)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
       );
     }
   }
