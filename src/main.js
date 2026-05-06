@@ -507,7 +507,7 @@ function updateReport() {
   const salt = n(refs.saltFrom);
 
   refs.rFc.textContent = `${round2(fc)} ppm`;
-  refs.rPh.textContent = `${round2(ph)}`;
+  refs.rPh.textContent = `${round2(ph)} ppm`;
   refs.rTa.textContent = `${Math.round(ta)} ppm`;
   refs.rCh.textContent = `${Math.round(ch)} ppm`;
   refs.rCya.textContent = `${Math.round(cya)} ppm`;
