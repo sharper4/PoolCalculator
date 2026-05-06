@@ -514,7 +514,7 @@ function updateReport() {
   refs.rSalt.textContent = `${Math.round(salt)} ppm`;
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
-  refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)));
+  refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
   refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
   refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
   refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
