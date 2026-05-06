@@ -489,6 +489,26 @@ function fmtOz(oz) {
   return `${Math.round(oz)} oz`;
 }
 
+// Use the same pH-to-acid model as calcPH so treatment and forecast comparisons stay consistent.
+function muriaticAcidOzForPhDrop(from, to, taPpm, borPpm, gallons, maStrength) {
+  if (from <= to) return 0;
+  const mamul = [2.0, 1.11111, 1.0, 0.909091, 2.16897, 1.08448];
+  const maMul = mamul[maStrength] || 1.0;
+
+  let delta = (to - from) * gallons;
+  const temp = (from + to) / 2;
+  const adj = (192.1626 + -60.1221 * temp + 6.0752 * temp * temp + -0.1943 * temp * temp * temp) * (taPpm + 13.91) / 114.6;
+  let extra = (-5.476259 + 2.414292 * temp + -0.355882 * temp * temp + 0.01755 * temp * temp * temp) * borPpm;
+  extra *= delta;
+  delta *= adj;
+
+  return delta / -240.15 * maMul + extra / -240.15 * maMul;
+}
+
+function formatPhVolume(volumeOz) {
+  return Number(n(refs.units)) === 0 ? fmtOz(volumeOz) : putVolume(volumeOz);
+}
+
 function updateReport() {
   const today = new Date();
   const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -657,22 +677,22 @@ function updateReport() {
         `pH: No acid dose needed today — projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). Natural rise +${phRise.toFixed(2)}/week at TA ${Math.round(ta)} ppm (${aerLabel} aeration) stays in range.`
       );
     } else {
-      // Compute acid dose using same formula as calcPH (muriatic acid oz)
+      // Compute acid doses using the exact same pH-acid model as treatment plan.
       const maStrength = Number(n(refs.maPop));
-      const mamul = [2.0, 1.11111, 1.0, 0.909091, 2.16897, 1.08448];
-      const maMul = mamul[maStrength] || 1.0;
-      const forecastOz = Math.abs(phTargetStart - ph) * gallons / 240.15 * maMul;
-      // Also compute what treatment plan would dose (to phTo from phFrom)
-      const treatmentOz = ph > n(refs.phTo) ? Math.abs(n(refs.phTo) - ph) * gallons / 240.15 * maMul : 0;
-      const comparison = treatmentOz > 0 ? forecastOz / treatmentOz : 1;
+      const bor = i(refs.borFrom, 0);
+      const forecastOz = muriaticAcidOzForPhDrop(ph, phTargetStart, ta, bor, gallons, maStrength);
+      // Compare rounded recommendation amounts to match what user sees in the UI text.
+      const treatmentOz = muriaticAcidOzForPhDrop(ph, n(refs.phTo), ta, bor, gallons, maStrength);
+      const forecastRounded = Math.round(forecastOz);
+      const treatmentRounded = Math.round(treatmentOz);
       let doseNote = '';
-      if (comparison < 0.95) {
+      if (treatmentRounded > 0 && forecastRounded < treatmentRounded) {
         doseNote = ` This is LESS than today's treatment plan because natural +${phRise.toFixed(2)}/week rise will help bring it to target.`;
-      } else if (comparison > 1.05) {
+      } else if (treatmentRounded > 0 && forecastRounded > treatmentRounded) {
         doseNote = ` This is MORE than today's treatment plan because the forecast targets the high end of the range, accounting for the upward drift.`;
       }
       forecastItems.push(
-        `pH: Add ${fmtOz(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
+        `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
       );
     }
   }
@@ -857,9 +877,9 @@ function calcPH() {
 
   if (from > to) {
     let down = delta / -240.15 * mamul[ma] + extra / -240.15 * mamul[ma];
-    lines.push(`Add ${putVolume(down)} of ${data.maPop[ma]} muriatic acid.`);
+    lines.push(`Add ${formatPhVolume(down)} of ${data.maPop[ma]} muriatic acid.`);
     down = delta / -178.66 + extra / -178.66;
-    lines.push(`Or add ${putWeight(down)} by weight or ${putVolume(down * 0.6657)} by volume of dry acid.`);
+    lines.push(`Or add ${putWeight(down)} by weight or ${formatPhVolume(down * 0.6657)} by volume of dry acid.`);
   }
 
   refs.phResult.innerHTML = lines.length ? lines.join('<br>') : 'No pH adjustment required.';
