@@ -509,6 +509,19 @@ function formatPhVolume(volumeOz) {
   return Number(n(refs.units)) === 0 ? fmtOz(volumeOz) : putVolume(volumeOz);
 }
 
+function parseDisplayedOz(text) {
+  if (!text) return Number.NaN;
+  let match = text.match(/Add\s+(\d+)\s+gal\s+(\d+)\s+oz/i);
+  if (match) {
+    return Number(match[1]) * 128 + Number(match[2]);
+  }
+  match = text.match(/Add\s+([0-9]+(?:\.[0-9]+)?)\s+oz/i);
+  if (match) {
+    return Number.parseFloat(match[1]);
+  }
+  return Number.NaN;
+}
+
 function updateReport() {
   const today = new Date();
   const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -682,7 +695,10 @@ function updateReport() {
       const bor = i(refs.borFrom, 0);
       const forecastOz = muriaticAcidOzForPhDrop(ph, phTargetStart, ta, bor, gallons, maStrength);
       // Compare rounded recommendation amounts to match what user sees in the UI text.
-      const treatmentOz = muriaticAcidOzForPhDrop(ph, n(refs.phTo), ta, bor, gallons, maStrength);
+      const treatmentDisplayedOz = parseDisplayedOz(phPlan);
+      const treatmentOz = Number.isFinite(treatmentDisplayedOz)
+        ? treatmentDisplayedOz
+        : muriaticAcidOzForPhDrop(ph, n(refs.phTo), ta, bor, gallons, maStrength);
       const forecastRounded = Math.round(forecastOz);
       const treatmentRounded = Math.round(treatmentOz);
       let doseNote = '';
