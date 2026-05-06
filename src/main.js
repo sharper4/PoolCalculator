@@ -11,6 +11,8 @@ const refs = {
   tcNow: document.getElementById('tc-now'),
   phosphatesNow: document.getElementById('phosphates-now'),
   weatherConditions: document.getElementById('weather-conditions'),
+  weatherLabel: document.getElementById('weather-label'),
+  weatherLabelText: document.getElementById('weather-label-text'),
   serviceDetailsSection: document.getElementById('service-details-section'),
 
   fcFrom: document.getElementById('fc-from'),
@@ -859,8 +861,88 @@ function applyCustomerSectionsVisibility() {
 
 async function loadWeather() {
   try {
+    let latitude;
+    let longitude;
+    let locationName = '';
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 6000,
+            maximumAge: 300000
+          });
+        });
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      } catch {
+        refs.weatherConditions.value = '';
+        if (refs.weatherLabelText) {
+          refs.weatherLabelText.textContent = 'Current weather conditions';
+        }
+        return;
+      }
+    } else {
+      refs.weatherConditions.value = '';
+      if (refs.weatherLabelText) {
+        refs.weatherLabelText.textContent = 'Current weather conditions';
+      }
+      return;
+    }
+
+    // Try to resolve a human-friendly location name for the weather label.
+    try {
+      const reverseUrl = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`;
+      const reverseResponse = await fetch(reverseUrl);
+      if (reverseResponse.ok) {
+        const reversePayload = await reverseResponse.json();
+        const place = reversePayload?.results?.[0];
+        if (place) {
+          const city = place.name || '';
+          const county = place.admin2 || '';
+          const state = place.admin1 || '';
+          if (city) {
+            locationName = state ? `${city}, ${state}` : city;
+          } else if (county) {
+            locationName = county.includes('County') ? county : `${county} County`;
+          }
+        }
+      }
+    } catch {
+      // Keep existing location label when reverse lookup fails.
+    }
+
+    // Fallback reverse geocoding provider when Open-Meteo has no usable place data.
+    if (!locationName) {
+      try {
+        const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+        const bdcResponse = await fetch(bdcUrl);
+        if (bdcResponse.ok) {
+          const bdcPayload = await bdcResponse.json();
+          const city = bdcPayload.city || bdcPayload.locality || bdcPayload.localityInfo?.administrative?.[2]?.name || '';
+          const state = bdcPayload.principalSubdivision || '';
+          const county = bdcPayload.localityInfo?.administrative?.find((item) => item.order === 5)?.name || '';
+
+          if (city) {
+            locationName = state ? `${city}, ${state}` : city;
+          } else if (county) {
+            locationName = county.includes('County') ? county : `${county} County`;
+          }
+        }
+      } catch {
+        // Keep generic label if fallback provider is unavailable.
+      }
+    }
+
+    if (refs.weatherLabelText) {
+      refs.weatherLabelText.textContent = locationName
+        ? `Current weather conditions (${locationName})`
+        : 'Current weather conditions';
+    }
+
     // Include daily temperature and uv_index_max for 7-day averages used in FC forecast
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.2148&longitude=-97.1331&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Weather fetch failed');
     const payload = await response.json();
@@ -886,7 +968,10 @@ async function loadWeather() {
       weeklyAvgTemp = Math.round(tempValues.reduce((a, b) => a + b, 0) / tempValues.length);
     }
   } catch (err) {
-    refs.weatherConditions.value = 'Unable to load live weather automatically';
+    refs.weatherConditions.value = '';
+    if (refs.weatherLabelText) {
+      refs.weatherLabelText.textContent = 'Current weather conditions';
+    }
   }
 }
 
