@@ -406,6 +406,9 @@ function parseRange(text, fallbackMin, fallbackMax) {
   return [fallbackMin, fallbackMax];
 }
 
+// Weekly average UV index fetched from Open-Meteo (default 7 = typical North Texas summer)
+let weeklyAvgUV = 7;
+
 function exactTarget(value, unit = '') {
   return `${value}${unit}`.trim();
 }
@@ -418,23 +421,31 @@ function parseWeatherTemp() {
   return m ? parseInt(m[1], 10) : 80; // default 80°F if weather not loaded
 }
 
-// FC daily loss rate (ppm/day) based on temperature and CYA level.
-// Source: TFP (average pool loses 3-5 ppm/day in summer, much less in winter)
-// and Litra (temperature drives demand) — higher CYA = UV protection = less loss.
-function fcDailyLossRate(tempF, cyaPpm) {
+// FC daily loss rate (ppm/day) using temperature + UV index + CYA level.
+// Sources: TFP (CYA/UV relationship), Litra Pool Care (temperature demand)
+function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
+  // Temperature sets base biological/chemical demand (Litra Pool Care)
   let base;
-  if (tempF >= 90) base = 4.5;      // North Texas summer, peak UV
-  else if (tempF >= 80) base = 3.5; // warm, active season
-  else if (tempF >= 70) base = 2.5; // mild / shoulder season
-  else if (tempF >= 60) base = 1.5; // cool
-  else base = 0.75;                 // cold, minimal demand
-  // CYA binds FC into reserve, shielding it from UV (TFP).
+  if (tempF >= 90) base = 3.2;
+  else if (tempF >= 80) base = 2.5;
+  else if (tempF >= 70) base = 1.8;
+  else if (tempF >= 60) base = 1.0;
+  else base = 0.5;
+  // UV index drives photolysis — primary outdoor chlorine loss mechanism (TFP)
+  // Scale: 0-2 Low, 3-5 Moderate, 6-7 High (baseline), 8-10 Very High, 11+ Extreme
+  const uvFactor =
+    uvIndex >= 11 ? 1.45 :
+    uvIndex >=  8 ? 1.25 :
+    uvIndex >=  6 ? 1.0  :
+    uvIndex >=  3 ? 0.75 :
+                    0.5;
+  // CYA protects FC from UV by binding it as reserve chlorine (TFP)
   const cyaFactor =
     cyaPpm <= 0  ? 1.5  : // no stabilizer — very rapid UV burn-off
     cyaPpm <= 30 ? 1.0  : // baseline outdoor pool
-    cyaPpm <= 60 ? 0.82 : // liquid chlorine pool, good protection
+    cyaPpm <= 60 ? 0.82 : // liquid chlorine pool, good UV protection
                    0.65;  // SWG pool (CYA 60–90), best UV protection
-  return Math.round(base * cyaFactor * 10) / 10;
+  return Math.round(base * uvFactor * cyaFactor * 10) / 10;
 }
 
 // Weekly pH rise estimate from CO2 off-gassing (Henry's Law — Orenda Tech).
@@ -553,120 +564,133 @@ function updateReport() {
   }
 
   // ── Elite Pool Forecast Plan ─────────────────────────────────────────────
-  // Goal: use minimal chemicals — target the BOTTOM of each range after 7 days.
-  // Research sources:
-  //   FC/CYA:  TroubleFreePool (3-5 ppm/day summer demand; CYA reduces UV loss)
-  //   Temp:    Litra Pool Care  (temperature drives daily chlorine demand)
-  //   pH rise: Orenda Tech      (CO2 off-gassing via Henry's Law; TA sets ceiling)
+  // Goal: add chemicals TODAY to reach the BOTTOM of each target range after 7 days.
+  // No mid-week adjustments assumed. One dose, one week.
+  // Sources:
+  //   FC/CYA:  TroubleFreePool (CYA/UV relationship, daily demand)
+  //   Temp+UV: Litra Pool Care + Open-Meteo daily uv_index_max
+  //   pH rise: Orenda Tech (CO2 off-gassing / Henry's Law)
   const forecastItems = [];
   const tempF = parseWeatherTemp();
 
   // ── FC ──────────────────────────────────────────────────────────────────
   if (tested.fc) {
-    const dailyLoss  = fcDailyLossRate(tempF, cya);
+    const dailyLoss  = fcDailyLossRate(tempF, cya, weeklyAvgUV);
     const weeklyLoss = Math.round(dailyLoss * 7 * 10) / 10;
-    // If action is taken today, project from the corrected target; otherwise from current.
-    const fcStart     = fcAction ? n(refs.fcTo) : fc;
-    const fcProjected = Math.round((fcStart - weeklyLoss) * 10) / 10;
-    const demandLabel = tempF >= 80 ? 'high' : tempF >= 65 ? 'moderate' : 'low';
+    // Required starting FC so end-of-week lands at fcMin (bottom of target)
+    const requiredNow = Math.round((fcMin + weeklyLoss) * 10) / 10;
+    const doseNeeded  = Math.max(0, Math.round((requiredNow - fc) * 10) / 10);
+    const fcEndOfWeek = Math.round((fc + doseNeeded - weeklyLoss) * 10) / 10;
+    const uvLabel = weeklyAvgUV >= 8 ? 'high' : weeklyAvgUV >= 5 ? 'moderate' : 'low';
 
-    if (fcProjected >= fcMin) {
+    if (doseNeeded > 0) {
       forecastItems.push(
-        `FC: On track — projected ~${Math.max(fcProjected, 0).toFixed(1)} ppm at next visit ` +
-        `(min: ${fcMin} ppm). At ${Math.round(tempF)}°F with CYA ${Math.round(cya)} ppm, ` +
-        `expect ~${dailyLoss} ppm/day loss (${demandLabel} demand). No mid-week dose needed.`
+        `FC: Add ~${doseNeeded} ppm today. ` +
+        `Projected ~${Math.max(fcEndOfWeek, fcMin).toFixed(1)} ppm at next visit (target min: ${fcMin} ppm). ` +
+        `Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}\u00b0F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
       );
     } else {
-      const topup = Math.round((fcMin - fcProjected) * 10) / 10;
       forecastItems.push(
-        `FC: Projected to drop to ~${Math.max(fcProjected, 0).toFixed(1)} ppm — below minimum ${fcMin} ppm. ` +
-        `Schedule a mid-week top-up of ~${topup} ppm. ` +
-        `(~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, CYA ${Math.round(cya)} ppm, ${demandLabel} demand.)`
+        `FC: No dose needed today. ` +
+        `Projected ~${Math.max(fcEndOfWeek, 0).toFixed(1)} ppm at next visit (target min: ${fcMin} ppm). ` +
+        `Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}\u00b0F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
       );
     }
   }
 
   // ── pH ──────────────────────────────────────────────────────────────────
-  // pH naturally rises via CO2 off-gassing (Orenda). TA level sets the weekly drift rate.
+  // Strategy: lower pH today so natural CO2 off-gassing brings it to phMin by next visit.
   if (tested.ph) {
-    const phRise      = phWeeklyRise(ta);
-    const phStart     = phAction ? n(refs.phTo) : ph;
-    const phProjected = Math.round((phStart + phRise) * 100) / 100;
+    const phRise = phWeeklyRise(ta);
+    // Ideal starting point: phMin minus the week's natural rise
+    const phTargetStart  = Math.max(7.0, Math.round((phMin - phRise) * 10) / 10);
+    const phEndProjected = Math.round((ph + phRise) * 10) / 10;
 
-    if (phProjected <= phMax) {
+    if (ph <= phTargetStart) {
       forecastItems.push(
-        `pH: Stable — projected to rise to ~${phProjected.toFixed(1)} by next visit (max: ${phMax}). ` +
-        `CO2 off-gassing at TA ${Math.round(ta)} ppm drives ~${phRise.toFixed(1)} pH units/week. No mid-week adjustment needed.`
+        `pH: No adjustment needed today. ` +
+        `Natural CO2 off-gassing (+${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm) will bring pH to ~${Math.min(ph + phRise, phMax).toFixed(1)} by next visit.`
+      );
+    } else if (phEndProjected <= phMax) {
+      forecastItems.push(
+        `pH: No acid dose needed today — projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). ` +
+        `Natural rise of +${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm stays within range.`
       );
     } else {
       forecastItems.push(
-        `pH: Projected to exceed max — reaching ~${phProjected.toFixed(1)} (max: ${phMax}). ` +
-        `Dose pH to ${phMin} today so natural off-gassing (+${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm) brings it back into range by next visit.`
+        `pH: Dose to ${phTargetStart.toFixed(1)} today. ` +
+        `Natural off-gassing (+${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm) will bring it to ~${Math.min(phTargetStart + phRise, phMax).toFixed(1)} \u2014 bottom of range \u2014 by next visit.`
       );
     }
   }
 
   // ── TA ──────────────────────────────────────────────────────────────────
-  // TA changes slowly; acid doses (for pH control) reduce it ~5-10 ppm/week.
+  // TA is a byproduct of acid additions for pH; no direct weekly TA dose needed.
   if (tested.ta) {
     const taWeeklyDrop = phAction ? 8 : 3;
     const taProjected  = Math.round(ta - taWeeklyDrop);
 
     if (ta > taMax) {
       forecastItems.push(
-        `TA: High at ${Math.round(ta)} ppm. Will drift toward range as pH-control acid doses reduce it ~${taWeeklyDrop} ppm/week. No additional TA treatment needed.`
+        `TA: High at ${Math.round(ta)} ppm \u2014 no bicarbonate dose today. pH-control acid will reduce it ~${taWeeklyDrop} ppm/week toward target (${taMin}\u2013${taMax} ppm).`
       );
     } else if (taProjected >= taMin) {
       forecastItems.push(
-        `TA: Stable — projected ~${taProjected} ppm at next visit (target: ${taMin}–${taMax} ppm). Normal acid maintenance may reduce TA ~${taWeeklyDrop} ppm/week.`
+        `TA: Stable \u2014 no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}\u2013${taMax} ppm).`
       );
     } else {
       forecastItems.push(
-        `TA: Projected ~${taProjected} ppm — near or below minimum (${taMin} ppm). ` +
-        `Add sodium bicarbonate if TA drops below range; avoid over-dosing acid this week.`
+        `TA: Projected ~${taProjected} ppm \u2014 near minimum (${taMin} ppm). Limit acid use this week; add sodium bicarbonate if TA drops below range.`
       );
     }
   }
 
   // ── CYA ─────────────────────────────────────────────────────────────────
-  // CYA degrades ~5-10 ppm/month (TFP) — faster in heat. ~1-2 ppm/week.
+  // CYA degrades ~1-2 ppm/week (faster above 85°F per TFP). Dose today if projected low.
   if (tested.cya) {
     const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
     const cyaProjected  = Math.round(cya - cyaWeeklyLoss);
 
     if (cyaProjected >= cyaMin) {
       forecastItems.push(
-        `CYA: Stable — projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm). ` +
-        `Degradation ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}°F; retest monthly.`
+        `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}\u00b0F).`
       );
     } else {
       forecastItems.push(
-        `CYA: Projected ~${cyaProjected} ppm — may drop below minimum (${cyaMin} ppm). ` +
-        `Add stabilizer at next visit if confirmed low; low CYA accelerates FC burn-off.`
+        `CYA: Add stabilizer today to at least ${cyaMin} ppm (currently ${Math.round(cya)} ppm; ` +
+        `will lose ~${cyaWeeklyLoss} ppm this week). Low CYA accelerates FC burn-off.`
       );
     }
   }
 
   // ── CH ──────────────────────────────────────────────────────────────────
-  // CH is essentially stable over 1 week (no significant gain or loss in 7 days).
+  // CH is stable over 7 days — no dose needed for the forecast window.
   if (tested.ch) {
-    forecastItems.push(
-      `CH: Stable — no meaningful change expected in 7 days. Projected to hold near ${Math.round(ch)} ppm (target: ${chMin}–${chMax} ppm).`
-    );
+    if (ch >= chMin && ch <= chMax) {
+      forecastItems.push(
+        `CH: Stable \u2014 no calcium dose needed today. Projected to hold near ${Math.round(ch)} ppm at next visit (target: ${chMin}\u2013${chMax} ppm).`
+      );
+    } else {
+      forecastItems.push(
+        chAction
+          ? `CH: ${chAction.replace(/^CH:\s*/, '')} \u2014 no further change expected after today's dose.`
+          : `CH: At ${Math.round(ch)} ppm against target ${chMin}\u2013${chMax} ppm \u2014 review at next visit.`
+      );
+    }
   }
 
   // ── Salt ────────────────────────────────────────────────────────────────
-  // Salt is stable week-to-week; only significant rainfall or water replacement alters it.
+  // Salt is stable week-to-week; only rainfall or water replacement changes it.
   if (tested.salt) {
     if (salt >= saltMin && salt <= saltMax) {
       forecastItems.push(
-        `Salt: On target — no change expected. Projected to hold near ${Math.round(salt)} ppm (target: ${saltMin}–${saltMax} ppm).`
+        `Salt: Stable \u2014 no addition today. Projected to hold near ${Math.round(salt)} ppm at next visit (target: ${saltMin}\u2013${saltMax} ppm).`
       );
     } else {
       forecastItems.push(
         saltAction
-          ? `Salt: ${saltAction.replace(/^Salt:\s*/, '')} — retest at next visit after correction.`
-          : `Salt: At ${Math.round(salt)} ppm against target ${saltMin}–${saltMax} ppm — monitor and adjust at next visit.`
+          ? `Salt: ${saltAction.replace(/^Salt:\s*/, '')} \u2014 retest at next visit after today's correction.`
+          : `Salt: At ${Math.round(salt)} ppm against target ${saltMin}\u2013${saltMax} ppm \u2014 adjust today and retest at next visit.`
       );
     }
   }
@@ -675,8 +699,8 @@ function updateReport() {
   if (tested.bor) {
     forecastItems.push(
       borAction
-        ? `Borate: ${borAction.replace(/^Borate:\s*/, '')} — retest at next visit.`
-        : `Borate: Stable — projected to hold near target (${Math.round(n(refs.borTo))} ppm). Borate also helps buffer pH drift this week.`
+        ? `Borate: ${borAction.replace(/^Borate:\s*/, '')} \u2014 retest at next visit.`
+        : `Borate: Stable \u2014 projected near target (${Math.round(n(refs.borTo))} ppm). Borate will help buffer pH drift through the week.`
     );
   }
 
@@ -696,7 +720,8 @@ function setReportMode(enabled) {
 
 async function loadWeather() {
   try {
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.2148&longitude=-97.1331&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph';
+    // Include daily uv_index_max for 7-day UV average used in FC forecast
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=33.2148&longitude=-97.1331&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago';
     const response = await fetch(url);
     if (!response.ok) throw new Error('Weather fetch failed');
     const payload = await response.json();
@@ -711,6 +736,12 @@ async function loadWeather() {
     else if (code >= 95) label = 'Thunderstorm';
 
     refs.weatherConditions.value = `${label}, ${Math.round(current.temperature_2m)}F (feels ${Math.round(current.apparent_temperature)}F), wind ${Math.round(current.wind_speed_10m)} mph`;
+
+    // Compute 7-day average UV index (used in FC demand forecast)
+    const uvValues = payload.daily?.uv_index_max || [];
+    if (uvValues.length) {
+      weeklyAvgUV = Math.round(uvValues.reduce((a, b) => a + b, 0) / uvValues.length * 10) / 10;
+    }
   } catch (err) {
     refs.weatherConditions.value = 'Unable to load live weather automatically';
   }

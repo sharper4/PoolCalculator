@@ -272,18 +272,20 @@
 
           <section class="report-block">
             <h3>WATER CONDITION SUMMARY</h3>
-            <div class="check-row condition-summary-row">
-              <label><input id="status-clear" type="checkbox" /> Crystal Clear &amp; Balanced</label>
-              <label><input id="status-minor" type="checkbox" checked /> Minor Adjustments Needed</label>
-              <label><input id="status-immediate" type="checkbox" /> Immediate Attention Required</label>
-            </div>
-            <div class="check-row condition-issues-row">
-              <label><input id="issue-low-chlorine" type="checkbox" /> Low Chlorine</label>
-              <label><input id="issue-high-ph" type="checkbox" /> High pH</label>
-              <label><input id="issue-high-cya" type="checkbox" /> High Stabilizer</label>
-              <label><input id="issue-algae" type="checkbox" /> Algae Risk</label>
-              <label><input id="issue-phosphates" type="checkbox" /> Phosphates Present</label>
-              <label>Other: <input id="issue-other" class="inline-text" type="text" /></label>
+            <div class="condition-two-col">
+              <div class="condition-status-col check-row">
+                <label><input id="status-clear" type="checkbox" /> Crystal Clear &amp; Balanced</label>
+                <label><input id="status-immediate" type="checkbox" /> Immediate Attention Required</label>
+                <label><input id="status-minor" type="checkbox" checked /> Minor Adjustments Needed</label>
+              </div>
+              <div class="condition-issues-col check-row">
+                <label><input id="issue-low-chlorine" type="checkbox" /> Low Chlorine</label>
+                <label><input id="issue-high-ph" type="checkbox" /> High pH</label>
+                <label><input id="issue-high-cya" type="checkbox" /> High Stabilizer</label>
+                <label><input id="issue-algae" type="checkbox" /> Algae Risk</label>
+                <label><input id="issue-phosphates" type="checkbox" /> Phosphates Present</label>
+                <label>Other: <input id="issue-other" class="inline-text" type="text" /></label>
+              </div>
             </div>
           </section>
 

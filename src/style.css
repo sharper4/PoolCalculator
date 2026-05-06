@@ -464,25 +464,25 @@ select:focus {
   margin: 0.25rem 0;
 }
 
-.condition-summary-row,
-.condition-issues-row {
-  list-style: none;
-  padding-left: 0;
+.condition-two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 0.15rem 1rem;
 }
 
-.condition-summary-row {
+.condition-status-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.condition-issues-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.18rem 0.7rem;
 }
 
-.condition-issues-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.18rem 0.7rem;
-}
-
-.condition-issues-row label:last-child {
+.condition-issues-col label:last-child {
   grid-column: 1 / -1;
 }
 
@@ -725,24 +725,20 @@ body.report-mode {
     margin: 0.08rem 0;
   }
 
-  .condition-summary-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .condition-two-col {
+    gap: 0.1rem 0.6rem;
+  }
+
+  .condition-issues-col {
     gap: 0.12rem 0.35rem;
   }
 
-  .condition-issues-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.12rem 0.35rem;
-  }
-
-  .condition-summary-row label,
-  .condition-issues-row label {
+  .condition-status-col label,
+  .condition-issues-col label {
     white-space: nowrap;
   }
 
-  .condition-issues-row label:last-child {
+  .condition-issues-col label:last-child {
     white-space: normal;
     grid-column: 1 / -1;
   }
@@ -859,27 +855,25 @@ body.report-mode {
     grid-template-columns: 1fr;
   }
 
-  .condition-summary-row,
-  .condition-issues-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
+  .condition-two-col {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    gap: 0.25rem 0.5rem;
   }
 
-  .condition-summary-row label,
-  .condition-issues-row label {
+  .condition-status-col label,
+  .condition-issues-col label {
     white-space: normal;
     align-items: flex-start;
   }
 
-  .condition-issues-row label:last-child {
+  .condition-issues-col label:last-child {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.4rem;
     align-items: center;
   }
 
-  .condition-issues-row .inline-text {
+  .condition-issues-col .inline-text {
     width: 100%;
   }
 
@@ -908,8 +902,8 @@ body.report-mode {
 }
 
 @media print {
-  .condition-summary-row input[type='checkbox'],
-  .condition-issues-row input[type='checkbox'],
+  .condition-status-col input[type='checkbox'],
+  .condition-issues-col input[type='checkbox'],
   .next-steps-grid input[type='checkbox'] {
     width: 0.78rem;
     height: 0.78rem;
