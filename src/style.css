@@ -464,22 +464,10 @@ select:focus {
   margin: 0.25rem 0;
 }
 
-.condition-two-col {
+.condition-three-col {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
-  gap: 0.15rem 1rem;
-}
-
-.condition-status-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
-}
-
-.condition-issues-col {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.18rem 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
 }
 
 .condition-issues-col label:last-child {
@@ -728,22 +716,12 @@ body.report-mode {
     margin: 0.08rem 0;
   }
 
-  .condition-two-col {
+  .condition-three-col {
     gap: 0.1rem 0.6rem;
   }
 
-  .condition-issues-col {
-    gap: 0.12rem 0.35rem;
-  }
-
-  .condition-status-col label,
-  .condition-issues-col label {
+  .condition-three-col label {
     white-space: nowrap;
-  }
-
-  .condition-issues-col label:last-child {
-    white-space: normal;
-    grid-column: 1 / -1;
   }
 
   .check-row label,
@@ -858,22 +836,14 @@ body.report-mode {
     grid-template-columns: 1fr;
   }
 
-  .condition-two-col {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  .condition-three-col {
+    grid-template-columns: 1fr;
     gap: 0.25rem 0.5rem;
   }
 
-  .condition-status-col label,
-  .condition-issues-col label {
+  .condition-three-col label {
     white-space: normal;
     align-items: flex-start;
-  }
-
-  .condition-issues-col label:last-child {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.4rem;
-    align-items: center;
   }
 
   .condition-issues-col .inline-text {
@@ -905,8 +875,7 @@ body.report-mode {
 }
 
 @media print {
-  .condition-status-col input[type='checkbox'],
-  .condition-issues-col input[type='checkbox'],
+  .condition-three-col input[type='checkbox'],
   .next-steps-grid input[type='checkbox'] {
     width: 0.78rem;
     height: 0.78rem;
