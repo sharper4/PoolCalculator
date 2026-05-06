@@ -744,9 +744,9 @@ function updateReport() {
       const treatmentRounded = Math.round(treatmentOz);
       let doseNote = '';
       if (treatmentRounded > 0 && forecastRounded < treatmentRounded) {
-        doseNote = ` This is LESS than today's treatment plan because natural +${phRise.toFixed(2)}/week rise will help bring it to target.`;
+        doseNote = ` This is LESS than today's treatment plan because the forecast targets the TOP of the pH range (${phMax}) — less acid today prevents an early-week dip.`;
       } else if (treatmentRounded > 0 && forecastRounded > treatmentRounded) {
-        doseNote = ` This is MORE than today's treatment plan because the forecast targets the high end of the range, accounting for the upward drift.`;
+        doseNote = ` This is MORE than today's treatment plan because the forecast targets the top end of the range, accounting for the upward drift.`;
       }
       forecastItems.push(
         `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(taForPhModel)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
