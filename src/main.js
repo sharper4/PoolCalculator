@@ -11,6 +11,7 @@ const refs = {
   tcNow: document.getElementById('tc-now'),
   phosphatesNow: document.getElementById('phosphates-now'),
   weatherConditions: document.getElementById('weather-conditions'),
+  serviceDetailsSection: document.getElementById('service-details-section'),
 
   fcFrom: document.getElementById('fc-from'),
   fcTo: document.getElementById('fc-to'),
@@ -87,8 +88,11 @@ const refs = {
 
   rCustomer: document.getElementById('r-customer'),
   rAddress: document.getElementById('r-address'),
+  rRowCustomer: document.getElementById('r-row-customer'),
+  rRowAddress: document.getElementById('r-row-address'),
   rDate: document.getElementById('r-date'),
   rTechnician: document.getElementById('r-technician'),
+  rRowTechnician: document.getElementById('r-row-technician'),
   rWeather: document.getElementById('r-weather'),
   rPoolSize: document.getElementById('r-pool-size'),
   rPoolTemp: document.getElementById('r-pool-temp'),
@@ -115,6 +119,8 @@ const refs = {
   sSalt: document.getElementById('s-salt'),
   rTreatmentList: document.getElementById('r-treatment-list'),
   rForecastList: document.getElementById('r-forecast-list'),
+  reportTechInsights: document.getElementById('report-tech-insights'),
+  reportEliteDifference: document.getElementById('report-elite-difference'),
   statusClear: document.getElementById('status-clear'),
   statusMinor: document.getElementById('status-minor'),
   statusImmediate: document.getElementById('status-immediate')
@@ -163,6 +169,7 @@ const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1,
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
+let customerSectionsVisible = false;
 const manualTargetOverride = {
   fc: false,
   ta: false,
@@ -524,6 +531,31 @@ function parseDisplayedOz(text) {
   return Number.NaN;
 }
 
+function buildFcTreatmentAction(fcNow, fcTarget, gallons, bleachPercent) {
+  const doseNeeded = Math.max(0, Math.round((fcTarget - fcNow) * 10) / 10);
+  if (doseNeeded <= 0 || gallons <= 0) {
+    return 'FC: No FC increase required.';
+  }
+
+  const totalBleachOz = bleachOzForDose(doseNeeded, gallons, bleachPercent);
+  let line = `FC: Add ${fmtOz(totalBleachOz)} of ${bleachPercent}% liquid bleach to reach target ${fcTarget.toFixed(1)} ppm today.`;
+
+  const ppmPerPuck = ppmPerTrichlorPuck(gallons);
+  const maxPucks = doseNeeded >= ppmPerPuck * 2 ? 2 : doseNeeded >= ppmPerPuck ? 1 : 0;
+  if (maxPucks > 0) {
+    const puckPpm = maxPucks * ppmPerPuck;
+    const remainPpm = Math.max(0, doseNeeded - puckPpm);
+    if (remainPpm > 0.1) {
+      const remainBleach = bleachOzForDose(remainPpm, gallons, bleachPercent);
+      line += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} + ${fmtOz(remainBleach)} of ${bleachPercent}% bleach (pucks contribute ~${puckPpm.toFixed(1)} ppm).`;
+    } else {
+      line += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} (~${puckPpm.toFixed(1)} ppm).`;
+    }
+  }
+
+  return line;
+}
+
 function updateReport() {
   const today = new Date();
   const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -552,6 +584,7 @@ function updateReport() {
     salt: refs.saltFrom.value.trim() !== '',
     bor: refs.borFrom.value.trim() !== ''
   };
+  const gallons = getGallons();
 
   refs.rFc.textContent = tested.fc ? `${round2(fc)} ppm` : 'Not tested';
   refs.rPh.textContent = tested.ph ? `${round2(ph)} ppm` : 'Not tested';
@@ -614,7 +647,10 @@ function updateReport() {
   const borPlan = cleanResult(refs.borResult.textContent);
 
   const saltPlan = cleanResult(refs.saltResult.textContent);
-  const fcAction = tested.fc && hasAction(fcPlan, 'No FC') ? `FC: ${fcPlan}` : '';
+  const fcTarget = n(refs.fcTo);
+  const fcAction = tested.fc
+    ? buildFcTreatmentAction(fc, fcTarget, gallons, Math.max(0.1, n(refs.fcPercent, 6)))
+    : '';
   const phAction = tested.ph && hasAction(phPlan, 'No pH') ? `pH: ${phPlan}` : '';
   const taAction = tested.ta && hasAction(taPlan, 'No TA') ? `TA: ${taPlan}` : '';
   const cyaAction = tested.cya && hasAction(cyaPlan, 'No CYA') ? `CYA: ${cyaPlan}` : '';
@@ -636,7 +672,6 @@ function updateReport() {
   //   pH rise: Orenda Tech (CO2 off-gassing / Henry's Law)
   const forecastItems = [];
   const tempF    = weeklyAvgTemp; // 7-day average for FC demand projection
-  const gallons  = getGallons();
   const blPct    = Math.max(0.1, n(refs.fcPercent, 6));
   const aeration = refs.phAeration ? refs.phAeration.value : 'low';
 
@@ -811,6 +846,15 @@ function setReportMode(enabled) {
   document.body.classList.toggle('report-mode', enabled);
   refs.reportView.hidden = !enabled;
   if (enabled) updateReport();
+}
+
+function applyCustomerSectionsVisibility() {
+  if (refs.serviceDetailsSection) refs.serviceDetailsSection.hidden = !customerSectionsVisible;
+  if (refs.rRowCustomer) refs.rRowCustomer.hidden = !customerSectionsVisible;
+  if (refs.rRowAddress) refs.rRowAddress.hidden = !customerSectionsVisible;
+  if (refs.rRowTechnician) refs.rRowTechnician.hidden = !customerSectionsVisible;
+  if (refs.reportTechInsights) refs.reportTechInsights.hidden = !customerSectionsVisible;
+  if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = !customerSectionsVisible;
 }
 
 async function loadWeather() {
@@ -1389,12 +1433,12 @@ function init() {
   refs.effPop.value = '1';
 
   refs.openReport.addEventListener('click', () => {
-    setReportMode(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    customerSectionsVisible = !customerSectionsVisible;
+    applyCustomerSectionsVisibility();
+    updateReport();
   });
 
   refs.backToApp.addEventListener('click', () => {
-    setReportMode(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
@@ -1451,6 +1495,7 @@ function init() {
   });
 
   calcUnits();
+  applyCustomerSectionsVisibility();
   calcAll();
   loadWeather().then(() => {
     updateReport();

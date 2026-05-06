@@ -106,9 +106,24 @@ body {
 }
 
 .hero-copy {
-  margin: 0.8rem 0 0;
+  margin: 0;
   max-width: 70ch;
   color: var(--muted);
+}
+
+.hero-detail-row {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  align-items: end;
+  gap: 0.9rem;
+}
+
+.hero-weather {
+  justify-self: end;
+  width: 100%;
+  max-width: 420px;
+  font-size: 0.82rem;
 }
 
 .hero-actions {
@@ -426,6 +441,7 @@ select:focus {
   font-family: "Space Mono", monospace;
   font-size: 0.72rem;
   text-align: right;
+  white-space: nowrap;
 }
 
 .report-note-muted {
@@ -860,6 +876,15 @@ body.report-mode {
 
   .brand-logo {
     width: min(80vw, 320px);
+  }
+
+  .hero-detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-weather {
+    justify-self: stretch;
+    max-width: none;
   }
 
   .check-row input[type='checkbox'],

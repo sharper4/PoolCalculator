@@ -24,10 +24,15 @@
             </div>
           </div>
         </div>
-        <p class="hero-copy">
-          Professional water chemistry tools for clean pools and elite service. This calculator includes
-          complete chemistry balancing, CSI, goal ranges, volume estimation, and chemical-effects math.
-        </p>
+        <div class="hero-detail-row">
+          <p class="hero-copy">
+            Professional water chemistry tools for clean pools and elite service. This calculator includes
+            complete chemistry balancing, CSI, goal ranges, volume estimation, and chemical-effects math.
+          </p>
+          <label class="hero-weather">Current weather conditions (Denton County)
+            <input id="weather-conditions" type="text" value="Loading current weather..." />
+          </label>
+        </div>
       </header>
 
       <section class="panel controls reveal stagger-1">
@@ -57,12 +62,9 @@
         </div>
       </section>
 
-      <section class="panel reveal stagger-1">
-        <div class="section-head service-head">
+      <section id="service-details-section" class="panel reveal stagger-1" hidden>
+        <div class="section-head">
           <h2>Service Details</h2>
-          <label class="service-weather">Current weather conditions (Denton County)
-            <input id="weather-conditions" type="text" value="Loading current weather..." />
-          </label>
         </div>
         <div class="grid three">
           <label>Customer
@@ -258,7 +260,7 @@
         </p>
       </footer>
 
-      <section id="report-view" class="report-view" hidden>
+      <section id="report-view" class="report-view">
         <div class="report-toolbar">
           <button id="back-to-app" type="button" class="action-btn subtle">Back to Calculator</button>
           <button id="print-report" type="button" class="action-btn">Print Report</button>
@@ -271,10 +273,10 @@
           </header>
 
           <section class="report-meta">
-            <p><strong>Customer:</strong> <span id="r-customer"></span></p>
-            <p><strong>Address:</strong> <span id="r-address"></span></p>
+            <p id="r-row-customer"><strong>Customer:</strong> <span id="r-customer"></span></p>
+            <p id="r-row-address"><strong>Address:</strong> <span id="r-address"></span></p>
             <p><strong>Date:</strong> <span id="r-date"></span></p>
-            <p><strong>Technician:</strong> <span id="r-technician"></span></p>
+            <p id="r-row-technician"><strong>Technician:</strong> <span id="r-technician"></span></p>
             <p><strong>Current weather conditions:</strong> <span id="r-weather"></span></p>
             <p><strong>Pool size:</strong> <span id="r-pool-size"></span></p>
             <p><strong>Pool temperature:</strong> <span id="r-pool-temp"></span></p>
@@ -315,27 +317,27 @@
             <div>
               <div class="report-title-row">
                 <h3>ELITE TREATMENT PLAN</h3>
-                <p class="report-note-inline">to perfectly balance your water today</p>
+                <p class="report-note-inline">to <u>perfectly</u> balance your water to the target today</p>
               </div>
               <ul id="r-treatment-list" class="check-list chemical-checklist"></ul>
               <p class="report-note-muted">...only items checked were completed in today's action plan</p>
             </div>
             <div>
               <div class="report-title-row">
-                <h3>ELITE POOL FORECAST PLAN</h3>
-                <p class="report-note-inline">to maintain water balance for 1 week</p>
+                <h3>ELITE FORECAST PLAN</h3>
+                <p class="report-note-inline">maintain water balance for 1 week in target range</p>
               </div>
               <ul id="r-forecast-list" class="check-list chemical-checklist"></ul>
               <p class="report-note-muted">...only items checked were completed in today's action plan</p>
             </div>
           </section>
 
-          <section class="report-block">
+          <section id="report-tech-insights" class="report-block">
             <h3>TECHNICIAN INSIGHTS</h3>
             <textarea id="r-insights" rows="2">Water chemistry adjusted based on maintaining target levels for one week. Continue circulation and retest as scheduled.</textarea>
           </section>
 
-          <section class="report-block">
+          <section id="report-elite-difference" class="report-block">
             <h3>THE ELITE DIFFERENCE</h3>
             <p>We do not just clean pools, we protect your investment.</p>
             <ul class="check-list static static-grid">
