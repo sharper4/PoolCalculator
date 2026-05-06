@@ -90,6 +90,7 @@ const refs = {
   rDate: document.getElementById('r-date'),
   rTechnician: document.getElementById('r-technician'),
   rWeather: document.getElementById('r-weather'),
+  rPoolSize: document.getElementById('r-pool-size'),
   rFc: document.getElementById('r-fc'),
   rPh: document.getElementById('r-ph'),
   rTa: document.getElementById('r-ta'),
@@ -531,6 +532,7 @@ function updateReport() {
   refs.rDate.textContent = dateText;
   refs.rTechnician.textContent = refs.technicianName.value || 'Scott Harper';
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
+  refs.rPoolSize.textContent = `${Math.round(n(refs.size))} ${refs.sizeUnit.textContent}`;
 
   const fc = n(refs.fcFrom);
   const ph = n(refs.phFrom);
