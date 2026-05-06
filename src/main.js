@@ -675,7 +675,7 @@ function updateReport() {
   const forecastItems = [];
   const tempF    = weeklyAvgTemp; // 7-day average for FC demand projection
   const blPct    = Math.max(0.1, n(refs.fcPercent, 6));
-  const aeration = refs.phAeration ? refs.phAeration.value : 'low';
+  const aeration = refs.phAeration ? refs.phAeration.value : 'medium';
 
   // ── FC ──────────────────────────────────────────────────────────────────
   if (tested.fc) {
