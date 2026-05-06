@@ -110,15 +110,8 @@ const refs = {
   sCya: document.getElementById('s-cya'),
   sPhos: document.getElementById('s-phos'),
   sSalt: document.getElementById('s-salt'),
-  rPlanFc: document.getElementById('r-plan-fc'),
-  rPlanFcRow: document.getElementById('r-plan-fc-row'),
-  rPlanBalance: document.getElementById('r-plan-balance'),
-  rPlanBalanceRow: document.getElementById('r-plan-balance-row'),
-  rPlanStructure: document.getElementById('r-plan-structure'),
-  rPlanStructureRow: document.getElementById('r-plan-structure-row'),
-  rPlanPrevent: document.getElementById('r-plan-prevent'),
-  rPlanPreventRow: document.getElementById('r-plan-prevent-row'),
-  rChemList: document.getElementById('r-chem-list'),
+  rTreatmentList: document.getElementById('r-treatment-list'),
+  rForecastList: document.getElementById('r-forecast-list'),
   issueLowChlorine: document.getElementById('issue-low-chlorine'),
   statusClear: document.getElementById('status-clear'),
   statusMinor: document.getElementById('status-minor'),
@@ -335,15 +328,16 @@ function setPlanLine(rowEl, valueEl, text) {
   valueEl.textContent = visible ? text : '';
 }
 
-function setChemList(items) {
+function setChecklist(listEl, items) {
+  if (!listEl) return;
   const checkedMap = new Map();
-  refs.rChemList.querySelectorAll('li').forEach((li) => {
+  listEl.querySelectorAll('li').forEach((li) => {
     const labelText = li.querySelector('span')?.textContent?.trim();
     const checked = li.querySelector('input[type="checkbox"]')?.checked;
     if (labelText) checkedMap.set(labelText, Boolean(checked));
   });
 
-  refs.rChemList.innerHTML = '';
+  listEl.innerHTML = '';
   items.forEach((item) => {
     const li = document.createElement('li');
     const label = document.createElement('label');
@@ -354,13 +348,15 @@ function setChemList(items) {
     text.textContent = item;
     label.append(box, text);
     li.appendChild(label);
-    refs.rChemList.appendChild(li);
+    listEl.appendChild(li);
   });
 }
 
 function clearChemicalChecks() {
-  refs.rChemList.querySelectorAll('input[type="checkbox"]').forEach((box) => {
-    box.checked = false;
+  [refs.rTreatmentList, refs.rForecastList].forEach((listEl) => {
+    listEl?.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+      box.checked = false;
+    });
   });
 }
 
@@ -496,36 +492,87 @@ function updateReport() {
   const cyaPlan = cleanResult(refs.cyaResult.textContent);
   const borPlan = cleanResult(refs.borResult.textContent);
 
-  const fcAction = hasAction(fcPlan, 'No FC') ? fcPlan : '';
-  const phAction = hasAction(phPlan, 'No pH') ? phPlan : '';
-  const taAction = hasAction(taPlan, 'No TA') ? taPlan : '';
-  const chAction = hasAction(chPlan, 'No CH') ? chPlan : '';
-  const cyaAction = hasAction(cyaPlan, 'No CYA') ? cyaPlan : '';
-  const borAction = hasAction(borPlan, 'No borate') ? borPlan : '';
+  const saltPlan = cleanResult(refs.saltResult.textContent);
+  const tested = {
+    fc: refs.fcFrom.value.trim() !== '',
+    ph: refs.phFrom.value.trim() !== '',
+    ta: refs.taFrom.value.trim() !== '',
+    ch: refs.chFrom.value.trim() !== '',
+    cya: refs.cyaFrom.value.trim() !== '',
+    salt: refs.saltFrom.value.trim() !== '',
+    bor: refs.borFrom.value.trim() !== ''
+  };
 
-  const balanceAction = [phAction, taAction].filter(Boolean).join(' ');
-  const structureAction = [cyaAction, chAction].filter(Boolean).join(' ');
+  const fcAction = tested.fc && hasAction(fcPlan, 'No FC') ? `FC: ${fcPlan}` : '';
+  const phAction = tested.ph && hasAction(phPlan, 'No pH') ? `pH: ${phPlan}` : '';
+  const taAction = tested.ta && hasAction(taPlan, 'No TA') ? `TA: ${taPlan}` : '';
+  const cyaAction = tested.cya && hasAction(cyaPlan, 'No CYA') ? `CYA: ${cyaPlan}` : '';
+  const chAction = tested.ch && hasAction(chPlan, 'No CH') ? `CH: ${chPlan}` : '';
+  const borAction = tested.bor && hasAction(borPlan, 'No borate') ? `Borate: ${borPlan}` : '';
+  const saltAction = tested.salt && !saltPlan.startsWith('No salt') ? `Salt: ${saltPlan}` : '';
 
-  setPlanLine(refs.rPlanFcRow, refs.rPlanFc, fcAction);
-  setPlanLine(refs.rPlanBalanceRow, refs.rPlanBalance, balanceAction);
-  setPlanLine(refs.rPlanStructureRow, refs.rPlanStructure, structureAction);
-  setPlanLine(refs.rPlanPreventRow, refs.rPlanPrevent, borAction);
-
-  const applied = [];
-  if (!fcPlan.startsWith('No FC')) applied.push(`FC: ${fcPlan}`);
-  if (!phPlan.startsWith('No pH')) applied.push(`pH: ${phPlan}`);
-  if (!taPlan.startsWith('No TA')) applied.push(`TA: ${taPlan}`);
-  if (!chPlan.startsWith('No CH')) applied.push(`CH: ${chPlan}`);
-  if (!cyaPlan.startsWith('No CYA')) applied.push(`CYA: ${cyaPlan}`);
-  if (!cleanResult(refs.saltResult.textContent).startsWith('No salt')) {
-    applied.push(`Salt: ${cleanResult(refs.saltResult.textContent)}`);
+  const treatmentItems = [fcAction, phAction, taAction, cyaAction, chAction, borAction, saltAction].filter(Boolean);
+  if (!treatmentItems.length) {
+    treatmentItems.push('No immediate chemical balancing action required today.');
   }
-  if (!borPlan.startsWith('No borate')) applied.push(`Borate: ${borPlan}`);
 
-  if (!applied.length) {
-    applied.push('No chemicals required today; values already within target range.');
+  const forecastItems = [];
+  if (tested.fc) {
+    forecastItems.push(
+      fcAction
+        ? `FC (1-week forecast): ${fcAction.replace(/^FC:\s*/, '')}`
+        : `FC (1-week forecast): Maintain ${fcMin}-${fcMax} ppm based on CYA and expected weather-driven demand; retest in 2-3 days.`
+    );
   }
-  setChemList(applied.slice(0, 5));
+  if (tested.ph) {
+    forecastItems.push(
+      phAction
+        ? `pH (1-week forecast): ${phAction.replace(/^pH:\s*/, '')}`
+        : `pH (1-week forecast): Keep pH in the ${phMin}-${phMax} range and watch for natural pH rise.`
+    );
+  }
+  if (tested.ta) {
+    forecastItems.push(
+      taAction
+        ? `TA (1-week forecast): ${taAction.replace(/^TA:\s*/, '')}`
+        : `TA (1-week forecast): Hold TA in the ${taMin}-${taMax} ppm band through stable circulation and pH control.`
+    );
+  }
+  if (tested.cya) {
+    forecastItems.push(
+      cyaAction
+        ? `CYA (1-week forecast): ${cyaAction.replace(/^CYA:\s*/, '')}`
+        : `CYA (1-week forecast): Keep stabilizer in the ${cyaMin}-${cyaMax} ppm band for chlorine efficiency.`
+    );
+  }
+  if (tested.ch) {
+    forecastItems.push(
+      chAction
+        ? `CH (1-week forecast): ${chAction.replace(/^CH:\s*/, '')}`
+        : `CH (1-week forecast): Keep calcium in the ${chMin}-${chMax} ppm range to protect surfaces.`
+    );
+  }
+  if (tested.salt) {
+    forecastItems.push(
+      saltAction
+        ? `Salt (1-week forecast): ${saltAction.replace(/^Salt:\s*/, '')}`
+        : `Salt (1-week forecast): Maintain ${saltMin}-${saltMax} ppm for steady chlorine generation.`
+    );
+  }
+  if (tested.bor) {
+    forecastItems.push(
+      borAction
+        ? `Borate (1-week forecast): ${borAction.replace(/^Borate:\s*/, '')}`
+        : `Borate (1-week forecast): Keep borate near the target (${Math.round(n(refs.borTo))} ppm) to help buffer pH drift.`
+    );
+  }
+
+  if (!forecastItems.length) {
+    forecastItems.push('No forecast items are shown because no Chemistry Targets "Now" values were entered.');
+  }
+
+  setChecklist(refs.rTreatmentList, treatmentItems);
+  setChecklist(refs.rForecastList, forecastItems);
 }
 
 function setReportMode(enabled) {
