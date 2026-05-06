@@ -640,11 +640,11 @@ function updateReport() {
 
   // ── pH ──────────────────────────────────────────────────────────────────
   // Strategy: lower pH today so natural CO2 off-gassing (driven by aeration) brings it
-  // to phMin by next visit. Aeration level selected by technician in pH card.
+  // to phMax by next visit. Aeration level selected by technician in pH card.
   if (tested.ph) {
     const phRise = phWeeklyRise(ta, aeration);
-    // Ideal starting point: phMin minus the week's natural rise
-    const phTargetStart  = Math.max(7.0, Math.round((phMin - phRise) * 100) / 100);
+    // Ideal starting point: phMax minus the week's natural rise
+    const phTargetStart  = Math.max(7.0, Math.round((phMax - phRise) * 100) / 100);
     const phEndProjected = Math.round((ph + phRise) * 100) / 100;
     const aerLabel       = aeration.charAt(0).toUpperCase() + aeration.slice(1);
 
@@ -669,7 +669,7 @@ function updateReport() {
       if (comparison < 0.95) {
         doseNote = ` This is LESS than today's treatment plan because natural +${phRise.toFixed(2)}/week rise will help bring it to target.`;
       } else if (comparison > 1.05) {
-        doseNote = ` This is MORE than today's treatment plan because the forecast targets the lower end of the range, accounting for the upward drift.`;
+        doseNote = ` This is MORE than today's treatment plan because the forecast targets the high end of the range, accounting for the upward drift.`;
       }
       forecastItems.push(
         `pH: Add ${fmtOz(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
@@ -678,7 +678,7 @@ function updateReport() {
   }
 
   // ── TA ──────────────────────────────────────────────────────────────────
-  // TA is a byproduct of acid additions for pH; no direct weekly TA dose needed.
+  // TA is influenced by acid additions for pH and can be corrected with baking soda when low.
   if (tested.ta) {
     const taWeeklyDrop = phAction ? 8 : 3;
     const taProjected  = Math.round(ta - taWeeklyDrop);
@@ -692,8 +692,10 @@ function updateReport() {
         `TA: Stable \u2014 no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}\u2013${taMax} ppm).`
       );
     } else {
+      const taBoostNeeded = taMin - taProjected;
+      const bakingSodaLbs = taBoostNeeded * gallons / 4259.15;
       forecastItems.push(
-        `TA: Projected ~${taProjected} ppm \u2014 near minimum (${taMin} ppm). Limit acid use this week; add sodium bicarbonate if TA drops below range.`
+        `TA: Projected ~${taProjected} ppm \u2014 below minimum (${taMin} ppm). Add ~${bakingSodaLbs.toFixed(2)} lb of baking soda (sodium bicarbonate) to maintain the minimum by next visit.`
       );
     }
   }
