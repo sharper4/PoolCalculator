@@ -26,6 +26,7 @@ const refs = {
   phCard: document.querySelector('.chem-card.ph'),
   phTargetRange: document.getElementById('ph-target-range'),
   maPop: document.getElementById('ma-pop'),
+  phAeration: document.getElementById('ph-aeration'),
 
   taFrom: document.getElementById('ta-from'),
   taTo: document.getElementById('ta-to'),
@@ -449,12 +450,46 @@ function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
 }
 
 // Weekly pH rise estimate from CO2 off-gassing (Henry's Law — Orenda Tech).
-// Higher TA = more bicarbonate = faster off-gassing and higher pH ceiling.
-function phWeeklyRise(taPpm) {
-  if (taPpm > 120) return 0.4;
-  if (taPpm >  90) return 0.3;
-  if (taPpm >  60) return 0.2;
-  return 0.1;
+// Aeration accelerates CO2 loss: SWG H2 bubbles, waterfalls, jets all force CO2 out.
+// TA level sets the ceiling; aeration level amplifies how fast we climb toward it.
+function phWeeklyRise(taPpm, aeration) {
+  // Base rise from TA (bicarbonate equilibrium drives CO2 off-gassing rate)
+  let base;
+  if (taPpm > 120) base = 0.4;
+  else if (taPpm > 90) base = 0.3;
+  else if (taPpm > 60) base = 0.2;
+  else base = 0.1;
+  // Aeration multiplier (Orenda: aeration / CO2 off-gassing are primary pH rise drivers)
+  const aerFactor =
+    aeration === 'high'   ? 1.6 :
+    aeration === 'medium' ? 1.2 :
+    aeration === 'low'    ? 0.85 :
+                            0.6;  // none
+  return Math.round(base * aerFactor * 100) / 100;
+}
+
+// ── Forecast chemical quantity helpers ──────────────────────────────────────
+// Returns the oz of liquid bleach needed to raise a pool by doseNeeded ppm.
+function bleachOzForDose(doseNeeded, gallons, percent) {
+  if (doseNeeded <= 0) return 0;
+  return doseNeeded * gallons / 482.202 * 6 / percent;
+}
+// FC ppm that one 3" trichlor puck (~8 oz, 90% Cl) contributes over 7 days
+// (slow-dissolve; effectively full puck dissolves in the week).
+// Using the same ozmul formula as calcFC: ozmul[trichlor] = 3565.44
+// ppm = oz * ozmul / gallons  (re-arranged from: oz = delta * gallons / ozmul)
+function ppmPerTrichlorPuck(gallons) {
+  return (8 * 3565.44) / gallons;
+}
+// Format oz as a friendly string (oz or gallons + oz for large amounts)
+function fmtOz(oz) {
+  if (oz <= 0) return '0 oz';
+  if (oz >= 128) {
+    const gals = Math.floor(oz / 128);
+    const rem  = Math.round(oz % 128);
+    return rem > 0 ? `${gals} gal ${rem} oz` : `${gals} gal`;
+  }
+  return `${Math.round(oz)} oz`;
 }
 
 function updateReport() {
@@ -571,7 +606,10 @@ function updateReport() {
   //   Temp+UV: Litra Pool Care + Open-Meteo daily uv_index_max
   //   pH rise: Orenda Tech (CO2 off-gassing / Henry's Law)
   const forecastItems = [];
-  const tempF = parseWeatherTemp();
+  const tempF    = parseWeatherTemp();
+  const gallons  = getGallons();
+  const blPct    = Math.max(0.1, n(refs.fcPercent, 6));
+  const aeration = refs.phAeration ? refs.phAeration.value : 'medium';
 
   // ── FC ──────────────────────────────────────────────────────────────────
   if (tested.fc) {
@@ -581,45 +619,60 @@ function updateReport() {
     const requiredNow = Math.round((fcMin + weeklyLoss) * 10) / 10;
     const doseNeeded  = Math.max(0, Math.round((requiredNow - fc) * 10) / 10);
     const fcEndOfWeek = Math.round((fc + doseNeeded - weeklyLoss) * 10) / 10;
-    const uvLabel = weeklyAvgUV >= 8 ? 'high' : weeklyAvgUV >= 5 ? 'moderate' : 'low';
+    const uvLabel     = weeklyAvgUV >= 8 ? 'high' : weeklyAvgUV >= 5 ? 'moderate' : 'low';
 
-    if (doseNeeded > 0) {
-      forecastItems.push(
-        `FC: Add ~${doseNeeded} ppm today. ` +
-        `Projected ~${Math.max(fcEndOfWeek, fcMin).toFixed(1)} ppm at next visit (target min: ${fcMin} ppm). ` +
-        `Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}\u00b0F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
-      );
+    if (doseNeeded > 0 && gallons > 0) {
+      // Option A: liquid bleach only
+      const totalBleachOz = bleachOzForDose(doseNeeded, gallons, blPct);
+
+      // Option B: use 1 or 2 trichlor pucks to cover part of the dose
+      const ppmPerPuck   = ppmPerTrichlorPuck(gallons);
+      const maxPucks     = doseNeeded >= ppmPerPuck * 2 ? 2 : doseNeeded >= ppmPerPuck ? 1 : 0;
+      const puckPpm      = maxPucks * ppmPerPuck;
+      const remainPpm    = Math.max(0, doseNeeded - puckPpm);
+      const remainBleach = bleachOzForDose(remainPpm, gallons, blPct);
+
+      let fcLine = `FC: Add ${fmtOz(totalBleachOz)} of ${blPct}% liquid bleach today.`;
+      if (maxPucks > 0 && remainPpm > 0.1) {
+        fcLine += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} + ${fmtOz(remainBleach)} of ${blPct}% bleach (pucks add ~${puckPpm.toFixed(1)} ppm over the week).`;
+      }
+      fcLine += ` → Projected ~${Math.max(fcEndOfWeek, fcMin).toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
+      forecastItems.push(fcLine);
     } else {
+      const fcEnd = Math.max(fcEndOfWeek, 0).toFixed(1);
       forecastItems.push(
-        `FC: No dose needed today. ` +
-        `Projected ~${Math.max(fcEndOfWeek, 0).toFixed(1)} ppm at next visit (target min: ${fcMin} ppm). ` +
-        `Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}\u00b0F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
+        `FC: No dose needed today. Projected ~${fcEnd} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
       );
     }
   }
 
   // ── pH ──────────────────────────────────────────────────────────────────
-  // Strategy: lower pH today so natural CO2 off-gassing brings it to phMin by next visit.
+  // Strategy: lower pH today so natural CO2 off-gassing (driven by aeration) brings it
+  // to phMin by next visit. Aeration level selected by technician in pH card.
   if (tested.ph) {
-    const phRise = phWeeklyRise(ta);
+    const phRise = phWeeklyRise(ta, aeration);
     // Ideal starting point: phMin minus the week's natural rise
-    const phTargetStart  = Math.max(7.0, Math.round((phMin - phRise) * 10) / 10);
-    const phEndProjected = Math.round((ph + phRise) * 10) / 10;
+    const phTargetStart  = Math.max(7.0, Math.round((phMin - phRise) * 100) / 100);
+    const phEndProjected = Math.round((ph + phRise) * 100) / 100;
+    const aerLabel       = aeration.charAt(0).toUpperCase() + aeration.slice(1);
 
     if (ph <= phTargetStart) {
       forecastItems.push(
-        `pH: No adjustment needed today. ` +
-        `Natural CO2 off-gassing (+${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm) will bring pH to ~${Math.min(ph + phRise, phMax).toFixed(1)} by next visit.`
+        `pH: No adjustment needed today. Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(ph + phRise, phMax).toFixed(1)} by next visit.`
       );
     } else if (phEndProjected <= phMax) {
       forecastItems.push(
-        `pH: No acid dose needed today — projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). ` +
-        `Natural rise of +${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm stays within range.`
+        `pH: No acid dose needed today — projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). Natural rise +${phRise.toFixed(2)}/week at TA ${Math.round(ta)} ppm (${aerLabel} aeration) stays in range.`
       );
     } else {
+      // Compute acid dose via existing calcPH logic (muriatic acid oz)
+      const maStrength = Number(n(refs.maPop));
+      const mamul = [2.0, 1.11111, 1.0, 0.909091, 2.16897, 1.08448];
+      const maMul = mamul[maStrength] || 1.0;
+      const maOz  = Math.abs(phTargetStart - ph) * gallons / 784.66 * maMul;
       forecastItems.push(
-        `pH: Dose to ${phTargetStart.toFixed(1)} today. ` +
-        `Natural off-gassing (+${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm) will bring it to ~${Math.min(phTargetStart + phRise, phMax).toFixed(1)} \u2014 bottom of range \u2014 by next visit.`
+        `pH: Add ${fmtOz(maOz)} of muriatic acid today → dose to ${phTargetStart.toFixed(2)}. ` +
+        `Natural off-gassing (+${phRise.toFixed(2)}/week, TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(1)} by next visit (bottom of range: ${phMin}).`
       );
     }
   }
