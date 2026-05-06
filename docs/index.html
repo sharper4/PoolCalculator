@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-CiXaOfNe.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DsjAz0y-.css">
+    <script type="module" crossorigin src="./assets/index-Z4emPayg.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-hNnJdSCz.css">
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -86,9 +86,20 @@
       <section class="panel reveal stagger-2">
         <div class="section-head">
           <h2>Chemistry Targets</h2>
-          <p id="status-top" class="status">Hover-like details are now shown below each result card.</p>
         </div>
         <div class="chem-grid">
+          <article class="chem-card cya">
+            <div class="chem-head">
+              <h3>CYA</h3>
+              <p id="cya-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="cya-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="cya-to" type="number" step="1" value="40" /></label>
+            </div>
+            <div id="cya-result" class="result-block"></div>
+          </article>
+
           <article class="chem-card fc">
             <div class="chem-head">
               <h3>FC</h3>
@@ -152,18 +163,6 @@
             </div>
             <label>Fill Water CH <input id="ch-fill" type="number" step="1" value="0" /></label>
             <div id="ch-result" class="result-block"></div>
-          </article>
-
-          <article class="chem-card cya">
-            <div class="chem-head">
-              <h3>CYA</h3>
-              <p id="cya-target-range" class="range-pill">Target: --</p>
-            </div>
-            <div class="pair">
-              <label>Now <input id="cya-from" type="number" step="1" value="" /></label>
-              <label>Target <input id="cya-to" type="number" step="1" value="40" /></label>
-            </div>
-            <div id="cya-result" class="result-block"></div>
           </article>
 
           <article class="chem-card salt">
@@ -315,20 +314,18 @@
             <div>
               <div class="report-title-row">
                 <h3>ELITE TREATMENT PLAN</h3>
-                <p class="report-note-inline">To reach your target, follow these steps:</p>
+                <p class="report-note-inline">to perfectly balance your water today</p>
               </div>
-              <p id="r-plan-fc-row"><strong>Sanitization (Chlorine):</strong> <span id="r-plan-fc"></span></p>
-              <p id="r-plan-balance-row"><strong>Water Balance (pH / Alkalinity):</strong> <span id="r-plan-balance"></span></p>
-              <p id="r-plan-structure-row"><strong>Stabilizer / Calcium Adjustments:</strong> <span id="r-plan-structure"></span></p>
-              <p id="r-plan-prevent-row"><strong>Preventative Treatments:</strong> <span id="r-plan-prevent"></span></p>
+              <ul id="r-treatment-list" class="check-list chemical-checklist"></ul>
+              <p class="report-note-muted">...only items checked were completed in today's action plan</p>
             </div>
             <div>
               <div class="report-title-row">
-                <h3>ACTIONS TAKEN TODAY</h3>
-                <p class="report-note-inline">to maintain target range for 1 week</p>
+                <h3>ELITE POOL FORECAST PLAN</h3>
+                <p class="report-note-inline">to maintain water balance for 1 week</p>
               </div>
-              <ul id="r-chem-list" class="check-list chemical-checklist"></ul>
-              <p class="report-note-muted">Only items with a check were completed in today's action plan.</p>
+              <ul id="r-forecast-list" class="check-list chemical-checklist"></ul>
+              <p class="report-note-muted">...only items checked were completed in today's action plan</p>
             </div>
           </section>
 
