@@ -410,6 +410,42 @@ function exactTarget(value, unit = '') {
   return `${value}${unit}`.trim();
 }
 
+// Parse current temperature (°F) from the weather conditions field.
+// Weather string format: "Clear, 85F (feels 83F), wind 5 mph"
+function parseWeatherTemp() {
+  const w = (refs.weatherConditions.value || '').replace(/°/g, '');
+  const m = w.match(/(\d+)F/);
+  return m ? parseInt(m[1], 10) : 80; // default 80°F if weather not loaded
+}
+
+// FC daily loss rate (ppm/day) based on temperature and CYA level.
+// Source: TFP (average pool loses 3-5 ppm/day in summer, much less in winter)
+// and Litra (temperature drives demand) — higher CYA = UV protection = less loss.
+function fcDailyLossRate(tempF, cyaPpm) {
+  let base;
+  if (tempF >= 90) base = 4.5;      // North Texas summer, peak UV
+  else if (tempF >= 80) base = 3.5; // warm, active season
+  else if (tempF >= 70) base = 2.5; // mild / shoulder season
+  else if (tempF >= 60) base = 1.5; // cool
+  else base = 0.75;                 // cold, minimal demand
+  // CYA binds FC into reserve, shielding it from UV (TFP).
+  const cyaFactor =
+    cyaPpm <= 0  ? 1.5  : // no stabilizer — very rapid UV burn-off
+    cyaPpm <= 30 ? 1.0  : // baseline outdoor pool
+    cyaPpm <= 60 ? 0.82 : // liquid chlorine pool, good protection
+                   0.65;  // SWG pool (CYA 60–90), best UV protection
+  return Math.round(base * cyaFactor * 10) / 10;
+}
+
+// Weekly pH rise estimate from CO2 off-gassing (Henry's Law — Orenda Tech).
+// Higher TA = more bicarbonate = faster off-gassing and higher pH ceiling.
+function phWeeklyRise(taPpm) {
+  if (taPpm > 120) return 0.4;
+  if (taPpm >  90) return 0.3;
+  if (taPpm >  60) return 0.2;
+  return 0.1;
+}
+
 function updateReport() {
   const today = new Date();
   const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -516,54 +552,131 @@ function updateReport() {
     treatmentItems.push('No immediate chemical balancing action required today.');
   }
 
+  // ── Elite Pool Forecast Plan ─────────────────────────────────────────────
+  // Goal: use minimal chemicals — target the BOTTOM of each range after 7 days.
+  // Research sources:
+  //   FC/CYA:  TroubleFreePool (3-5 ppm/day summer demand; CYA reduces UV loss)
+  //   Temp:    Litra Pool Care  (temperature drives daily chlorine demand)
+  //   pH rise: Orenda Tech      (CO2 off-gassing via Henry's Law; TA sets ceiling)
   const forecastItems = [];
+  const tempF = parseWeatherTemp();
+
+  // ── FC ──────────────────────────────────────────────────────────────────
   if (tested.fc) {
-    forecastItems.push(
-      fcAction
-        ? `FC (1-week forecast): ${fcAction.replace(/^FC:\s*/, '')}`
-        : `FC (1-week forecast): Maintain ${fcMin}-${fcMax} ppm based on CYA and expected weather-driven demand; retest in 2-3 days.`
-    );
+    const dailyLoss  = fcDailyLossRate(tempF, cya);
+    const weeklyLoss = Math.round(dailyLoss * 7 * 10) / 10;
+    // If action is taken today, project from the corrected target; otherwise from current.
+    const fcStart     = fcAction ? n(refs.fcTo) : fc;
+    const fcProjected = Math.round((fcStart - weeklyLoss) * 10) / 10;
+    const demandLabel = tempF >= 80 ? 'high' : tempF >= 65 ? 'moderate' : 'low';
+
+    if (fcProjected >= fcMin) {
+      forecastItems.push(
+        `FC: On track — projected ~${Math.max(fcProjected, 0).toFixed(1)} ppm at next visit ` +
+        `(min: ${fcMin} ppm). At ${Math.round(tempF)}°F with CYA ${Math.round(cya)} ppm, ` +
+        `expect ~${dailyLoss} ppm/day loss (${demandLabel} demand). No mid-week dose needed.`
+      );
+    } else {
+      const topup = Math.round((fcMin - fcProjected) * 10) / 10;
+      forecastItems.push(
+        `FC: Projected to drop to ~${Math.max(fcProjected, 0).toFixed(1)} ppm — below minimum ${fcMin} ppm. ` +
+        `Schedule a mid-week top-up of ~${topup} ppm. ` +
+        `(~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, CYA ${Math.round(cya)} ppm, ${demandLabel} demand.)`
+      );
+    }
   }
+
+  // ── pH ──────────────────────────────────────────────────────────────────
+  // pH naturally rises via CO2 off-gassing (Orenda). TA level sets the weekly drift rate.
   if (tested.ph) {
-    forecastItems.push(
-      phAction
-        ? `pH (1-week forecast): ${phAction.replace(/^pH:\s*/, '')}`
-        : `pH (1-week forecast): Keep pH in the ${phMin}-${phMax} range and watch for natural pH rise.`
-    );
+    const phRise      = phWeeklyRise(ta);
+    const phStart     = phAction ? n(refs.phTo) : ph;
+    const phProjected = Math.round((phStart + phRise) * 100) / 100;
+
+    if (phProjected <= phMax) {
+      forecastItems.push(
+        `pH: Stable — projected to rise to ~${phProjected.toFixed(1)} by next visit (max: ${phMax}). ` +
+        `CO2 off-gassing at TA ${Math.round(ta)} ppm drives ~${phRise.toFixed(1)} pH units/week. No mid-week adjustment needed.`
+      );
+    } else {
+      forecastItems.push(
+        `pH: Projected to exceed max — reaching ~${phProjected.toFixed(1)} (max: ${phMax}). ` +
+        `Dose pH to ${phMin} today so natural off-gassing (+${phRise.toFixed(1)}/week at TA ${Math.round(ta)} ppm) brings it back into range by next visit.`
+      );
+    }
   }
+
+  // ── TA ──────────────────────────────────────────────────────────────────
+  // TA changes slowly; acid doses (for pH control) reduce it ~5-10 ppm/week.
   if (tested.ta) {
-    forecastItems.push(
-      taAction
-        ? `TA (1-week forecast): ${taAction.replace(/^TA:\s*/, '')}`
-        : `TA (1-week forecast): Hold TA in the ${taMin}-${taMax} ppm band through stable circulation and pH control.`
-    );
+    const taWeeklyDrop = phAction ? 8 : 3;
+    const taProjected  = Math.round(ta - taWeeklyDrop);
+
+    if (ta > taMax) {
+      forecastItems.push(
+        `TA: High at ${Math.round(ta)} ppm. Will drift toward range as pH-control acid doses reduce it ~${taWeeklyDrop} ppm/week. No additional TA treatment needed.`
+      );
+    } else if (taProjected >= taMin) {
+      forecastItems.push(
+        `TA: Stable — projected ~${taProjected} ppm at next visit (target: ${taMin}–${taMax} ppm). Normal acid maintenance may reduce TA ~${taWeeklyDrop} ppm/week.`
+      );
+    } else {
+      forecastItems.push(
+        `TA: Projected ~${taProjected} ppm — near or below minimum (${taMin} ppm). ` +
+        `Add sodium bicarbonate if TA drops below range; avoid over-dosing acid this week.`
+      );
+    }
   }
+
+  // ── CYA ─────────────────────────────────────────────────────────────────
+  // CYA degrades ~5-10 ppm/month (TFP) — faster in heat. ~1-2 ppm/week.
   if (tested.cya) {
-    forecastItems.push(
-      cyaAction
-        ? `CYA (1-week forecast): ${cyaAction.replace(/^CYA:\s*/, '')}`
-        : `CYA (1-week forecast): Keep stabilizer in the ${cyaMin}-${cyaMax} ppm band for chlorine efficiency.`
-    );
+    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
+    const cyaProjected  = Math.round(cya - cyaWeeklyLoss);
+
+    if (cyaProjected >= cyaMin) {
+      forecastItems.push(
+        `CYA: Stable — projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm). ` +
+        `Degradation ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}°F; retest monthly.`
+      );
+    } else {
+      forecastItems.push(
+        `CYA: Projected ~${cyaProjected} ppm — may drop below minimum (${cyaMin} ppm). ` +
+        `Add stabilizer at next visit if confirmed low; low CYA accelerates FC burn-off.`
+      );
+    }
   }
+
+  // ── CH ──────────────────────────────────────────────────────────────────
+  // CH is essentially stable over 1 week (no significant gain or loss in 7 days).
   if (tested.ch) {
     forecastItems.push(
-      chAction
-        ? `CH (1-week forecast): ${chAction.replace(/^CH:\s*/, '')}`
-        : `CH (1-week forecast): Keep calcium in the ${chMin}-${chMax} ppm range to protect surfaces.`
+      `CH: Stable — no meaningful change expected in 7 days. Projected to hold near ${Math.round(ch)} ppm (target: ${chMin}–${chMax} ppm).`
     );
   }
+
+  // ── Salt ────────────────────────────────────────────────────────────────
+  // Salt is stable week-to-week; only significant rainfall or water replacement alters it.
   if (tested.salt) {
-    forecastItems.push(
-      saltAction
-        ? `Salt (1-week forecast): ${saltAction.replace(/^Salt:\s*/, '')}`
-        : `Salt (1-week forecast): Maintain ${saltMin}-${saltMax} ppm for steady chlorine generation.`
-    );
+    if (salt >= saltMin && salt <= saltMax) {
+      forecastItems.push(
+        `Salt: On target — no change expected. Projected to hold near ${Math.round(salt)} ppm (target: ${saltMin}–${saltMax} ppm).`
+      );
+    } else {
+      forecastItems.push(
+        saltAction
+          ? `Salt: ${saltAction.replace(/^Salt:\s*/, '')} — retest at next visit after correction.`
+          : `Salt: At ${Math.round(salt)} ppm against target ${saltMin}–${saltMax} ppm — monitor and adjust at next visit.`
+      );
+    }
   }
+
+  // ── Borate ──────────────────────────────────────────────────────────────
   if (tested.bor) {
     forecastItems.push(
       borAction
-        ? `Borate (1-week forecast): ${borAction.replace(/^Borate:\s*/, '')}`
-        : `Borate (1-week forecast): Keep borate near the target (${Math.round(n(refs.borTo))} ppm) to help buffer pH drift.`
+        ? `Borate: ${borAction.replace(/^Borate:\s*/, '')} — retest at next visit.`
+        : `Borate: Stable — projected to hold near target (${Math.round(n(refs.borTo))} ppm). Borate also helps buffer pH drift this week.`
     );
   }
 
