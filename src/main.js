@@ -113,14 +113,9 @@ const refs = {
   sSalt: document.getElementById('s-salt'),
   rTreatmentList: document.getElementById('r-treatment-list'),
   rForecastList: document.getElementById('r-forecast-list'),
-  issueLowChlorine: document.getElementById('issue-low-chlorine'),
   statusClear: document.getElementById('status-clear'),
   statusMinor: document.getElementById('status-minor'),
-  statusImmediate: document.getElementById('status-immediate'),
-  issueHighPh: document.getElementById('issue-high-ph'),
-  issueHighCya: document.getElementById('issue-high-cya'),
-  issueAlgae: document.getElementById('issue-algae'),
-  issuePhosphates: document.getElementById('issue-phosphates')
+  statusImmediate: document.getElementById('status-immediate')
 };
 
 const data = {
