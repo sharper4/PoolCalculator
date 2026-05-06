@@ -497,12 +497,15 @@ select:focus {
 
 .check-row input[type='checkbox'],
 .check-list input[type='checkbox'],
-.chemical-checklist input[type='checkbox'] {
+.chemical-checklist input[type='checkbox'],
+.check-list.chemical-checklist input[type='checkbox'] {
   width: 0.95rem;
   height: 0.95rem;
   min-height: 0;
+  min-width: 0.95rem;
   margin: 0;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .check-list {

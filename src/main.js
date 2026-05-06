@@ -667,13 +667,22 @@ function updateReport() {
         `pH: No acid dose needed today — projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). Natural rise +${phRise.toFixed(2)}/week at TA ${Math.round(ta)} ppm (${aerLabel} aeration) stays in range.`
       );
     } else {
-      // Compute acid dose via existing calcPH logic (muriatic acid oz)
+      // Compute acid dose using same formula as calcPH (muriatic acid oz)
       const maStrength = Number(n(refs.maPop));
       const mamul = [2.0, 1.11111, 1.0, 0.909091, 2.16897, 1.08448];
       const maMul = mamul[maStrength] || 1.0;
-      const maOz  = Math.abs(phTargetStart - ph) * gallons / 784.66 * maMul;
+      const forecastOz = Math.abs(phTargetStart - ph) * gallons / 240.15 * maMul;
+      // Also compute what treatment plan would dose (to phTo from phFrom)
+      const treatmentOz = ph > n(refs.phTo) ? Math.abs(n(refs.phTo) - ph) * gallons / 240.15 * maMul : 0;
+      const comparison = treatmentOz > 0 ? forecastOz / treatmentOz : 1;
+      let doseNote = '';
+      if (comparison < 0.95) {
+        doseNote = ` This is LESS than today's treatment plan because natural +${phRise.toFixed(2)}/week rise will help bring it to target.`;
+      } else if (comparison > 1.05) {
+        doseNote = ` This is MORE than today's treatment plan because the forecast targets the lower end of the range, accounting for the upward drift.`;
+      }
       forecastItems.push(
-        `pH: Add ${fmtOz(maOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}. This is LESS than the treatment plan because natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) will bring it to ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
+        `pH: Add ${fmtOz(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
       );
     }
   }
