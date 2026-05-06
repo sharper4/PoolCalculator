@@ -545,11 +545,6 @@ function updateReport() {
   setRangeState(refs.saltCard, salt, saltMin, saltMax);
   setRangeState(refs.borCard, n(refs.borFrom), borMin, borMax);
 
-  refs.issueLowChlorine.checked = fc < fcMin;
-  refs.issueHighPh.checked = ph > phMax;
-  refs.issueHighCya.checked = cya > cyaMax;
-  refs.issueAlgae.checked = fc < fcMin;
-  refs.issuePhosphates.checked = false;
 
   const outCount = [
     refs.sFc.textContent,
