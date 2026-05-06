@@ -807,7 +807,6 @@ body.report-mode {
     grid-template-columns: 1fr;
   }
 
-  .report-meta,
   .report-two-col {
     grid-template-columns: 1fr;
   }
