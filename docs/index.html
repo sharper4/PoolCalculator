@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-BQ4ogj8S.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BMjfem9e.css">
+    <script type="module" crossorigin src="./assets/index-BVHcXTHL.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-B8wycqXz.css">
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -49,7 +49,7 @@
           <label>
             Pool Size
             <div class="input-line">
-              <input id="size" type="number" min="0" step="1" value="10000" />
+              <input id="size" type="number" min="0" step="1" value="15000" />
               <span id="size-unit" class="unit-pill">gallons</span>
             </div>
           </label>
@@ -112,11 +112,13 @@
               <label>Target <input id="fc-to" type="number" step="0.1" value="4" /></label>
             </div>
             <label class="check-line"><input id="fc-auto-target" type="checkbox" checked /> Auto-set FC target from CYA</label>
-            <div class="mini-grid">
-              <label>Bleach % <input id="fc-percent" type="number" step="0.1" value="6" /></label>
+            <div class="mini-grid mini-grid-compact-two">
+              <label>Bleach % <input id="fc-percent" type="number" step="0.1" value="8.25" /></label>
               <label>Jug Size
                 <select id="fc-jug"></select>
               </label>
+            </div>
+            <div class="mini-grid">
               <label>Alt Chlorine
                 <select id="fc-pop"></select>
               </label>
@@ -184,6 +186,9 @@
               <label>Now <input id="salt-from" type="number" step="1" value="" /></label>
               <label>Target <input id="salt-to" type="number" step="1" value="3100" /></label>
             </div>
+            <div class="pair">
+              <label>SWG Runtime (hrs/day) <input id="swg-runtime" type="number" step="0.5" min="1" max="24" value="10" /></label>
+            </div>
             <p class="note">Note: leave this blank if this is not a salt water pool</p>
             <div id="salt-result" class="result-block"></div>
           </article>
@@ -246,8 +251,10 @@
         <article class="panel">
           <h2>Effects of Adding Chemicals</h2>
           <div class="grid three">
-            <label>Amount <input id="eff-oz" type="number" step="1" value="0" /></label>
-            <label>Unit <input id="eff-unit" type="text" value="oz" readonly /></label>
+            <label>Amount <input id="eff-oz" type="number" step="0.1" value="0" /></label>
+            <label>Unit
+              <select id="eff-unit"></select>
+            </label>
             <label>Chemical
               <select id="eff-pop"></select>
             </label>

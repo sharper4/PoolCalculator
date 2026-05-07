@@ -249,6 +249,11 @@ h3 {
   gap: 0.55rem;
 }
 
+.mini-grid-compact-two {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.45rem;
+}
+
 label {
   display: grid;
   gap: 0.3rem;

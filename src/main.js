@@ -49,6 +49,7 @@ const refs = {
 
   saltFrom: document.getElementById('salt-from'),
   saltTo: document.getElementById('salt-to'),
+  swgRuntime: document.getElementById('swg-runtime'),
   saltCard: document.querySelector('.chem-card.salt'),
   saltTargetRange: document.getElementById('salt-target-range'),
 
@@ -164,11 +165,13 @@ const data = {
     'calcium chloride dihydrate',
     'stabilizer',
     'liquid stabilizer',
-    'salt'
+    'salt',
+    '8.25% bleach'
   ]
 };
 
-const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2];
+const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0];
+const BAKING_SODA_TA_OZMUL = 4461.56;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
@@ -204,6 +207,87 @@ function setOptions(select, options) {
   });
 }
 
+function effectUnitOptions(system, chemicalUnit) {
+  if (system === 1) {
+    return chemicalUnit === 0
+      ? [['ml', 'ml'], ['l', 'liters']]
+      : [['g', 'grams'], ['kg', 'kilograms']];
+  }
+
+  return chemicalUnit === 0
+    ? [['oz', 'oz'], ['gal', 'gallons']]
+    : [['oz', 'oz'], ['lb', 'pounds']];
+}
+
+function fillEffectUnitOptions(options, selectedValue) {
+  refs.effUnit.innerHTML = '';
+  options.forEach(([value, label]) => {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    refs.effUnit.appendChild(opt);
+  });
+  refs.effUnit.value = options.some(([value]) => value === selectedValue) ? selectedValue : options[0][0];
+}
+
+function effectAmountToBaseOz(amount, unitValue, system, chemicalUnit) {
+  if (chemicalUnit === 0) {
+    if (unitValue === 'gal') return amount * (system === 2 ? 153.7216 : 128);
+    if (unitValue === 'l') return amount * 33.814;
+    if (unitValue === 'ml') return amount * 0.033814;
+    if (unitValue === 'oz') return system === 2 ? amount * 0.96076 : amount;
+    return amount;
+  }
+
+  if (unitValue === 'lb') return amount * 16;
+  if (unitValue === 'kg') return amount * 35.274;
+  if (unitValue === 'g') return amount * 0.035274;
+  return amount;
+}
+
+function baseOzToEffectAmount(oz, unitValue, system, chemicalUnit) {
+  if (chemicalUnit === 0) {
+    if (unitValue === 'gal') return oz / (system === 2 ? 153.7216 : 128);
+    if (unitValue === 'l') return oz / 33.814;
+    if (unitValue === 'ml') return oz / 0.033814;
+    if (unitValue === 'oz') return system === 2 ? oz / 0.96076 : oz;
+    return oz;
+  }
+
+  if (unitValue === 'lb') return oz / 16;
+  if (unitValue === 'kg') return oz / 35.274;
+  if (unitValue === 'g') return oz / 0.035274;
+  return oz;
+}
+
+function effectUnitKind(unitValue) {
+  return ['gal', 'l', 'lb', 'kg'].includes(unitValue) ? 'large' : 'small';
+}
+
+function syncEffectUnitControl(targetSystem, previousSystem = targetSystem, preserveAmount = true) {
+  const chemicalUnit = effUnits[Number(n(refs.effPop))];
+  const previousValue = refs.effUnit.value;
+  const previousChemicalUnit = Number.parseInt(refs.effUnit.dataset.chemicalUnit || String(chemicalUnit), 10);
+  const currentAmount = n(refs.effOz);
+  const baseOz = preserveAmount
+    ? effectAmountToBaseOz(currentAmount, previousValue, previousSystem, previousChemicalUnit)
+    : null;
+
+  const options = effectUnitOptions(targetSystem, chemicalUnit);
+  const preferredKind = effectUnitKind(previousValue);
+  const fallbackValue = preferredKind === 'large'
+    ? (options.find(([value]) => effectUnitKind(value) === 'large') || options[0])[0]
+    : options[0][0];
+
+  fillEffectUnitOptions(options, previousValue || fallbackValue);
+  if (!refs.effUnit.value) refs.effUnit.value = fallbackValue;
+  refs.effUnit.dataset.chemicalUnit = String(chemicalUnit);
+
+  if (preserveAmount && Number.isFinite(baseOz)) {
+    refs.effOz.value = String(round2(baseOzToEffectAmount(baseOz, refs.effUnit.value, targetSystem, chemicalUnit)));
+  }
+}
+
 function formatNum(value) {
   if (!Number.isFinite(value)) return '0';
   return value >= 10 ? String(Math.round(value)) : String(round2(value));
@@ -212,6 +296,15 @@ function formatNum(value) {
 function putWeight(oz) {
   if (Number(n(refs.units)) === 1) return `${Math.floor(oz * 28.3495 + 0.5)} g`;
   return `${formatNum(oz)} oz`;
+}
+
+function putWeightLbsOz(oz) {
+  if (Number(n(refs.units)) === 1) return putWeight(oz);
+  const totalOz = Math.max(0, Math.round(oz));
+  const lbs = Math.floor(totalOz / 16);
+  const rem = totalOz - lbs * 16;
+  if (lbs <= 0) return `${totalOz} oz`;
+  return rem > 0 ? `${lbs} lb ${rem} oz` : `${lbs} lb`;
 }
 
 function putLbs(oz) {
@@ -490,6 +583,46 @@ function bleachOzForDose(doseNeeded, gallons, percent) {
 function ppmPerTrichlorPuck(gallons) {
   return (8 * 3565.44) / gallons;
 }
+
+function cyaPpmPerTrichlorPuck(gallons) {
+  return (8 * 4159.41) / gallons;
+}
+
+function shockLevelForCya(cyaPpm) {
+  return Math.max(10, Math.floor(cyaPpm / 6 + 8.5));
+}
+
+function roundToNearestFive(value) {
+  return Math.round(value / 5) * 5;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function buildSwgRecommendation(gallons, cyaPpm, tempF, uvIndex, runtimeHours) {
+  if (gallons <= 0) return '';
+  // fcDailyLossRate is calibrated for typical residential pools — no additional bather factor.
+  const demandPpmPerDay = fcDailyLossRate(tempF, cyaPpm, uvIndex);
+  const swgCapacityPpmPerDay24h = (1.25 * 16 * 7489.4) / gallons;
+  if (swgCapacityPpmPerDay24h <= 0) return '';
+
+  // SWG cells are rated at 100% for 24 hrs. Scale to the actual pump runtime entered.
+  const rt = clamp(runtimeHours || 10, 1, 24);
+  const effectiveCapacity = swgCapacityPpmPerDay24h * (rt / 24);
+
+  const center = clamp((demandPpmPerDay / effectiveCapacity) * 100, 10, 100);
+  let low = clamp(roundToNearestFive(center * 0.9), 10, 100);
+  let high = clamp(roundToNearestFive(center * 1.1), 10, 100);
+  if (high - low < 10) {
+    low = clamp(roundToNearestFive(center - 5), 10, 100);
+    high = clamp(roundToNearestFive(center + 5), 10, 100);
+  }
+  if (high < low) high = low;
+
+  return `SWG: Estimated ${low}–${high}% output (based on ${rt} hr/day runtime, ~1.25 lb/day cell). Demand modeled at ~${demandPpmPerDay.toFixed(1)} ppm/day from ${Math.round(tempF)}°F, UV ${uvIndex}, CYA ${Math.round(cyaPpm)}.`;
+}
+
 // Format oz as a friendly string (oz or gallons + oz for large amounts)
 function fmtOz(oz) {
   if (oz <= 0) return '0 oz';
@@ -541,7 +674,8 @@ function buildFcTreatmentAction(fcNow, fcTarget, gallons, bleachPercent) {
   }
 
   const totalBleachOz = bleachOzForDose(doseNeeded, gallons, bleachPercent);
-  let line = `FC: Add ${fmtOz(totalBleachOz)} of ${bleachPercent}% liquid bleach to reach target ${fcTarget.toFixed(1)} ppm today.`;
+  const immediateFc = fcNow + doseNeeded;
+  let line = `FC: Add ${fmtOz(totalBleachOz)} of ${bleachPercent}% liquid bleach today → FC ~${fcNow.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm.`;
 
   const ppmPerPuck = ppmPerTrichlorPuck(gallons);
   const maxPucks = doseNeeded >= ppmPerPuck * 2 ? 2 : doseNeeded >= ppmPerPuck ? 1 : 0;
@@ -550,7 +684,7 @@ function buildFcTreatmentAction(fcNow, fcTarget, gallons, bleachPercent) {
     const remainPpm = Math.max(0, doseNeeded - puckPpm);
     if (remainPpm > 0.1) {
       const remainBleach = bleachOzForDose(remainPpm, gallons, bleachPercent);
-      line += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} + ${fmtOz(remainBleach)} of ${bleachPercent}% bleach (pucks contribute ~${puckPpm.toFixed(1)} ppm).`;
+      line += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} + ${fmtOz(remainBleach)} of ${bleachPercent}% bleach (pucks contribute ~${puckPpm.toFixed(1)} ppm over the week).`;
     } else {
       line += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} (~${puckPpm.toFixed(1)} ppm).`;
     }
@@ -662,6 +796,11 @@ function updateReport() {
   const saltAction = tested.salt && !saltPlan.startsWith('No salt') ? `Salt: ${saltPlan}` : '';
 
   const treatmentItems = [fcAction, phAction, taAction, cyaAction, chAction, borAction, saltAction].filter(Boolean);
+  if (Number(n(refs.chlorinePop)) === 2) {
+    const swgRuntime = n(refs.swgRuntime, 8);
+    const swgAction = buildSwgRecommendation(gallons, cya, weeklyAvgTemp, weeklyAvgUV, swgRuntime);
+    if (swgAction) treatmentItems.push(swgAction);
+  }
   if (!treatmentItems.length) {
     treatmentItems.push('No immediate chemical balancing action required today.');
   }
@@ -685,28 +824,61 @@ function updateReport() {
     // Required starting FC so end-of-week lands at fcMin (bottom of target)
     const requiredNow = Math.round((fcMin + weeklyLoss) * 10) / 10;
     const doseNeeded  = Math.max(0, Math.round((requiredNow - fc) * 10) / 10);
-    const fcEndOfWeek = Math.round((fc + doseNeeded - weeklyLoss) * 10) / 10;
     const uvLabel     = weeklyAvgUV >= 8 ? 'high' : weeklyAvgUV >= 5 ? 'moderate' : 'low';
+    const shockLevel  = shockLevelForCya(cya);
 
     if (doseNeeded > 0 && gallons > 0) {
-      // Option A: liquid bleach only
-      const totalBleachOz = bleachOzForDose(doseNeeded, gallons, blPct);
+      const ppmPerPuck = ppmPerTrichlorPuck(gallons);
+      const cyaPerPuck = cyaPpmPerTrichlorPuck(gallons);
+      const maxPucksByDose = Math.floor(doseNeeded / ppmPerPuck);
+      const maxPucksByCya = tested.cya && cyaPerPuck > 0
+        ? Math.max(0, Math.floor((cyaMax - cya) / cyaPerPuck))
+        : 0;
+      const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya));
+      const puckPpm = puckCount * ppmPerPuck;
+      const puckCyaPpm = puckCount * cyaPerPuck;
+      const remainingAfterPucks = Math.max(0, doseNeeded - puckPpm);
+      const maxBleachPpmToday = Math.max(0, shockLevel - fc);
+      const bleachPpm = Math.min(remainingAfterPucks, maxBleachPpmToday);
+      const bleachOz = bleachOzForDose(bleachPpm, gallons, blPct);
+      const immediateFc = fc + bleachPpm;
+      const projectedNextVisit = Math.max(0, Math.round((fc + bleachPpm + puckPpm - weeklyLoss) * 10) / 10);
+      const projectedCyaWithPucks = cya + puckCyaPpm;
 
-      // Option B: use 1 or 2 trichlor pucks to cover part of the dose
-      const ppmPerPuck   = ppmPerTrichlorPuck(gallons);
-      const maxPucks     = doseNeeded >= ppmPerPuck * 2 ? 2 : doseNeeded >= ppmPerPuck ? 1 : 0;
-      const puckPpm      = maxPucks * ppmPerPuck;
-      const remainPpm    = Math.max(0, doseNeeded - puckPpm);
-      const remainBleach = bleachOzForDose(remainPpm, gallons, blPct);
-
-      let fcLine = `FC: Add ${fmtOz(totalBleachOz)} of ${blPct}% liquid bleach today.`;
-      if (maxPucks > 0 && remainPpm > 0.1) {
-        fcLine += ` Or: ${maxPucks} trichlor puck${maxPucks > 1 ? 's' : ''} + ${fmtOz(remainBleach)} of ${blPct}% bleach (pucks add ~${puckPpm.toFixed(1)} ppm over the week).`;
+      const parts = [];
+      if (puckCount > 0) {
+        parts.push(`${puckCount} trichlor puck${puckCount > 1 ? 's' : ''}`);
       }
-      fcLine += ` → Projected ~${Math.max(fcEndOfWeek, fcMin).toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
+      if (bleachPpm > 0.1) {
+        parts.push(`${fmtOz(bleachOz)} of ${blPct}% liquid bleach`);
+      }
+
+      let fcLine = parts.length
+        ? `FC: Add ${parts.join(' + ')} today.`
+        : `FC: No practical FC dose can be added today without exceeding shock (${shockLevel} ppm).`;
+
+      if (bleachPpm > 0.1) {
+        fcLine += ` Immediate effect: liquid chlorine raises FC from ~${fc.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm today`;
+        fcLine += ` (shock cap: ${shockLevel} ppm).`;
+      }
+
+      if (puckCount > 0) {
+        fcLine += ` Trichlor adds ~${puckPpm.toFixed(1)} ppm FC and ~${puckCyaPpm.toFixed(1)} ppm CYA over the week`;
+        if (tested.cya) {
+          fcLine += `, keeping CYA near ~${projectedCyaWithPucks.toFixed(1)} ppm (high limit: ${cyaMax} ppm).`;
+        } else {
+          fcLine += '.';
+        }
+      }
+
+      if (remainingAfterPucks > maxBleachPpmToday + 0.1) {
+        fcLine += ` Full weekly target would require exceeding shock today, so bleach is capped at ~${shockLevel} ppm immediate FC.`;
+      }
+
+      fcLine += ` Projected ~${projectedNextVisit.toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
       forecastItems.push(fcLine);
     } else {
-      const fcEnd = Math.max(fcEndOfWeek, 0).toFixed(1);
+      const fcEnd = Math.max(Math.round((fc - weeklyLoss) * 10) / 10, 0).toFixed(1);
       forecastItems.push(
         `FC: No dose needed today. Projected ~${fcEnd} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
       );
@@ -714,12 +886,12 @@ function updateReport() {
   }
 
   // ── pH ──────────────────────────────────────────────────────────────────
-  // Strategy: lower pH today so natural CO2 off-gassing (driven by aeration) brings it
-  // to phMax by next visit. Aeration level selected by technician in pH card.
+  // Strategy: lower pH today toward the BOTTOM of range so natural CO2 off-gassing
+  // (driven by aeration) rises through the week. Aeration level selected in pH card.
   if (tested.ph) {
     const phRise = phWeeklyRise(taForPhModel, aeration);
-    // Ideal starting point: phMax minus the week's natural rise
-    const phTargetStart  = Math.max(7.0, Math.round((phMax - phRise) * 100) / 100);
+    // Forecast target is the bottom of the range because pH naturally rises through the week.
+    const phTargetStart  = Math.max(7.0, Math.round(phMin * 100) / 100);
     const phEndProjected = Math.round((ph + phRise) * 100) / 100;
     const aerLabel       = aeration.charAt(0).toUpperCase() + aeration.slice(1);
 
@@ -745,9 +917,9 @@ function updateReport() {
       const treatmentRounded = Math.round(treatmentOz);
       let doseNote = '';
       if (treatmentRounded > 0 && forecastRounded < treatmentRounded) {
-        doseNote = ` This is LESS than today's treatment plan because the forecast targets the TOP of the pH range (${phMax}) — less acid today prevents an early-week dip.`;
+        doseNote = ` This is LESS than today's treatment plan because the forecast targets the BOTTOM of the pH range (${phMin}) for a natural weekly rise.`;
       } else if (treatmentRounded > 0 && forecastRounded > treatmentRounded) {
-        doseNote = ` This is MORE than today's treatment plan because the forecast targets the top end of the range, accounting for the upward drift.`;
+        doseNote = ` This is MORE than today's treatment plan because the forecast starts at the range bottom and models weekly upward drift.`;
       }
       forecastItems.push(
         `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (TA ${Math.round(taForPhModel)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
@@ -771,9 +943,14 @@ function updateReport() {
       );
     } else {
       const taBoostNeeded = taMin - taProjected;
-      const bakingSodaLbs = taBoostNeeded * gallons / 4259.15;
+      const bakingSodaOz = taBoostNeeded * gallons / BAKING_SODA_TA_OZMUL;
+      const taImmediate = Math.round(ta + taBoostNeeded);
+      const taNextVisit = Math.round(taImmediate - taWeeklyDrop);
       forecastItems.push(
-        `TA: Projected ~${taProjected} ppm \u2014 below minimum (${taMin} ppm). Add ~${bakingSodaLbs.toFixed(2)} lb of baking soda (sodium bicarbonate) to maintain the minimum by next visit.`
+        `TA: Projected ~${taProjected} ppm \u2014 below minimum (${taMin} ppm). ` +
+        `Add ~${putWeightLbsOz(bakingSodaOz)} (${Math.round(bakingSodaOz)} oz) of baking soda today. ` +
+        `Immediate effect today: TA ~${Math.round(ta)} \u2192 ~${taImmediate} ppm. ` +
+        `1-week projection after normal drift (~${taWeeklyDrop} ppm): ~${taNextVisit} ppm (target: ${taMin}\u2013${taMax} ppm).`
       );
     }
   }
@@ -1026,16 +1203,16 @@ function calcPH() {
   const lines = [];
   if (from < to) {
     let up = delta / 218.68 + extra / 218.68;
-    lines.push(`Add ${putWeight(up)} by weight or ${putVolume(up * 0.8715)} by volume of washing soda/soda ash.`);
+    lines.push(`Add ${putWeight(up)} by weight or ${putVolume(up * 0.8715)} by volume of washing soda/soda ash today → pH ~${round2(from)} to ~${round2(to)}.`);
     up = delta / 110.05 + extra / 110.05;
-    lines.push(`Or add ${putWeight(up)} by weight or ${putVolume(up * 0.9586)} by volume of borax.`);
+    lines.push(`Or add ${putWeight(up)} by weight or ${putVolume(up * 0.9586)} by volume of borax today → pH ~${round2(from)} to ~${round2(to)}.`);
   }
 
   if (from > to) {
     let down = delta / -240.15 * mamul[ma] + extra / -240.15 * mamul[ma];
-    lines.push(`Add ${formatPhVolume(down)} of ${data.maPop[ma]} muriatic acid.`);
+    lines.push(`Add ${formatPhVolume(down)} of ${data.maPop[ma]} muriatic acid today → pH ~${round2(from)} to ~${round2(to)}.`);
     down = delta / -178.66 + extra / -178.66;
-    lines.push(`Or add ${putWeight(down)} by weight or ${formatPhVolume(down * 0.6657)} by volume of dry acid.`);
+    lines.push(`Or add ${putWeight(down)} by weight or ${formatPhVolume(down * 0.6657)} by volume of dry acid today → pH ~${round2(from)} to ~${round2(to)}.`);
   }
 
   refs.phResult.innerHTML = lines.length ? lines.join('<br>') : 'No pH adjustment required.';
@@ -1049,8 +1226,9 @@ function calcTA() {
     return;
   }
 
-  const amount = (to - from) * getGallons() / 4259.15;
-  refs.taResult.innerHTML = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 0.7988)} by volume of baking soda.`;
+  const taRise = to - from;
+  const amountOz = taRise * getGallons() / BAKING_SODA_TA_OZMUL;
+  refs.taResult.innerHTML = `Add ${putWeightLbsOz(amountOz)} (${Math.round(amountOz)} oz) of baking soda today → TA ~${from} to ~${to} ppm.`;
 }
 
 function calcCH() {
@@ -1060,9 +1238,9 @@ function calcCH() {
 
   if (from < to) {
     let amount = (to - from) * getGallons() / 6754.11;
-    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 0.7988)} by volume of calcium chloride.`;
+    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 0.7988)} by volume of calcium chloride today → CH ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     amount = (to - from) * getGallons() / 5098.82;
-    const line2 = `Or add ${putWeight(amount)} by weight or ${putVolume(amount * 1.148)} by volume of calcium chloride dihydrate.`;
+    const line2 = `Or add ${putWeight(amount)} by weight or ${putVolume(amount * 1.148)} by volume of calcium chloride dihydrate today → CH ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     refs.chResult.innerHTML = `${line1}<br>${line2}`;
     return;
   }
@@ -1085,9 +1263,9 @@ function calcCYA() {
 
   if (from < to) {
     let amount = (to - from) * getGallons() / 7489.51;
-    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 1.042)} by volume of stabilizer.`;
+    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 1.042)} by volume of stabilizer today → CYA ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     amount = (to - from) * getGallons() / 2890;
-    const line2 = `Or add ${putVolume(amount)} of liquid stabilizer.`;
+    const line2 = `Or add ${putVolume(amount)} of liquid stabilizer today → CYA ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     refs.cyaResult.innerHTML = `${line1}<br>${line2}`;
     return;
   }
@@ -1104,17 +1282,26 @@ function calcCYA() {
 function calcSalt() {
   const from = i(refs.saltFrom, 0);
   const to = i(refs.saltTo, 0);
+  const hasSaltReading = refs.saltFrom.value.trim() !== '';
+  const [saltMin, saltMax] = parseRange(refs.saltTargetRange.textContent, to, to);
 
   if (from < to) {
+    if (hasSaltReading && Number(n(refs.chlorinePop)) !== 2) refs.chlorinePop.value = '2';
     const amount = (to - from) * getGallons() / 7468.64;
     const lbs = Math.floor(amount / 16 + 0.5);
-    refs.saltResult.innerHTML = `Add ${putLbs(amount)} of salt (${statusBags(lbs)}).`;
+    const optionalNote = from >= saltMin && from <= saltMax
+      ? ` Optional: current salt (${Math.round(from)} ppm) is already in target range (${saltMin}-${saltMax}); this dose only moves to exact target ${Math.round(to)} ppm.`
+      : '';
+    refs.saltResult.innerHTML = `Add ${putLbs(amount)} of salt (${statusBags(lbs)}) today → salt ~${Math.round(from)} to ~${Math.round(to)} ppm.${optionalNote}`;
     return;
   }
 
   if (from > to) {
     const replacement = `${Math.floor(100 - (to / from) * 100 + 0.5)}%`;
-    refs.saltResult.innerHTML = `To lower salt, replace ${replacement} of the water.`;
+    const optionalNote = from >= saltMin && from <= saltMax
+      ? ` Optional: current salt (${Math.round(from)} ppm) is already in target range (${saltMin}-${saltMax}); lowering to exact target ${Math.round(to)} ppm is optional.`
+      : '';
+    refs.saltResult.innerHTML = `To lower salt, replace ${replacement} of the water to move ~${Math.round(from)} to ~${Math.round(to)} ppm.${optionalNote}`;
     return;
   }
 
@@ -1142,7 +1329,7 @@ function calcBorate() {
       acid = putVolume(amount * 0.4765);
     }
     refs.borResult.innerHTML = [
-      `Add ${putWeight(amount)} by weight or ${byVol} by volume of ${data.borPop[type]}.`,
+      `Add ${putWeight(amount)} by weight or ${byVol} by volume of ${data.borPop[type]} today → Borate ~${Math.round(from)} to ~${Math.round(to)} ppm.`,
       `Add ${acid} of 31.45% muriatic acid to compensate for pH rise.`
     ].join('<br>');
     return;
@@ -1319,34 +1506,12 @@ function formatEffect(value) {
 }
 
 function calcEffect() {
-  let oz = n(refs.effOz);
-  const unit = effUnits[Number(n(refs.effPop))];
+  const idx = Number(n(refs.effPop));
+  const unit = effUnits[idx];
   const system = Number(n(refs.units));
-
-  if (system === 1) {
-    if (unit === 1) {
-      refs.effUnit.value = 'g';
-      oz *= 0.035274;
-    } else if (unit === 2) {
-      refs.effUnit.value = 'kg';
-      oz *= 2.20462;
-    } else {
-      refs.effUnit.value = 'ml';
-      oz *= 0.033814;
-    }
-  } else if (system === 2) {
-    if (unit === 2) {
-      refs.effUnit.value = 'lbs';
-    } else {
-      refs.effUnit.value = 'oz';
-      if (unit === 0) oz *= 0.96076;
-    }
-  } else {
-    refs.effUnit.value = unit === 2 ? 'lbs' : 'oz';
-  }
+  let oz = effectAmountToBaseOz(n(refs.effOz), refs.effUnit.value, system, unit);
 
   const g = getGallons();
-  const idx = Number(n(refs.effPop));
   let result = '';
 
   switch (idx) {
@@ -1418,38 +1583,17 @@ function calcEffect() {
     case 24:
       result = `raise Salt by ${formatEffect(oz / g * 7468.64 * 16)}`;
       break;
+    case 25:
+      result = `raise FC by ${formatEffect(oz / g * 482.202 * 8.25 / 6)} and raise Salt by ${formatEffect(oz / g * 1607 * 8.25 / 12.5)}`;
+      break;
     default:
       result = 'no change';
   }
 
-  refs.effResult.textContent = `Adding ${n(refs.effOz)} ${refs.effUnit.value} of ${data.effPop[idx]} will ${result}.`;
-}
-
-function calcEffUnits(newUnit, old) {
-  const unit = effUnits[Number(n(refs.effPop))];
-  let factor = 1;
-
-  if (newUnit === 0) {
-    if (old === 1) {
-      factor = unit === 0 ? 0.033814 : unit === 1 ? 0.035274 : 2.20462;
-    } else if (old === 2) {
-      factor = unit === 0 ? 0.96076 : 1;
-    }
-  } else if (newUnit === 1) {
-    if (old === 0) {
-      factor = unit === 0 ? 29.5735 : unit === 1 ? 28.3495 : 0.453592;
-    } else if (old === 2) {
-      factor = unit === 0 ? 28.4131 : unit === 1 ? 28.3495 : 0.453592;
-    }
-  } else if (newUnit === 2) {
-    if (old === 0) {
-      factor = unit === 0 ? 1.04084 : unit === 1 ? 1 : 1;
-    } else if (old === 1) {
-      factor = unit === 0 ? 0.0351951 : unit === 1 ? 0.035274 : 2.20462;
-    }
-  }
-
-  refs.effOz.value = Math.floor(n(refs.effOz) * factor + 0.5);
+  const amountValue = n(refs.effOz);
+  const unitLabel = refs.effUnit.options[refs.effUnit.selectedIndex]?.textContent || refs.effUnit.value;
+  const singularUnitLabel = Math.abs(amountValue - 1) < 0.0001 ? unitLabel.replace(/s$/, '') : unitLabel;
+  refs.effResult.textContent = `Adding ${amountValue} ${singularUnitLabel} of ${data.effPop[idx]} will ${result}.`;
 }
 
 function calcUnits() {
@@ -1480,7 +1624,7 @@ function calcUnits() {
     if (oldUnit === 1) refs.temp.value = Math.floor(n(refs.temp) * 9 / 5 + 0.5) + 32;
   }
 
-  calcEffUnits(next, oldUnit);
+  syncEffectUnitControl(next, oldUnit, true);
   oldUnit = next;
 }
 
@@ -1518,11 +1662,11 @@ function init() {
   refs.fcPop.value = '0';
   refs.maPop.value = '2';
   refs.borPop.value = '0';
-  refs.fromPop.value = '2';
+  refs.fromPop.value = '1';
   refs.chlorinePop.value = '1';
   refs.surfacePop.value = '1';
   refs.szPop.value = '0';
-  refs.effPop.value = '1';
+  refs.effPop.value = '25';
 
   refs.openReport.addEventListener('click', () => {
     customerSectionsVisible = !customerSectionsVisible;
@@ -1564,6 +1708,10 @@ function init() {
       manualTargetOverride.fc = false;
       calcAll();
     }
+  });
+
+  refs.effPop.addEventListener('change', () => {
+    syncEffectUnitControl(Number(n(refs.units)), Number(n(refs.units)), false);
   });
 
   refs.taTo.addEventListener('input', () => {
