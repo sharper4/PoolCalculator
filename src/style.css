@@ -393,16 +393,42 @@ select:focus {
 }
 
 .report-logo {
-  height: 3.85rem;
+  height: 5rem;
   width: auto;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
-.report-header h2 {
+.report-header-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-phone {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0e4f97;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.report-header-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.report-header-title h2 {
   margin: 0;
   font-size: 0.92rem;
   text-align: right;
   letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
 .report-meta {
@@ -661,7 +687,16 @@ body.report-mode {
   }
 
   .report-logo {
-    height: 3.15rem;
+    height: 4.2rem;
+  }
+
+  .report-phone {
+    font-size: 0.95rem;
+  }
+
+  .report-header-title h2 {
+    font-size: 0.92rem;
+    line-height: 1.25;
   }
 
   .next-steps-grid {
@@ -686,8 +721,8 @@ body.report-mode {
     white-space: normal;
   }
 
-  .report-header h2 {
-    font-size: 1.043rem;
+  .report-header-title h2 {
+    font-size: 1.0rem;
   }
 
   .report-meta {
