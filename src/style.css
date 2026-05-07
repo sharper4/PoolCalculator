@@ -416,6 +416,12 @@ select:focus {
   white-space: nowrap;
 }
 
+.report-phone-img {
+  max-height: 3rem;
+  width: auto;
+  object-fit: contain;
+}
+
 .report-header-title {
   display: flex;
   flex-direction: column;
@@ -690,8 +696,8 @@ body.report-mode {
     height: 4.2rem;
   }
 
-  .report-phone {
-    font-size: 0.95rem;
+  .report-phone-img {
+    max-height: 2.2rem;
   }
 
   .report-header-title h2 {
