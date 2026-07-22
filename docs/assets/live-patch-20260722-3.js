@@ -106,8 +106,9 @@
     if (!forecastField) return;
 
     const text = String(forecastField.value || '').trim();
-    const stillLoading = /^loading\s*5-?day\s*forecast/i.test(text);
-    if (!force && !stillLoading) {
+    const pendingText = /^(loading\s*5-?day\s*forecast|waiting for weather permission and forecast data)/i.test(text);
+    const shouldFallback = !text || pendingText;
+    if (!shouldFallback) {
       syncReportForecastWeather();
       return;
     }

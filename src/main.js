@@ -1203,8 +1203,9 @@ function resolveWeatherForecastFallback(force = false) {
   if (!refs.weatherForecast) return;
 
   const text = String(refs.weatherForecast.value || '').trim();
-  const stillLoading = /^loading\s*5-?day\s*forecast/i.test(text);
-  if (!force && !stillLoading) return;
+  const pendingText = /^(loading\s*5-?day\s*forecast|waiting for weather permission and forecast data)/i.test(text);
+  const shouldFallback = !text || pendingText;
+  if (!shouldFallback) return;
 
   if (Number.isFinite(weeklyAvgTemp) && Number.isFinite(weeklyAvgUV)) {
     refs.weatherForecast.value = `Forecast baseline, ${Math.round(weeklyAvgTemp)}F (feels ${Math.round(weeklyAvgTemp)}F), wind 0 mph, UV ${weeklyAvgUV}`;
