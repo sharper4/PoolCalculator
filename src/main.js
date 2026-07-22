@@ -71,6 +71,7 @@ const refs = {
   effOz: document.getElementById('eff-oz'),
   effUnit: document.getElementById('eff-unit'),
   effPop: document.getElementById('eff-pop'),
+  passiveOutlook: document.getElementById('passive-outlook'),
 
   fcResult: document.getElementById('fc-result'),
   phResult: document.getElementById('ph-result'),
@@ -692,6 +693,86 @@ function buildFcTreatmentAction(fcNow, fcTarget, gallons, bleachPercent) {
   }
 
   return line;
+}
+
+function updatePassiveOutlook() {
+  if (!refs.passiveOutlook) return;
+
+  const tested = {
+    fc: refs.fcFrom.value.trim() !== '',
+    ph: refs.phFrom.value.trim() !== '',
+    ta: refs.taFrom.value.trim() !== '',
+    ch: refs.chFrom.value.trim() !== '',
+    cya: refs.cyaFrom.value.trim() !== '',
+    salt: refs.saltFrom.value.trim() !== '',
+    bor: refs.borFrom.value.trim() !== ''
+  };
+
+  const lines = [];
+  const tempF = weeklyAvgTemp || parseWeatherTemp();
+  const gallons = getGallons();
+
+  if (tested.fc) {
+    const fc = n(refs.fcFrom);
+    const cyaForModel = tested.cya ? n(refs.cyaFrom) : n(refs.cyaTo);
+    const dailyLoss = fcDailyLossRate(tempF, cyaForModel, weeklyAvgUV);
+    const weeklyLoss = Math.round(dailyLoss * 7 * 10) / 10;
+    const fcProjected = Math.max(0, Math.round((fc - weeklyLoss) * 10) / 10);
+    lines.push(
+      `FC: If untreated, expect ~${dailyLoss.toFixed(1)} ppm/day reduction (~${weeklyLoss.toFixed(1)} ppm this week) → ~${fcProjected.toFixed(1)} ppm in 7 days.`
+    );
+  }
+
+  if (tested.ph) {
+    const ph = n(refs.phFrom);
+    const taForPhModel = i(refs.taFrom, 100);
+    const aeration = refs.phAeration ? refs.phAeration.value : 'medium';
+    const phRiseWeek = phWeeklyRise(taForPhModel, aeration);
+    const phRiseDay = Math.round((phRiseWeek / 7) * 100) / 100;
+    const phProjected = Math.round((ph + phRiseWeek) * 100) / 100;
+    lines.push(
+      `pH: If untreated, expect ~${phRiseDay.toFixed(2)}/day rise (~${phRiseWeek.toFixed(2)}/week) → ~${phProjected.toFixed(2)} in 7 days.`
+    );
+  }
+
+  if (tested.ta) {
+    const ta = n(refs.taFrom);
+    const taWeeklyLoss = 3;
+    const taDailyLoss = Math.round((taWeeklyLoss / 7) * 10) / 10;
+    const taProjected = Math.max(0, Math.round(ta - taWeeklyLoss));
+    lines.push(
+      `TA: If untreated, model ~${taDailyLoss.toFixed(1)} ppm/day reduction (~${taWeeklyLoss} ppm this week) → ~${taProjected} ppm in 7 days.`
+    );
+  }
+
+  if (tested.cya) {
+    const cya = n(refs.cyaFrom);
+    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
+    const cyaDailyLoss = Math.round((cyaWeeklyLoss / 7) * 10) / 10;
+    const cyaProjected = Math.max(0, Math.round(cya - cyaWeeklyLoss));
+    lines.push(
+      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) → ~${cyaProjected} ppm in 7 days.`
+    );
+  }
+
+  if (tested.ch) {
+    lines.push('CH: If untreated, no meaningful weekly draw is modeled under normal conditions.');
+  }
+
+  if (tested.salt) {
+    lines.push('Salt: If untreated, no meaningful weekly draw is modeled unless water is lost or diluted.');
+  }
+
+  if (tested.bor) {
+    lines.push('Borate: If untreated, no meaningful weekly draw is modeled in the normal forecast window.');
+  }
+
+  if (!lines.length) {
+    refs.passiveOutlook.textContent = 'Enter current "Now" test values to see modeled do-nothing draw and drift.';
+    return;
+  }
+
+  refs.passiveOutlook.innerHTML = lines.join('<br>');
 }
 
 function updateReport() {
@@ -1649,6 +1730,7 @@ function calcAll() {
   calcSuggested();
   calcPoolVolume();
   calcEffect();
+  updatePassiveOutlook();
   updateReport();
 }
 

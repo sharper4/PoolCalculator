@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
     <script type="module" crossorigin src="./assets/index-DfLsSyTU.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-Meb5smCX.css">
+    <style>
+      .build-badge{position:fixed;right:.85rem;bottom:.8rem;z-index:20;border:1px solid rgba(14,79,151,.25);border-radius:999px;background:rgba(255,255,255,.9);color:#45658f;padding:.18rem .55rem;font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.04em;box-shadow:0 8px 18px rgba(7,27,67,.08);backdrop-filter:blur(8px)}
+      @media print{.build-badge{display:none}}
+      @media (width<=980px){.build-badge{right:.55rem;bottom:.55rem}}
+    </style>
+    <script defer src="./assets/live-patch-20260722-2.js"></script>
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -265,7 +271,15 @@
         </article>
       </section>
 
-      <footer class="panel foot reveal stagger-5">
+      <section class="panel reveal stagger-5">
+        <div class="section-head">
+          <h2>If You Do Nothing Today</h2>
+        </div>
+        <p class="status">Modeled daily draw and drift using the same weather, UV, aeration, and forecast assumptions as the weekly plan.</p>
+        <div id="passive-outlook" class="result-block"></div>
+      </section>
+
+      <footer class="panel foot reveal">
         <p>
           Tips: Add less than the full amount first, circulate, retest, then fine-tune. Powder volumes vary by manufacturer.
         </p>
@@ -375,6 +389,8 @@
         </article>
       </section>
     </main>
+
+    <div class="build-badge">Build 2026.07.22.2</div>
 
   </body>
 </html>

@@ -366,6 +366,23 @@ select:focus {
   font-size: 0.9rem;
 }
 
+.build-badge {
+  position: fixed;
+  right: 0.85rem;
+  bottom: 0.8rem;
+  z-index: 20;
+  border: 1px solid rgba(14, 79, 151, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #45658f;
+  padding: 0.18rem 0.55rem;
+  font-family: "Space Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 18px rgba(7, 27, 67, 0.08);
+  backdrop-filter: blur(8px);
+}
+
 .report-view {
   display: grid;
   gap: 0.8rem;
@@ -690,6 +707,10 @@ body.report-mode {
     display: block !important;
   }
 
+  .build-badge {
+    display: none;
+  }
+
   .report-sheet {
     border: 0;
     border-radius: 0;
@@ -938,6 +959,11 @@ body.report-mode {
 
   .brand-logo {
     width: min(80vw, 320px);
+  }
+
+  .build-badge {
+    right: 0.55rem;
+    bottom: 0.55rem;
   }
 
   .hero-detail-row {
