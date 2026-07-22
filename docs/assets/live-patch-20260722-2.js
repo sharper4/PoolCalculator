@@ -62,6 +62,24 @@
     return Math.round(base * aerationFactor * 100) / 100;
   }
 
+  function updateBuildBadge() {
+    const badge = document.getElementById('build-badge');
+    if (!badge) return;
+
+    const modified = new Date(document.lastModified);
+    if (Number.isNaN(modified.getTime())) {
+      badge.textContent = 'Build live';
+      return;
+    }
+
+    const year = modified.getFullYear();
+    const month = String(modified.getMonth() + 1).padStart(2, '0');
+    const day = String(modified.getDate()).padStart(2, '0');
+    const hour = String(modified.getHours()).padStart(2, '0');
+    const minute = String(modified.getMinutes()).padStart(2, '0');
+    badge.textContent = `Build ${year}.${month}.${day}.${hour}${minute}`;
+  }
+
   function updatePassiveOutlook() {
     const refs = {
       passiveOutlook: document.getElementById('passive-outlook'),
@@ -152,6 +170,7 @@
   }
 
   function init() {
+    updateBuildBadge();
     updatePassiveOutlook();
     document.addEventListener('input', updatePassiveOutlook, true);
     document.addEventListener('change', updatePassiveOutlook, true);

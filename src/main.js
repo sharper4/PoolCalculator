@@ -775,6 +775,24 @@ function updatePassiveOutlook() {
   refs.passiveOutlook.innerHTML = lines.join('<br>');
 }
 
+function updateBuildBadge() {
+  const badge = document.getElementById('build-badge');
+  if (!badge) return;
+
+  const modified = new Date(document.lastModified);
+  if (Number.isNaN(modified.getTime())) {
+    badge.textContent = 'Build live';
+    return;
+  }
+
+  const year = modified.getFullYear();
+  const month = String(modified.getMonth() + 1).padStart(2, '0');
+  const day = String(modified.getDate()).padStart(2, '0');
+  const hour = String(modified.getHours()).padStart(2, '0');
+  const minute = String(modified.getMinutes()).padStart(2, '0');
+  badge.textContent = `Build ${year}.${month}.${day}.${hour}${minute}`;
+}
+
 function updateReport() {
   const today = new Date();
   const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1754,6 +1772,8 @@ function init() {
   refs.surfacePop.value = '1';
   refs.szPop.value = '0';
   refs.effPop.value = '25';
+
+  updateBuildBadge();
 
   refs.openReport.addEventListener('click', () => {
     customerSectionsVisible = !customerSectionsVisible;
