@@ -65,6 +65,73 @@
     return Math.round(base * aerationFactor * 100) / 100;
   }
 
+  function weatherCodeLabel(code) {
+    if (code >= 1 && code <= 3) return 'Partly Cloudy';
+    if (code >= 45 && code <= 48) return 'Fog';
+    if (code >= 51 && code <= 67) return 'Rain';
+    if (code >= 71 && code <= 77) return 'Snow';
+    if (code >= 80 && code <= 82) return 'Rain Showers';
+    if (code >= 95) return 'Thunderstorm';
+    return 'Clear';
+  }
+
+  function averageFirstDays(values, count, digits = 0) {
+    const usable = (values || []).slice(0, count).filter(Number.isFinite);
+    if (!usable.length) return Number.NaN;
+    const avg = usable.reduce((sum, value) => sum + value, 0) / usable.length;
+    const factor = 10 ** digits;
+    return Math.round(avg * factor) / factor;
+  }
+
+  function dominantWeatherLabel(codes, count) {
+    const usable = (codes || []).slice(0, count).filter(Number.isFinite);
+    if (!usable.length) return 'Clear';
+    const counts = new Map();
+    usable.forEach((code) => {
+      const label = weatherCodeLabel(code);
+      counts.set(label, (counts.get(label) || 0) + 1);
+    });
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  async function updateWeatherSummary() {
+    const currentField = document.getElementById('weather-conditions');
+    const forecastField = document.getElementById('weather-forecast');
+    if (!currentField || !forecastField || !navigator.geolocation) return;
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          timeout: 6000,
+          maximumAge: 300000
+        });
+      });
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,apparent_temperature_max,wind_speed_10m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
+      if (!response.ok) return;
+
+      const payload = await response.json();
+      const current = payload.current || {};
+      const currentUv = Number.isFinite(Number(current.uv_index))
+        ? Math.round(Number(current.uv_index) * 10) / 10
+        : averageFirstDays(payload.daily?.uv_index_max, 1, 1);
+      currentField.value = `${weatherCodeLabel(Number(current.weather_code))}, ${Math.round(current.temperature_2m)}F (feels ${Math.round(current.apparent_temperature)}F), wind ${Math.round(current.wind_speed_10m)} mph, UV ${currentUv}`;
+
+      const forecastCount = 5;
+      const avgTemp = averageFirstDays(payload.daily?.temperature_2m_max, forecastCount, 0);
+      const avgFeels = averageFirstDays(payload.daily?.apparent_temperature_max, forecastCount, 0);
+      const avgWind = averageFirstDays(payload.daily?.wind_speed_10m_max, forecastCount, 0);
+      const avgUv = averageFirstDays(payload.daily?.uv_index_max, forecastCount, 1);
+      const forecastLabel = dominantWeatherLabel(payload.daily?.weather_code, forecastCount);
+      forecastField.value = `${forecastLabel}, ${Math.round(avgTemp)}F (feels ${Math.round(avgFeels)}F), wind ${Math.round(avgWind)} mph, UV ${avgUv}`;
+    } catch {
+      // Keep whatever the primary app rendered if the helper fetch fails.
+    }
+  }
+
   function formatEffect(value) {
     if (value < 9.95) return Math.floor(value * 10 + 0.5) / 10;
     return Math.floor(value + 0.5);
@@ -257,6 +324,7 @@
 
   function init() {
     updateBuildBadge();
+    updateWeatherSummary();
     updateGoalNote();
     updatePassiveOutlook();
     syncTrichlorEffectUi();
@@ -268,6 +336,7 @@
     document.addEventListener('change', () => window.setTimeout(syncTrichlorEffectUi, 0), true);
     window.setTimeout(updatePassiveOutlook, 1000);
     window.setTimeout(updatePassiveOutlook, 4000);
+    window.setTimeout(updateWeatherSummary, 1000);
     window.setTimeout(updateGoalNote, 1000);
     window.setTimeout(syncTrichlorEffectUi, 1000);
   }

@@ -11,8 +11,9 @@
     <link rel="stylesheet" crossorigin href="./assets/index-Meb5smCX.css">
     <style>
       .build-badge{position:fixed;right:.85rem;bottom:.8rem;z-index:20;border:1px solid rgba(14,79,151,.25);border-radius:999px;background:rgba(255,255,255,.9);color:#45658f;padding:.18rem .55rem;font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.04em;box-shadow:0 8px 18px rgba(7,27,67,.08);backdrop-filter:blur(8px)}
+      .hero-weather-stack{display:grid;gap:.55rem;width:100%;max-width:420px;justify-self:end}
       @media print{.build-badge{display:none}}
-      @media (width<=980px){.build-badge{right:.55rem;bottom:.55rem}}
+      @media (width<=980px){.build-badge{right:.55rem;bottom:.55rem}.hero-weather-stack{justify-self:stretch;max-width:none}}
     </style>
     <script defer src="./assets/live-patch-20260722-2.js"></script>
   </head>
@@ -38,9 +39,14 @@
             Professional water chemistry tools for clean pools and elite service. This calculator includes
             complete chemistry balancing, CSI, goal ranges, volume estimation, and chemical-effects math.
           </p>
-          <label id="weather-label" class="hero-weather"><span id="weather-label-text">Current weather conditions</span>
-            <input id="weather-conditions" type="text" value="Loading current weather..." />
-          </label>
+          <div class="hero-weather-stack">
+            <label id="weather-label" class="hero-weather"><span id="weather-label-text">Current weather conditions</span>
+              <input id="weather-conditions" type="text" value="Loading current weather..." />
+            </label>
+            <label class="hero-weather"><span>5-day forecast average</span>
+              <input id="weather-forecast" type="text" value="Loading 5-day forecast..." />
+            </label>
+          </div>
         </div>
       </header>
 

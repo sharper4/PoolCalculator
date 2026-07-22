@@ -11,6 +11,7 @@ const refs = {
   tcNow: document.getElementById('tc-now'),
   phosphatesNow: document.getElementById('phosphates-now'),
   weatherConditions: document.getElementById('weather-conditions'),
+  weatherForecast: document.getElementById('weather-forecast'),
   weatherLabel: document.getElementById('weather-label'),
   weatherLabelText: document.getElementById('weather-label-text'),
   serviceDetailsSection: document.getElementById('service-details-section'),
@@ -527,13 +528,42 @@ function parseRange(text, fallbackMin, fallbackMax) {
   return [fallbackMin, fallbackMax];
 }
 
-// Weekly average temperature from Open-Meteo forecast (7-day forecast data).
-// Used to project chlorine demand over the week ahead.
+// Forecast average temperature and UV from the next 5 days.
+// Used to project chlorine demand instead of the current momentary conditions.
 let weeklyAvgTemp = 80; // default 80°F
 let weeklyAvgUV = 7;    // default UV index
 
 function exactTarget(value, unit = '') {
   return `${value}${unit}`.trim();
+}
+
+function weatherCodeLabel(code) {
+  if (code >= 1 && code <= 3) return 'Partly Cloudy';
+  if (code >= 45 && code <= 48) return 'Fog';
+  if (code >= 51 && code <= 67) return 'Rain';
+  if (code >= 71 && code <= 77) return 'Snow';
+  if (code >= 80 && code <= 82) return 'Rain Showers';
+  if (code >= 95) return 'Thunderstorm';
+  return 'Clear';
+}
+
+function averageFirstDays(values, count, digits = 0) {
+  const usable = (values || []).slice(0, count).filter(Number.isFinite);
+  if (!usable.length) return Number.NaN;
+  const avg = usable.reduce((sum, value) => sum + value, 0) / usable.length;
+  const factor = 10 ** digits;
+  return Math.round(avg * factor) / factor;
+}
+
+function dominantWeatherLabel(codes, count) {
+  const usable = (codes || []).slice(0, count).filter(Number.isFinite);
+  if (!usable.length) return 'Clear';
+  const counts = new Map();
+  usable.forEach((code) => {
+    const label = weatherCodeLabel(code);
+    counts.set(label, (counts.get(label) || 0) + 1);
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
 // Parse current temperature (°F) from the weather conditions field.
@@ -1247,34 +1277,37 @@ async function loadWeather() {
         : 'Current weather conditions';
     }
 
-    // Include daily temperature and uv_index_max for 7-day averages used in FC forecast
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
+    // Include current and next-5-day forecast fields used in the UI and chemistry forecast model.
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,apparent_temperature_max,wind_speed_10m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Weather fetch failed');
     const payload = await response.json();
     const current = payload.current;
-    const code = Number(current.weather_code);
-    let label = 'Clear';
-    if (code >= 1 && code <= 3) label = 'Partly Cloudy';
-    else if (code >= 45 && code <= 48) label = 'Fog';
-    else if (code >= 51 && code <= 67) label = 'Rain';
-    else if (code >= 71 && code <= 77) label = 'Snow';
-    else if (code >= 80 && code <= 82) label = 'Rain Showers';
-    else if (code >= 95) label = 'Thunderstorm';
+    const currentLabel = weatherCodeLabel(Number(current.weather_code));
+    const currentUv = Number.isFinite(Number(current.uv_index))
+      ? Math.round(Number(current.uv_index) * 10) / 10
+      : averageFirstDays(payload.daily?.uv_index_max, 1, 1);
+    refs.weatherConditions.value = `${currentLabel}, ${Math.round(current.temperature_2m)}F (feels ${Math.round(current.apparent_temperature)}F), wind ${Math.round(current.wind_speed_10m)} mph, UV ${currentUv}`;
 
-    refs.weatherConditions.value = `${label}, ${Math.round(current.temperature_2m)}F (feels ${Math.round(current.apparent_temperature)}F), wind ${Math.round(current.wind_speed_10m)} mph`;
+    const forecastCount = 5;
+    const forecastUv = averageFirstDays(payload.daily?.uv_index_max, forecastCount, 1);
+    const forecastTemp = averageFirstDays(payload.daily?.temperature_2m_max, forecastCount, 0);
+    const forecastFeels = averageFirstDays(payload.daily?.apparent_temperature_max, forecastCount, 0);
+    const forecastWind = averageFirstDays(payload.daily?.wind_speed_10m_max, forecastCount, 0);
+    const forecastLabel = dominantWeatherLabel(payload.daily?.weather_code, forecastCount);
 
-    // Compute 7-day average UV index and temperature (used in FC demand forecast)
-    const uvValues  = payload.daily?.uv_index_max || [];
-    const tempValues = payload.daily?.temperature_2m_max || [];
-    if (uvValues.length) {
-      weeklyAvgUV = Math.round(uvValues.reduce((a, b) => a + b, 0) / uvValues.length * 10) / 10;
+    if (Number.isFinite(forecastUv)) {
+      weeklyAvgUV = forecastUv;
     }
-    if (tempValues.length) {
-      weeklyAvgTemp = Math.round(tempValues.reduce((a, b) => a + b, 0) / tempValues.length);
+    if (Number.isFinite(forecastTemp)) {
+      weeklyAvgTemp = forecastTemp;
+    }
+    if (refs.weatherForecast) {
+      refs.weatherForecast.value = `${forecastLabel}, ${Math.round(forecastTemp || weeklyAvgTemp)}F (feels ${Math.round(forecastFeels || weeklyAvgTemp)}F), wind ${Math.round(forecastWind || 0)} mph, UV ${Number.isFinite(forecastUv) ? forecastUv : weeklyAvgUV}`;
     }
   } catch (err) {
     refs.weatherConditions.value = '';
+    if (refs.weatherForecast) refs.weatherForecast.value = '';
     if (refs.weatherLabelText) {
       refs.weatherLabelText.textContent = 'Current weather conditions';
     }

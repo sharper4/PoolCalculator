@@ -126,6 +126,14 @@ body {
   font-size: 0.82rem;
 }
 
+.hero-weather-stack {
+  display: grid;
+  gap: 0.55rem;
+  width: 100%;
+  max-width: 420px;
+  justify-self: end;
+}
+
 .hero-actions {
   margin-top: 0;
 }
@@ -971,6 +979,11 @@ body.report-mode {
   }
 
   .hero-weather {
+    justify-self: stretch;
+    max-width: none;
+  }
+
+  .hero-weather-stack {
     justify-self: stretch;
     max-width: none;
   }
