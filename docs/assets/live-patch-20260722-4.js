@@ -413,7 +413,27 @@
     goalNote.textContent = `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less. Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`;
   }
 
+  function hidePassiveOutlookForPrint() {
+    const printStyleId = 'hide-passive-outlook-print-style';
+    if (!document.getElementById(printStyleId)) {
+      const style = document.createElement('style');
+      style.id = printStyleId;
+      style.textContent = '@media print { .panel.reveal.stagger-5 { display: none !important; } }';
+      document.head.appendChild(style);
+    }
+
+    const panel = document.querySelector('.panel.reveal.stagger-5');
+    if (!panel) return;
+    window.addEventListener('beforeprint', () => {
+      panel.style.display = 'none';
+    });
+    window.addEventListener('afterprint', () => {
+      panel.style.display = '';
+    });
+  }
+
   function init() {
+    hidePassiveOutlookForPrint();
     updateBuildBadge();
     updateWeatherSummary();
     syncReportForecastWeather();
