@@ -174,6 +174,8 @@ const data = {
 
 const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0];
 const BAKING_SODA_TA_OZMUL = 4461.56;
+const TRICHLOR_EFFECT_INDEX = 4;
+const TRICHLOR_3IN_TABLET_OZ = 8;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
@@ -209,7 +211,13 @@ function setOptions(select, options) {
   });
 }
 
-function effectUnitOptions(system, chemicalUnit) {
+function effectUnitOptions(system, chemicalUnit, chemicalIndex) {
+  if (chemicalIndex === TRICHLOR_EFFECT_INDEX) {
+    return system === 1
+      ? [['tab3', '3" tablets'], ['g', 'grams'], ['kg', 'kilograms']]
+      : [['tab3', '3" tablets'], ['oz', 'oz'], ['lb', 'pounds']];
+  }
+
   if (system === 1) {
     return chemicalUnit === 0
       ? [['ml', 'ml'], ['l', 'liters']]
@@ -232,7 +240,11 @@ function fillEffectUnitOptions(options, selectedValue) {
   refs.effUnit.value = options.some(([value]) => value === selectedValue) ? selectedValue : options[0][0];
 }
 
-function effectAmountToBaseOz(amount, unitValue, system, chemicalUnit) {
+function effectAmountToBaseOz(amount, unitValue, system, chemicalUnit, chemicalIndex) {
+  if (chemicalIndex === TRICHLOR_EFFECT_INDEX && unitValue === 'tab3') {
+    return amount * TRICHLOR_3IN_TABLET_OZ;
+  }
+
   if (chemicalUnit === 0) {
     if (unitValue === 'gal') return amount * (system === 2 ? 153.7216 : 128);
     if (unitValue === 'l') return amount * 33.814;
@@ -247,7 +259,11 @@ function effectAmountToBaseOz(amount, unitValue, system, chemicalUnit) {
   return amount;
 }
 
-function baseOzToEffectAmount(oz, unitValue, system, chemicalUnit) {
+function baseOzToEffectAmount(oz, unitValue, system, chemicalUnit, chemicalIndex) {
+  if (chemicalIndex === TRICHLOR_EFFECT_INDEX && unitValue === 'tab3') {
+    return oz / TRICHLOR_3IN_TABLET_OZ;
+  }
+
   if (chemicalUnit === 0) {
     if (unitValue === 'gal') return oz / (system === 2 ? 153.7216 : 128);
     if (unitValue === 'l') return oz / 33.814;
@@ -267,15 +283,16 @@ function effectUnitKind(unitValue) {
 }
 
 function syncEffectUnitControl(targetSystem, previousSystem = targetSystem, preserveAmount = true) {
-  const chemicalUnit = effUnits[Number(n(refs.effPop))];
+  const chemicalIndex = Number(n(refs.effPop));
+  const chemicalUnit = effUnits[chemicalIndex];
   const previousValue = refs.effUnit.value;
   const previousChemicalUnit = Number.parseInt(refs.effUnit.dataset.chemicalUnit || String(chemicalUnit), 10);
   const currentAmount = n(refs.effOz);
   const baseOz = preserveAmount
-    ? effectAmountToBaseOz(currentAmount, previousValue, previousSystem, previousChemicalUnit)
+    ? effectAmountToBaseOz(currentAmount, previousValue, previousSystem, previousChemicalUnit, chemicalIndex)
     : null;
 
-  const options = effectUnitOptions(targetSystem, chemicalUnit);
+  const options = effectUnitOptions(targetSystem, chemicalUnit, chemicalIndex);
   const preferredKind = effectUnitKind(previousValue);
   const fallbackValue = preferredKind === 'large'
     ? (options.find(([value]) => effectUnitKind(value) === 'large') || options[0])[0]
@@ -286,7 +303,7 @@ function syncEffectUnitControl(targetSystem, previousSystem = targetSystem, pres
   refs.effUnit.dataset.chemicalUnit = String(chemicalUnit);
 
   if (preserveAmount && Number.isFinite(baseOz)) {
-    refs.effOz.value = String(round2(baseOzToEffectAmount(baseOz, refs.effUnit.value, targetSystem, chemicalUnit)));
+    refs.effOz.value = String(round2(baseOzToEffectAmount(baseOz, refs.effUnit.value, targetSystem, chemicalUnit, chemicalIndex)));
   }
 }
 
@@ -1613,7 +1630,7 @@ function calcEffect() {
   const idx = Number(n(refs.effPop));
   const unit = effUnits[idx];
   const system = Number(n(refs.units));
-  let oz = effectAmountToBaseOz(n(refs.effOz), refs.effUnit.value, system, unit);
+  let oz = effectAmountToBaseOz(n(refs.effOz), refs.effUnit.value, system, unit, idx);
 
   const g = getGallons();
   let result = '';

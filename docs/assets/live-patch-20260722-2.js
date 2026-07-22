@@ -1,4 +1,7 @@
 (() => {
+  const TRICHLOR_EFFECT_INDEX = 4;
+  const TRICHLOR_3IN_TABLET_OZ = 8;
+
   function num(el, fallback = 0) {
     const value = Number.parseFloat(el?.value ?? '');
     return Number.isFinite(value) ? value : fallback;
@@ -60,6 +63,78 @@
       0.6;
 
     return Math.round(base * aerationFactor * 100) / 100;
+  }
+
+  function formatEffect(value) {
+    if (value < 9.95) return Math.floor(value * 10 + 0.5) / 10;
+    return Math.floor(value + 0.5);
+  }
+
+  function round2(value) {
+    return Math.round(value * 100) / 100;
+  }
+
+  function syncTrichlorEffectUi() {
+    const effPop = document.getElementById('eff-pop');
+    const effUnit = document.getElementById('eff-unit');
+    const effOz = document.getElementById('eff-oz');
+    const effResult = document.getElementById('eff-result');
+    const units = document.getElementById('units');
+    const size = document.getElementById('size');
+
+    if (!effPop || !effUnit || !effOz || !effResult || Number(num(effPop)) !== TRICHLOR_EFFECT_INDEX) {
+      return;
+    }
+
+    const currentUnit = effUnit.value;
+    const amount = num(effOz);
+    let baseOz = amount;
+
+    if (currentUnit === 'tab3') {
+      baseOz = amount * TRICHLOR_3IN_TABLET_OZ;
+    } else if (currentUnit === 'lb') {
+      baseOz = amount * 16;
+    } else if (currentUnit === 'kg') {
+      baseOz = amount * 35.274;
+    } else if (currentUnit === 'g') {
+      baseOz = amount * 0.035274;
+    }
+
+    const system = Number(num(units));
+    const options = system === 1
+      ? [['tab3', '3" tablets'], ['g', 'grams'], ['kg', 'kilograms']]
+      : [['tab3', '3" tablets'], ['oz', 'oz'], ['lb', 'pounds']];
+
+    effUnit.innerHTML = '';
+    options.forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      effUnit.appendChild(option);
+    });
+
+    const nextUnit = options.some(([value]) => value === currentUnit) ? currentUnit : 'tab3';
+    effUnit.value = nextUnit;
+
+    if (nextUnit === 'tab3') {
+      effOz.value = String(round2(baseOz / TRICHLOR_3IN_TABLET_OZ));
+    }
+
+    const gallons = getGallons({ units, size });
+    const activeAmount = num(effOz);
+    const activeOz = effUnit.value === 'tab3'
+      ? activeAmount * TRICHLOR_3IN_TABLET_OZ
+      : effUnit.value === 'lb'
+        ? activeAmount * 16
+        : effUnit.value === 'kg'
+          ? activeAmount * 35.274
+          : effUnit.value === 'g'
+            ? activeAmount * 0.035274
+            : activeAmount;
+
+    const unitLabel = effUnit.options[effUnit.selectedIndex]?.textContent || effUnit.value;
+    const singularUnitLabel = Math.abs(activeAmount - 1) < 0.0001 ? unitLabel.replace(/s$/, '') : unitLabel;
+    effResult.textContent = `Adding ${activeAmount} ${singularUnitLabel} of trichlor will raise FC by ${formatEffect(activeOz / gallons * 6854.95)}, raise CYA by ${formatEffect(activeOz / gallons * 4159.41)}, lower pH by ${round2(activeOz / gallons * 367)}, and raise Salt by ${formatEffect(activeOz / gallons * 5600)}.`;
   }
 
   function updateBuildBadge() {
@@ -172,10 +247,14 @@
   function init() {
     updateBuildBadge();
     updatePassiveOutlook();
+    syncTrichlorEffectUi();
     document.addEventListener('input', updatePassiveOutlook, true);
     document.addEventListener('change', updatePassiveOutlook, true);
+    document.addEventListener('input', () => window.setTimeout(syncTrichlorEffectUi, 0), true);
+    document.addEventListener('change', () => window.setTimeout(syncTrichlorEffectUi, 0), true);
     window.setTimeout(updatePassiveOutlook, 1000);
     window.setTimeout(updatePassiveOutlook, 4000);
+    window.setTimeout(syncTrichlorEffectUi, 1000);
   }
 
   if (document.readyState === 'loading') {
