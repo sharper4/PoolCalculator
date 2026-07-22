@@ -7,7 +7,7 @@ const refs = {
 
   customerName: document.getElementById('customer-name'),
   customerAddress: document.getElementById('customer-address'),
-  technicianName: document.getElementById('technician-name'),
+  emailAddress: document.getElementById('email-address'),
   tcNow: document.getElementById('tc-now'),
   phosphatesNow: document.getElementById('phosphates-now'),
   weatherConditions: document.getElementById('weather-conditions'),
@@ -95,8 +95,8 @@ const refs = {
   rRowCustomer: document.getElementById('r-row-customer'),
   rRowAddress: document.getElementById('r-row-address'),
   rDate: document.getElementById('r-date'),
-  rTechnician: document.getElementById('r-technician'),
-  rRowTechnician: document.getElementById('r-row-technician'),
+  rEmailAddress: document.getElementById('r-email-address'),
+  rRowEmailAddress: document.getElementById('r-row-email-address'),
   rWeather: document.getElementById('r-weather'),
   rPoolSize: document.getElementById('r-pool-size'),
   rPoolTemp: document.getElementById('r-pool-temp'),
@@ -782,7 +782,7 @@ function updateReport() {
   refs.rCustomer.textContent = refs.customerName.value || '__________________________';
   refs.rAddress.textContent = refs.customerAddress.value || '__________________________';
   refs.rDate.textContent = dateText;
-  refs.rTechnician.textContent = refs.technicianName.value || '';
+  refs.rEmailAddress.textContent = refs.emailAddress.value || '';
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
   refs.rPoolSize.textContent = `${Math.round(n(refs.size))} ${refs.sizeUnit.textContent}`;
   refs.rPoolTemp.textContent = `${Math.round(n(refs.temp))} ${refs.tempUnit.textContent === 'Celsius' ? 'C' : 'F'}`;
@@ -1124,7 +1124,7 @@ function applyCustomerSectionsVisibility() {
   if (refs.serviceDetailsSection) refs.serviceDetailsSection.hidden = !customerSectionsVisible;
   if (refs.rRowCustomer) refs.rRowCustomer.hidden = !customerSectionsVisible;
   if (refs.rRowAddress) refs.rRowAddress.hidden = !customerSectionsVisible;
-  if (refs.rRowTechnician) refs.rRowTechnician.hidden = !customerSectionsVisible;
+  if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible;
   if (refs.reportTechInsights) refs.reportTechInsights.hidden = !customerSectionsVisible;
   if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = !customerSectionsVisible;
 }
