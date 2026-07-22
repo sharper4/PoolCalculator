@@ -674,6 +674,7 @@ body.report-mode .controls,
 body.report-mode .panel.reveal.stagger-2,
 body.report-mode .panel.reveal.stagger-3,
 body.report-mode .grid.two.reveal.stagger-4,
+body.report-mode .panel.reveal.stagger-5,
 body.report-mode .foot {
   display: none;
 }
@@ -700,6 +701,7 @@ body.report-mode {
   .panel.reveal.stagger-2,
   .panel.reveal.stagger-3,
   .grid.two.reveal.stagger-4,
+  .panel.reveal.stagger-5,
   .foot,
   .report-toolbar {
     display: none !important;
