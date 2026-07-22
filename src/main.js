@@ -100,6 +100,7 @@ const refs = {
   rEmailAddress: document.getElementById('r-email-address'),
   rRowEmailAddress: document.getElementById('r-row-email-address'),
   rWeather: document.getElementById('r-weather'),
+  rWeatherForecast: document.getElementById('r-weather-forecast'),
   rPoolSize: document.getElementById('r-pool-size'),
   rPoolTemp: document.getElementById('r-pool-temp'),
   rFc: document.getElementById('r-fc'),
@@ -850,6 +851,9 @@ function updateReport() {
   refs.rDate.textContent = dateText;
   refs.rEmailAddress.textContent = refs.emailAddress.value || '';
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
+  if (refs.rWeatherForecast) {
+    refs.rWeatherForecast.textContent = refs.weatherForecast.value || 'Unavailable';
+  }
   refs.rPoolSize.textContent = `${Math.round(n(refs.size))} ${refs.sizeUnit.textContent}`;
   refs.rPoolTemp.textContent = `${Math.round(n(refs.temp))} ${refs.tempUnit.textContent === 'Celsius' ? 'C' : 'F'}`;
 
@@ -1193,6 +1197,20 @@ function applyCustomerSectionsVisibility() {
   if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible;
   if (refs.reportTechInsights) refs.reportTechInsights.hidden = !customerSectionsVisible;
   if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = !customerSectionsVisible;
+}
+
+function resolveWeatherForecastFallback(force = false) {
+  if (!refs.weatherForecast) return;
+
+  const text = String(refs.weatherForecast.value || '').trim();
+  const stillLoading = /^loading\s*5-?day\s*forecast/i.test(text);
+  if (!force && !stillLoading) return;
+
+  if (Number.isFinite(weeklyAvgTemp) && Number.isFinite(weeklyAvgUV)) {
+    refs.weatherForecast.value = `Forecast baseline, ${Math.round(weeklyAvgTemp)}F (feels ${Math.round(weeklyAvgTemp)}F), wind 0 mph, UV ${weeklyAvgUV}`;
+  } else {
+    refs.weatherForecast.value = 'Forecast unavailable (location permission or weather service issue).';
+  }
 }
 
 async function loadWeather() {
@@ -1916,9 +1934,15 @@ function init() {
   calcAll();
   expandReportInsightsForPrint();
   loadWeather().then(() => {
+    resolveWeatherForecastFallback(false);
     updateReport();
     expandReportInsightsForPrint();
   });
+
+  window.setTimeout(() => {
+    resolveWeatherForecastFallback(true);
+    updateReport();
+  }, 7000);
 }
 
 init();

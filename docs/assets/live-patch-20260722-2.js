@@ -94,12 +94,35 @@
     return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
   }
 
+  function syncReportForecastWeather() {
+    const reportForecast = document.getElementById('r-weather-forecast');
+    const forecastField = document.getElementById('weather-forecast');
+    if (!reportForecast || !forecastField) return;
+    reportForecast.textContent = forecastField.value || 'Unavailable';
+  }
+
+  function resolveForecastFallback(force) {
+    const forecastField = document.getElementById('weather-forecast');
+    if (!forecastField) return;
+
+    const text = String(forecastField.value || '').trim();
+    const stillLoading = /^loading\s*5-?day\s*forecast/i.test(text);
+    if (!force && !stillLoading) {
+      syncReportForecastWeather();
+      return;
+    }
+
+    forecastField.value = 'Forecast unavailable (location permission or weather service issue).';
+    syncReportForecastWeather();
+  }
+
   async function updateWeatherSummary() {
     const currentField = document.getElementById('weather-conditions');
     const forecastField = document.getElementById('weather-forecast');
     if (!currentField || !forecastField) return;
     if (!navigator.geolocation) {
       forecastField.value = 'Forecast unavailable (geolocation not supported).';
+      syncReportForecastWeather();
       return;
     }
 
@@ -117,6 +140,7 @@
       const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,apparent_temperature_max,wind_speed_10m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
       if (!response.ok) {
         forecastField.value = 'Forecast unavailable (weather service error).';
+        syncReportForecastWeather();
         return;
       }
 
@@ -134,8 +158,10 @@
       const avgUv = averageFirstDays(payload.daily?.uv_index_max, forecastCount, 1);
       const forecastLabel = dominantWeatherLabel(payload.daily?.weather_code, forecastCount);
       forecastField.value = `${forecastLabel}, ${Math.round(avgTemp)}F (feels ${Math.round(avgFeels)}F), wind ${Math.round(avgWind)} mph, UV ${avgUv}`;
+      syncReportForecastWeather();
     } catch {
       forecastField.value = 'Forecast unavailable (location blocked or weather fetch failed).';
+      syncReportForecastWeather();
     }
   }
 
@@ -332,6 +358,8 @@
   function init() {
     updateBuildBadge();
     updateWeatherSummary();
+    syncReportForecastWeather();
+    resolveForecastFallback(false);
     updateGoalNote();
     updatePassiveOutlook();
     syncTrichlorEffectUi();
@@ -341,9 +369,13 @@
     document.addEventListener('change', updateGoalNote, true);
     document.addEventListener('input', () => window.setTimeout(syncTrichlorEffectUi, 0), true);
     document.addEventListener('change', () => window.setTimeout(syncTrichlorEffectUi, 0), true);
+    document.addEventListener('input', () => window.setTimeout(syncReportForecastWeather, 0), true);
+    document.addEventListener('change', () => window.setTimeout(syncReportForecastWeather, 0), true);
     window.setTimeout(updatePassiveOutlook, 1000);
     window.setTimeout(updatePassiveOutlook, 4000);
     window.setTimeout(updateWeatherSummary, 1000);
+    window.setTimeout(() => resolveForecastFallback(true), 7000);
+    window.setTimeout(syncReportForecastWeather, 1200);
     window.setTimeout(updateGoalNote, 1000);
     window.setTimeout(syncTrichlorEffectUi, 1000);
   }
