@@ -533,6 +533,7 @@ function parseRange(text, fallbackMin, fallbackMax) {
 // Used to project chlorine demand instead of the current momentary conditions.
 let weeklyAvgTemp = 80; // default 80°F
 let weeklyAvgUV = 7;    // default UV index
+let weatherModelSource = 'baseline'; // forecast | current | baseline
 
 function exactTarget(value, unit = '') {
   return `${value}${unit}`.trim();
@@ -761,6 +762,12 @@ function updatePassiveOutlook() {
   const tempF = weeklyAvgTemp || parseWeatherTemp();
   const gallons = getGallons();
 
+  if (weatherModelSource === 'current') {
+    lines.push('Note: 5-day forecast inputs were unavailable, so this model is using current weather as fallback.');
+  } else if (weatherModelSource === 'baseline') {
+    lines.push('Note: Weather inputs are unavailable, so this model is using baseline assumptions (80F, UV 7).');
+  }
+
   if (tested.fc) {
     const fc = n(refs.fcFrom);
     const cyaForModel = tested.cya ? n(refs.cyaFrom) : n(refs.cyaTo);
@@ -968,6 +975,12 @@ function updateReport() {
   const tempF    = weeklyAvgTemp; // 7-day average for FC demand projection
   const blPct    = Math.max(0.1, n(refs.fcPercent, 6));
   const aeration = refs.phAeration ? refs.phAeration.value : 'medium';
+
+  if (weatherModelSource === 'current') {
+    forecastItems.push('Weather model note: 5-day forecast inputs were unavailable, so this forecast plan is temporarily using current weather conditions.');
+  } else if (weatherModelSource === 'baseline') {
+    forecastItems.push('Weather model note: Weather inputs are unavailable, so this forecast plan is using baseline assumptions (80F, UV 7).');
+  }
 
   // ── FC ──────────────────────────────────────────────────────────────────
   if (tested.fc) {
@@ -1233,6 +1246,7 @@ async function loadWeather() {
         longitude = position.coords.longitude;
       } catch {
         refs.weatherConditions.value = '';
+        weatherModelSource = 'baseline';
         if (refs.weatherForecast) {
           refs.weatherForecast.value = 'Forecast unavailable (location blocked).';
         }
@@ -1243,6 +1257,7 @@ async function loadWeather() {
       }
     } else {
       refs.weatherConditions.value = '';
+      weatherModelSource = 'baseline';
       if (refs.weatherForecast) {
         refs.weatherForecast.value = 'Forecast unavailable (geolocation not supported).';
       }
@@ -1321,17 +1336,35 @@ async function loadWeather() {
     const forecastWind = averageFirstDays(payload.daily?.wind_speed_10m_max, forecastCount, 0);
     const forecastLabel = dominantWeatherLabel(payload.daily?.weather_code, forecastCount);
 
-    if (Number.isFinite(forecastUv)) {
+    const hasForecastTemp = Number.isFinite(forecastTemp);
+    const hasForecastUv = Number.isFinite(forecastUv);
+    const currentTemp = Number(current.temperature_2m);
+    const currentFeels = Number(current.apparent_temperature);
+    const currentWind = Number(current.wind_speed_10m);
+    const currentUvValue = Number(currentUv);
+
+    if (hasForecastUv) {
       weeklyAvgUV = forecastUv;
+    } else if (Number.isFinite(currentUvValue)) {
+      weeklyAvgUV = currentUvValue;
     }
-    if (Number.isFinite(forecastTemp)) {
+    if (hasForecastTemp) {
       weeklyAvgTemp = forecastTemp;
+    } else if (Number.isFinite(currentTemp)) {
+      weeklyAvgTemp = currentTemp;
     }
+
+    const usingCurrentFallback = !hasForecastTemp || !hasForecastUv;
+    weatherModelSource = usingCurrentFallback ? 'current' : 'forecast';
+
     if (refs.weatherForecast) {
-      refs.weatherForecast.value = `${forecastLabel}, ${Math.round(forecastTemp || weeklyAvgTemp)}F (feels ${Math.round(forecastFeels || weeklyAvgTemp)}F), wind ${Math.round(forecastWind || 0)} mph, UV ${Number.isFinite(forecastUv) ? forecastUv : weeklyAvgUV}`;
+      refs.weatherForecast.value = usingCurrentFallback
+        ? `Current weather fallback, ${Math.round(currentTemp || weeklyAvgTemp)}F (feels ${Math.round(currentFeels || weeklyAvgTemp)}F), wind ${Math.round(currentWind || 0)} mph, UV ${Number.isFinite(currentUvValue) ? currentUvValue : weeklyAvgUV}`
+        : `${forecastLabel}, ${Math.round(forecastTemp || weeklyAvgTemp)}F (feels ${Math.round(forecastFeels || weeklyAvgTemp)}F), wind ${Math.round(forecastWind || 0)} mph, UV ${Number.isFinite(forecastUv) ? forecastUv : weeklyAvgUV}`;
     }
   } catch (err) {
     refs.weatherConditions.value = '';
+    weatherModelSource = 'baseline';
     if (refs.weatherForecast) {
       refs.weatherForecast.value = 'Forecast unavailable (weather service error).';
     }
@@ -1936,12 +1969,14 @@ function init() {
   expandReportInsightsForPrint();
   loadWeather().then(() => {
     resolveWeatherForecastFallback(false);
+    updatePassiveOutlook();
     updateReport();
     expandReportInsightsForPrint();
   });
 
   window.setTimeout(() => {
     resolveWeatherForecastFallback(true);
+    updatePassiveOutlook();
     updateReport();
   }, 7000);
 }
