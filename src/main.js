@@ -1214,6 +1214,9 @@ async function loadWeather() {
         longitude = position.coords.longitude;
       } catch {
         refs.weatherConditions.value = '';
+        if (refs.weatherForecast) {
+          refs.weatherForecast.value = 'Forecast unavailable (location blocked).';
+        }
         if (refs.weatherLabelText) {
           refs.weatherLabelText.textContent = 'Current weather conditions';
         }
@@ -1221,6 +1224,9 @@ async function loadWeather() {
       }
     } else {
       refs.weatherConditions.value = '';
+      if (refs.weatherForecast) {
+        refs.weatherForecast.value = 'Forecast unavailable (geolocation not supported).';
+      }
       if (refs.weatherLabelText) {
         refs.weatherLabelText.textContent = 'Current weather conditions';
       }
@@ -1307,7 +1313,9 @@ async function loadWeather() {
     }
   } catch (err) {
     refs.weatherConditions.value = '';
-    if (refs.weatherForecast) refs.weatherForecast.value = '';
+    if (refs.weatherForecast) {
+      refs.weatherForecast.value = 'Forecast unavailable (weather service error).';
+    }
     if (refs.weatherLabelText) {
       refs.weatherLabelText.textContent = 'Current weather conditions';
     }

@@ -97,7 +97,11 @@
   async function updateWeatherSummary() {
     const currentField = document.getElementById('weather-conditions');
     const forecastField = document.getElementById('weather-forecast');
-    if (!currentField || !forecastField || !navigator.geolocation) return;
+    if (!currentField || !forecastField) return;
+    if (!navigator.geolocation) {
+      forecastField.value = 'Forecast unavailable (geolocation not supported).';
+      return;
+    }
 
     try {
       const position = await new Promise((resolve, reject) => {
@@ -111,7 +115,10 @@
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
       const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,apparent_temperature_max,wind_speed_10m_max,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
-      if (!response.ok) return;
+      if (!response.ok) {
+        forecastField.value = 'Forecast unavailable (weather service error).';
+        return;
+      }
 
       const payload = await response.json();
       const current = payload.current || {};
@@ -128,7 +135,7 @@
       const forecastLabel = dominantWeatherLabel(payload.daily?.weather_code, forecastCount);
       forecastField.value = `${forecastLabel}, ${Math.round(avgTemp)}F (feels ${Math.round(avgFeels)}F), wind ${Math.round(avgWind)} mph, UV ${avgUv}`;
     } catch {
-      // Keep whatever the primary app rendered if the helper fetch fails.
+      forecastField.value = 'Forecast unavailable (location blocked or weather fetch failed).';
     }
   }
 
