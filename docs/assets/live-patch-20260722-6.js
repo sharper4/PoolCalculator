@@ -281,6 +281,16 @@
     effResult.textContent = `Adding ${activeAmount} ${singularUnitLabel} of trichlor will raise FC by ${formatEffect(activeOz / gallons * 6854.95)}, raise CYA by ${formatEffect(activeOz / gallons * 4159.41)}, lower pH by ${round2(activeOz / gallons * 367)}, and raise Salt by ${formatEffect(activeOz / gallons * 5600)}.`;
   }
 
+  function reorderEffectsDropdownOptions() {
+    const effPop = document.getElementById('eff-pop');
+    if (!effPop) return;
+    const options = Array.from(effPop.options);
+    const bleach825 = options.find((opt) => opt.textContent.trim().toLowerCase() === '8.25% bleach');
+    const bleach10 = options.find((opt) => opt.textContent.trim().toLowerCase() === '10% bleach');
+    if (!bleach825 || !bleach10) return;
+    effPop.insertBefore(bleach825, bleach10);
+  }
+
   function updateBuildBadge() {
     const badge = document.getElementById('build-badge');
     if (!badge) return;
@@ -446,6 +456,7 @@
   function init() {
     hidePassiveOutlookForPrint();
     updateBuildBadge();
+    reorderEffectsDropdownOptions();
     updateWeatherSummary();
     syncReportForecastWeather();
     resolveForecastFallback(false);
@@ -468,6 +479,7 @@
     window.setTimeout(syncForecastPlanModelNote, 2000);
     window.setTimeout(updateGoalNote, 1000);
     window.setTimeout(syncTrichlorEffectUi, 1000);
+    window.setTimeout(reorderEffectsDropdownOptions, 1000);
   }
 
   if (document.readyState === 'loading') {

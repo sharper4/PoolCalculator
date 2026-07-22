@@ -214,6 +214,17 @@ function setOptions(select, options) {
   });
 }
 
+function reorderEffectsDropdownOptions() {
+  if (!refs.effPop) return;
+  const options = Array.from(refs.effPop.options);
+  const bleach825 = options.find((opt) => opt.textContent.trim().toLowerCase() === '8.25% bleach');
+  const bleach10 = options.find((opt) => opt.textContent.trim().toLowerCase() === '10% bleach');
+  if (!bleach825 || !bleach10) return;
+
+  // Keep underlying option values intact so effect math mapping does not change.
+  refs.effPop.insertBefore(bleach825, bleach10);
+}
+
 function effectUnitOptions(system, chemicalUnit, chemicalIndex) {
   if (chemicalIndex === TRICHLOR_EFFECT_INDEX) {
     return system === 1
@@ -1874,6 +1885,7 @@ function init() {
   setOptions(refs.surfacePop, data.surfacePop);
   setOptions(refs.szPop, data.szPop);
   setOptions(refs.effPop, data.effPop);
+  reorderEffectsDropdownOptions();
 
   refs.fcJug.value = '0';
   refs.fcPop.value = '0';
