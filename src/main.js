@@ -123,6 +123,7 @@ const refs = {
   rTreatmentList: document.getElementById('r-treatment-list'),
   rForecastList: document.getElementById('r-forecast-list'),
   rInsights: document.getElementById('r-insights'),
+  rInsightsPrint: document.getElementById('r-insights-print'),
   reportTechInsights: document.getElementById('report-tech-insights'),
   reportEliteDifference: document.getElementById('report-elite-difference'),
   statusClear: document.getElementById('status-clear'),
@@ -1024,8 +1025,12 @@ function updateReport() {
 
 function expandReportInsightsForPrint() {
   if (!refs.rInsights) return;
-  refs.rInsights.style.height = 'auto';
+  refs.rInsights.style.height = '0px';
   refs.rInsights.style.height = `${refs.rInsights.scrollHeight}px`;
+
+  if (refs.rInsightsPrint) {
+    refs.rInsightsPrint.textContent = refs.rInsights.value;
+  }
 }
 
 function setReportMode(enabled) {

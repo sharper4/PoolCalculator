@@ -636,6 +636,13 @@ select:focus {
   font: inherit;
 }
 
+.report-insights-print {
+  display: none;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 body.report-mode .orb,
 body.report-mode .hero,
 body.report-mode .controls,
@@ -814,6 +821,13 @@ body.report-mode {
     max-height: none;
     overflow: visible;
     resize: none;
+    display: none;
+  }
+
+  .report-insights-print {
+    display: block;
+    font-size: 0.883rem;
+    line-height: 1.2;
   }
 
   #r-insights,
