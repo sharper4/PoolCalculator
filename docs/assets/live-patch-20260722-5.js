@@ -404,13 +404,24 @@
 
   function updateGoalNote() {
     const cyaFrom = document.getElementById('cya-from');
-    const goalNote = document.getElementById('goal-note');
-    if (!goalNote) return;
+    const goalResult = document.getElementById('goal-result');
+    if (!goalResult) return;
 
     const cya = intNum(cyaFrom, 0);
     const shock = Math.max(10, Math.floor(cya / 6 + 8.5));
     const mustard = Math.max(12, Math.floor(cya / 2 + 4.5));
-    goalNote.textContent = `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less. Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`;
+    const noteText = `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less. Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`;
+
+    const externalNote = document.getElementById('goal-note');
+    if (externalNote) externalNote.style.display = 'none';
+
+    const existing = goalResult.querySelector('[data-goal-note="1"]');
+    if (existing) existing.remove();
+
+    const noteLine = document.createElement('div');
+    noteLine.dataset.goalNote = '1';
+    noteLine.textContent = noteText;
+    goalResult.appendChild(noteLine);
   }
 
   function hidePassiveOutlookForPrint() {

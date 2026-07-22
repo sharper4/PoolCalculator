@@ -1686,12 +1686,9 @@ function calcSuggested() {
   refs.goalResult.innerHTML = [
     `Suggested FC Levels: SWG ${swg}, Normal ${min}-${targ}, Shock ${shock}, Mustard ${mustard}.`,
     `FC Goal Band: ${fcGoal} (target ${fcRangeMin}-${targ} ppm).`,
-    `Suggested Goals -> pH: ${phGoal}, TA: ${taGoal}, CH: ${chGoal}, CYA: ${cyaGoal}.`
+    `Suggested Goals -> pH: ${phGoal}, TA: ${taGoal}, CH: ${chGoal}, CYA: ${cyaGoal}.`,
+    `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less. Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`
   ].join('<br>');
-
-  if (refs.goalNote) {
-    refs.goalNote.textContent = `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less. Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`;
-  }
 }
 
 function calcPoolVolume() {
