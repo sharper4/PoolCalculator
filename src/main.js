@@ -146,8 +146,8 @@ const data = {
   surfacePop: ['Not Setup', 'Plaster', 'Vinyl', 'Fiberglass'],
   szPop: ['rectangular', 'oval', 'round (ignores length)'],
   effPop: [
-    '5.25% bleach',
     '6% bleach',
+    '7.5% bleach',
     '10% bleach',
     '12.5% bleach',
     'trichlor',
@@ -157,7 +157,6 @@ const data = {
     '65% cal-hypo',
     '73% cal-hypo',
     'lithium hypochlorite',
-    'chlorine gas',
     '15.7% muriatic acid',
     '31.45% muriatic acid',
     'dry acid',
@@ -175,7 +174,7 @@ const data = {
   ]
 };
 
-const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0];
+const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0];
 const BAKING_SODA_TA_OZMUL = 4461.56;
 const TRICHLOR_EFFECT_INDEX = 4;
 const TRICHLOR_3IN_TABLET_OZ = 8;
@@ -212,6 +211,16 @@ function setOptions(select, options) {
     opt.textContent = label;
     select.appendChild(opt);
   });
+}
+
+function replaceWithBreaks(el, lines) {
+  if (!el) return;
+  const fragment = document.createDocumentFragment();
+  lines.forEach((line, idx) => {
+    if (idx > 0) fragment.appendChild(document.createElement('br'));
+    fragment.append(line);
+  });
+  el.replaceChildren(fragment);
 }
 
 function reorderEffectsDropdownOptions() {
@@ -1694,12 +1703,13 @@ function calcSuggested() {
   refs.saltTargetRange.textContent = `Target range: 2700-3400`;
   refs.borTargetRange.textContent = `Target: ${i(refs.borTo, 0)} ppm`;
 
-  refs.goalResult.innerHTML = [
+  replaceWithBreaks(refs.goalResult, [
     `Suggested FC Levels: SWG ${swg}, Normal ${min}-${targ}, Shock ${shock}, Mustard ${mustard}.`,
     `FC Goal Band: ${fcGoal} (target ${fcRangeMin}-${targ} ppm).`,
     `Suggested Goals -> pH: ${phGoal}, TA: ${taGoal}, CH: ${chGoal}, CYA: ${cyaGoal}.`,
-    `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less.<br>Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`
-  ].join('<br>');
+    `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less.`,
+    `Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`
+  ]);
 }
 
 function calcPoolVolume() {
@@ -1743,11 +1753,14 @@ function calcEffect() {
 
   switch (idx) {
     case 0:
-      oz = oz * 525 / 600;
+      result = `raise FC by ${formatEffect(oz / g * 602.7525)} and raise Salt by ${formatEffect(oz / g * 991.66992)}`;
+      break;
     case 1:
-      oz = oz * 0.61721856;
+      result = `raise FC by ${formatEffect(oz / g * 669.6891)} and raise Salt by ${formatEffect(oz / g * 1101.64368)}`;
+      break;
     case 2:
-      oz = oz * 100 / 125;
+      result = `raise FC by ${formatEffect(oz / g * 781.2496)} and raise Salt by ${formatEffect(oz / g * 1285.6)}`;
+      break;
     case 3:
       result = `raise FC by ${formatEffect(oz / g * 976.562)} and raise Salt by ${formatEffect(oz / g * 1607)}`;
       break;
@@ -1770,47 +1783,44 @@ function calcEffect() {
       result = `raise FC by ${formatEffect(oz / g * 2637.5)} and raise Salt by ${formatEffect(oz / g * 4170)}`;
       break;
     case 11:
-      result = `raise FC by ${formatEffect(oz / g * 7489.4)}, lower pH by ${round2(oz / g * 625)}, and raise Salt by ${formatEffect(oz / g * 6140)}`;
-      break;
-    case 12:
       oz /= 2;
-    case 13:
+    case 12:
       result = `lower pH by ${round2(oz / g * 240.15)} and lower TA by ${formatEffect(oz / g * 3911.47)}`;
       break;
-    case 14:
+    case 13:
       result = `lower pH by ${round2(oz / g * 167.9)} and lower TA by ${formatEffect(oz / g * 2909.47)}`;
       break;
-    case 15:
+    case 14:
       result = `raise pH by ${round2(oz / g * 217.1)} and raise TA by ${formatEffect(oz / g * 7072.46)}`;
       break;
-    case 16:
+    case 15:
       result = `raise pH by ${round2(oz / g * 109.1)}, raise Borate by ${formatEffect(oz / g * 849.271)}, and raise TA by ${formatEffect(oz / g * 1949.93)}`;
       break;
-    case 17:
+    case 16:
       result = `raise pH by ${round2(oz / g * 166.8)}, raise Borate by ${formatEffect(oz / g * 1111.69)}, and raise TA by ${formatEffect(oz / g * 2548.89)}`;
       break;
-    case 18:
+    case 17:
       result = `raise pH by ${round2(oz / g * 546.3)} and raise TA by ${formatEffect(oz / g * 9135.78)}`;
       break;
-    case 19:
+    case 18:
       result = `raise TA by ${formatEffect(oz / g * 4461.56)} and raise pH by ${round2(oz / g * 9.091)}`;
       break;
-    case 20:
+    case 19:
       result = `raise CH by ${formatEffect(oz / g * 6754.11)}`;
       break;
-    case 21:
+    case 20:
       result = `raise CH by ${formatEffect(oz / g * 5098.82)}`;
       break;
-    case 22:
+    case 21:
       result = `raise CYA by ${formatEffect(oz / g * 7489.51)} and lower pH by ${round2(oz / g * 138.8)}`;
       break;
-    case 23:
+    case 22:
       result = `raise CYA by ${formatEffect(oz / g * 2890)}`;
       break;
-    case 24:
+    case 23:
       result = `raise Salt by ${formatEffect(oz / g * 7468.64 * 16)}`;
       break;
-    case 25:
+    case 24:
       result = `raise FC by ${formatEffect(oz / g * 482.202 * 8.25 / 6)} and raise Salt by ${formatEffect(oz / g * 1607 * 8.25 / 12.5)}`;
       break;
     default:
@@ -1895,7 +1905,7 @@ function init() {
   refs.chlorinePop.value = '1';
   refs.surfacePop.value = '1';
   refs.szPop.value = '0';
-  refs.effPop.value = '25';
+  refs.effPop.value = '24';
 
   updateBuildBadge();
 
