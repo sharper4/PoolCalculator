@@ -425,8 +425,7 @@
     const externalNote = document.getElementById('goal-note');
     if (externalNote) externalNote.style.display = 'none';
 
-    const existing = goalResult.querySelector('[data-goal-note="1"]');
-    if (existing) existing.remove();
+    goalResult.querySelectorAll('[data-goal-note="1"]').forEach(el => el.remove());
 
     const noteLine = document.createElement('div');
     noteLine.dataset.goalNote = '1';
