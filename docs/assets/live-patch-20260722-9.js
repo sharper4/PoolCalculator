@@ -285,8 +285,15 @@
     const effPop = document.getElementById('eff-pop');
     if (!effPop) return;
     const options = Array.from(effPop.options);
-    const bleach825 = options.find((opt) => opt.textContent.trim().toLowerCase() === '8.25% bleach');
-    const bleach10 = options.find((opt) => opt.textContent.trim().toLowerCase() === '10% bleach');
+
+    // Remove chlorine gas — it was removed from the source array but the
+    // compiled bundle pre-dates that change. Option values are already set
+    // to their original indices so calcEffect still maps correctly.
+    const chlorineGas = options.find((opt) => opt.textContent.trim().toLowerCase() === 'chlorine gas');
+    if (chlorineGas) chlorineGas.remove();
+
+    const bleach825 = Array.from(effPop.options).find((opt) => opt.textContent.trim().toLowerCase() === '8.25% bleach');
+    const bleach10  = Array.from(effPop.options).find((opt) => opt.textContent.trim().toLowerCase() === '10% bleach');
     if (!bleach825 || !bleach10) return;
     effPop.insertBefore(bleach825, bleach10);
   }
