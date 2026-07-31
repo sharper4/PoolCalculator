@@ -1079,8 +1079,28 @@ function updateReport() {
     const phTargetStart  = Math.max(7.0, Math.round(phMin * 100) / 100);
     const phEndProjected = Math.round((ph + phRise) * 100) / 100;
     const aerLabel       = aeration.charAt(0).toUpperCase() + aeration.slice(1);
+    const bor = i(refs.borFrom, 0);
 
-    if (ph <= phTargetStart) {
+    if (ph < phMin) {
+      // pH is below minimum — recommend raising with borax or soda ash.
+      // Use the same polynomial model as calcPH().
+      const phr_raw = (phMin - ph) * gallons;
+      const phr_mid = (ph + phMin) / 2;
+      const phr_adj = (192.1626 + -60.1221 * phr_mid + 6.0752 * phr_mid * phr_mid + -0.1943 * phr_mid * phr_mid * phr_mid) * (taForPhModel + 13.91) / 114.6;
+      const phr_xco = (-5.476259 + 2.414292 * phr_mid + -0.355882 * phr_mid * phr_mid + 0.01755 * phr_mid * phr_mid * phr_mid) * bor;
+      const phr_extra = phr_xco * phr_raw;
+      const phr_delta = phr_raw * phr_adj;
+      const sodaAshOz = phr_delta / 218.68 + phr_extra / 218.68;
+      const boraxOz   = phr_delta / 110.05 + phr_extra / 110.05;
+      const phAfterRaise = Math.min(phMin + phRise, phMax);
+      forecastItems.push(
+        `pH: Below minimum (${ph.toFixed(1)} < ${phMin}) — raise pH today. ` +
+        `Add ${putWeight(sodaAshOz)} by weight or ${putVolume(sodaAshOz * 0.8715)} by volume of washing soda/soda ash → pH ~${ph.toFixed(1)} to ~${phMin.toFixed(1)}. ` +
+        `Or add ${putWeight(boraxOz)} by weight or ${putVolume(boraxOz * 0.9586)} by volume of borax → pH ~${ph.toFixed(1)} to ~${phMin.toFixed(1)}. ` +
+        `(Borax preferred: smaller TA impact.) ` +
+        `Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${phAfterRaise.toFixed(1)} by next visit (target: ${phMin}–${phMax}).`
+      );
+    } else if (ph <= phTargetStart) {
       forecastItems.push(
         `pH: No adjustment needed today. Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, TA ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(ph + phRise, phMax).toFixed(1)} by next visit.`
       );
@@ -1091,7 +1111,6 @@ function updateReport() {
     } else {
       // Compute acid doses using the exact same pH-acid model as treatment plan.
       const maStrength = Number(n(refs.maPop));
-      const bor = i(refs.borFrom, 0);
       const forecastOz = muriaticAcidOzForPhDrop(ph, phTargetStart, taForPhModel, bor, gallons, maStrength);
       // Compare rounded recommendation amounts to match what user sees in the UI text.
       const treatmentDisplayedOz = parseDisplayedOz(phPlan);
