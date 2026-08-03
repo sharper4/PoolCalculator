@@ -8,6 +8,7 @@
   style.textContent = `
     @media print { .no-print { display: none !important; } }
     .report-table tr.monitor-row td { font-weight: 600; color: #a05c00; }
+    .chem-card.near-range { border-color: #c07a00; background: #fff8e6; box-shadow: inset 0 0 0 1px rgba(160,92,0,0.2); }
   `;
   document.head.appendChild(style);
 
@@ -31,12 +32,12 @@
 
   // ── Parameter map ─────────────────────────────────────────────────────────
   const PARAMS = [
-    { resultId: 'r-fc',   rangeId: 'range-fc',   statusId: 's-fc',   pillId: 'fc-target-range',   idealId: 'ideal-fc',   fmtFn: round2str, unit: ' ppm', monitorBuf: 0.10 },
-    { resultId: 'r-ph',   rangeId: 'range-ph',   statusId: 's-ph',   pillId: 'ph-target-range',   idealId: 'ideal-ph',   fmtFn: round2str, unit: '',      monitorBuf: 0 },
-    { resultId: 'r-ta',   rangeId: 'range-ta',   statusId: 's-ta',   pillId: 'ta-target-range',   idealId: 'ideal-ta',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
-    { resultId: 'r-ch',   rangeId: 'range-ch',   statusId: 's-ch',   pillId: 'ch-target-range',   idealId: 'ideal-ch',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
-    { resultId: 'r-cya',  rangeId: 'range-cya',  statusId: 's-cya',  pillId: 'cya-target-range',  idealId: 'ideal-cya',  fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
-    { resultId: 'r-salt', rangeId: 'range-salt', statusId: 's-salt', pillId: 'salt-target-range', idealId: 'ideal-salt', fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-fc',   rangeId: 'range-fc',   statusId: 's-fc',   pillId: 'fc-target-range',   idealId: 'ideal-fc',   fmtFn: round2str, unit: ' ppm', monitorBuf: 0.10, cardSel: '.chem-card.fc' },
+    { resultId: 'r-ph',   rangeId: 'range-ph',   statusId: 's-ph',   pillId: 'ph-target-range',   idealId: 'ideal-ph',   fmtFn: round2str, unit: '',      monitorBuf: 0,    cardSel: null },
+    { resultId: 'r-ta',   rangeId: 'range-ta',   statusId: 's-ta',   pillId: 'ta-target-range',   idealId: 'ideal-ta',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10, cardSel: '.chem-card.ta' },
+    { resultId: 'r-ch',   rangeId: 'range-ch',   statusId: 's-ch',   pillId: 'ch-target-range',   idealId: 'ideal-ch',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10, cardSel: '.chem-card.ch' },
+    { resultId: 'r-cya',  rangeId: 'range-cya',  statusId: 's-cya',  pillId: 'cya-target-range',  idealId: 'ideal-cya',  fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10, cardSel: '.chem-card.cya' },
+    { resultId: 'r-salt', rangeId: 'range-salt', statusId: 's-salt', pillId: 'salt-target-range', idealId: 'ideal-salt', fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10, cardSel: '.chem-card.salt' },
   ];
 
   // ── Core update (idempotent) ───────────────────────────────────────────────
@@ -73,7 +74,22 @@
       row.classList.toggle('needs-attention-row', s === 'Needs attention');
       row.classList.toggle('monitor-row', s === 'Monitor');
     }
-  }
+
+    // Sync card color: upgrade out-of-range → near-range when within buffer
+    if (p.cardSel) {
+      const card = document.querySelector(p.cardSel);
+      if (card && card.classList.contains('out-of-range') && Number.isFinite(lo) && Number.isFinite(hi)) {
+        const valMatch = resultEl.textContent.match(/(\d+(?:\.\d+)?)/);  
+        if (valMatch) {
+          const value = Number(valMatch[1]);
+          const buffer = (hi - lo) * p.monitorBuf;
+          if (value >= lo - buffer && value <= hi + buffer) {
+            card.classList.remove('out-of-range');
+            card.classList.add('near-range');
+          }
+        }
+      }
+    }
 
   function runAll() { PARAMS.forEach(applyParam); }
 
@@ -113,11 +129,12 @@
 
     runAll();
 
-    // Watch status cells and target-range pills for bundle recalculations
+    // Watch status cells, target-range pills, and cards for bundle recalculations
     const watchEls = [
       ...PARAMS.map(p => document.getElementById(p.statusId)),
       ...PARAMS.map(p => document.getElementById(p.pillId)),
     ].filter(Boolean);
+    const cardEls = PARAMS.map(p => p.cardSel && document.querySelector(p.cardSel)).filter(Boolean);
 
     let debounce = null;
     const observer = new MutationObserver(() => {
@@ -125,6 +142,7 @@
       debounce = setTimeout(runAll, 0);
     });
     watchEls.forEach(el => observer.observe(el, { characterData: true, childList: true, subtree: true }));
+    cardEls.forEach(el => observer.observe(el, { attributes: true, attributeFilter: ['class'] }));
   }
 
   if (document.readyState === 'loading') {

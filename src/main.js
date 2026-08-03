@@ -526,7 +526,7 @@ function syncAttentionRow(statusCell) {
   row.classList.toggle('monitor-row', statusCell.textContent === 'Monitor');
 }
 
-function setRangeState(card, value, min, max) {
+function setRangeState(card, value, min, max, monitorBuf = 0.10) {
   const hasNow = (raw) => String(raw ?? '').trim() !== '';
   if (
     (card === refs.fcCard && !hasNow(refs.fcFrom.value))
@@ -537,14 +537,22 @@ function setRangeState(card, value, min, max) {
     || (card === refs.saltCard && !hasNow(refs.saltFrom.value))
     || (card === refs.borCard && !hasNow(refs.borFrom.value))
   ) {
-    card.classList.remove('within-range', 'out-of-range');
+    card.classList.remove('within-range', 'out-of-range', 'near-range');
     return;
   }
 
   if (!card || !Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) return;
   const inRange = value >= min && value <= max;
-  card.classList.toggle('within-range', inRange);
-  card.classList.toggle('out-of-range', !inRange);
+  if (inRange) {
+    card.classList.add('within-range');
+    card.classList.remove('out-of-range', 'near-range');
+  } else {
+    card.classList.remove('within-range');
+    const buffer = (max - min) * monitorBuf;
+    const isNear = monitorBuf > 0 && value >= min - buffer && value <= max + buffer;
+    card.classList.toggle('near-range', isNear);
+    card.classList.toggle('out-of-range', !isNear);
+  }
 }
 
 function parseRange(text, fallbackMin, fallbackMax) {
@@ -957,7 +965,7 @@ function updateReport() {
   [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
-  setRangeState(refs.phCard, ph, phMin, phMax);
+  setRangeState(refs.phCard, ph, phMin, phMax, 0);
   setRangeState(refs.taCard, ta, taMin, taMax);
   setRangeState(refs.chCard, ch, chMin, chMax);
   setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
