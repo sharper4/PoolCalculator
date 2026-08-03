@@ -117,6 +117,12 @@ const refs = {
   idealCya: document.getElementById('ideal-cya'),
   idealPhos: document.getElementById('ideal-phos'),
   idealSalt: document.getElementById('ideal-salt'),
+  rangeFc: document.getElementById('range-fc'),
+  rangePh: document.getElementById('range-ph'),
+  rangeTa: document.getElementById('range-ta'),
+  rangeCh: document.getElementById('range-ch'),
+  rangeCya: document.getElementById('range-cya'),
+  rangeSalt: document.getElementById('range-salt'),
   sFc: document.getElementById('s-fc'),
   sPh: document.getElementById('s-ph'),
   sTa: document.getElementById('s-ta'),
@@ -452,8 +458,10 @@ function statusBags(lbs) {
 
 function statusMark(value, min, max) {
   if (!Number.isFinite(value)) return '--';
-  if (value < min || value > max) return 'Needs attention';
-  return 'OK';
+  if (value >= min && value <= max) return 'OK';
+  const buffer = (max - min) * 0.05;
+  if (value >= min - buffer && value <= max + buffer) return 'Monitor';
+  return 'Needs attention';
 }
 
 function cleanResult(text) {
@@ -513,6 +521,7 @@ function syncAttentionRow(statusCell) {
   const row = statusCell?.parentElement;
   if (!row) return;
   row.classList.toggle('needs-attention-row', statusCell.textContent === 'Needs attention');
+  row.classList.toggle('monitor-row', statusCell.textContent === 'Monitor');
 }
 
 function setRangeState(card, value, min, max) {
@@ -923,6 +932,18 @@ function updateReport() {
   const [cyaMin, cyaMax] = parseRange(refs.cyaTargetRange.textContent, n(refs.cyaTo), n(refs.cyaTo));
   const [saltMin, saltMax] = parseRange(refs.saltTargetRange.textContent, n(refs.saltTo), n(refs.saltTo));
   const [borMin, borMax] = parseRange(refs.borTargetRange.textContent, n(refs.borTo), n(refs.borTo));
+
+  const fmtRange = (lo, hi, rounder, unit) => {
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return '--';
+    if (lo === hi) return `${rounder(lo)}${unit}`;
+    return `${rounder(lo)}–${rounder(hi)}${unit}`;
+  };
+  refs.rangeFc.textContent = fmtRange(fcMin, fcMax, round2, ' ppm');
+  refs.rangePh.textContent = fmtRange(phMin, phMax, round2, '');
+  refs.rangeTa.textContent = fmtRange(taMin, taMax, Math.round, ' ppm');
+  refs.rangeCh.textContent = fmtRange(chMin, chMax, Math.round, ' ppm');
+  refs.rangeCya.textContent = fmtRange(cyaMin, cyaMax, Math.round, ' ppm');
+  refs.rangeSalt.textContent = fmtRange(saltMin, saltMax, Math.round, ' ppm');
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
   refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax) : 'Not tested';
