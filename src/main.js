@@ -456,11 +456,11 @@ function statusBags(lbs) {
   return rem > 0 ? `${bags} (40 lb) bags and ${rem} lbs` : `${bags} (40 lb) bags`;
 }
 
-function statusMark(value, min, max, allowMonitor = true) {
+function statusMark(value, min, max, monitorBuf = 0.10) {
   if (!Number.isFinite(value)) return '--';
   if (value >= min && value <= max) return 'OK';
-  if (allowMonitor) {
-    const buffer = (max - min) * 0.10;
+  if (monitorBuf > 0) {
+    const buffer = (max - min) * monitorBuf;
     if (value >= min - buffer && value <= max + buffer) return 'Monitor';
   }
   return 'Needs attention';
@@ -956,7 +956,7 @@ function updateReport() {
   refs.rangeSalt.textContent = fmtRange(saltMin, saltMax, Math.round, ' ppm');
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
-  refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax, false) : 'Not tested';
+  refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax, 0.05) : 'Not tested';
   refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
   refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
@@ -965,7 +965,7 @@ function updateReport() {
   [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
-  setRangeState(refs.phCard, ph, phMin, phMax, 0);
+  setRangeState(refs.phCard, ph, phMin, phMax, 0.05);
   setRangeState(refs.taCard, ta, taMin, taMax);
   setRangeState(refs.chCard, ch, chMin, chMax);
   setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
