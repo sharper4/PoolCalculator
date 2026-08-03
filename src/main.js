@@ -956,7 +956,13 @@ function updateReport() {
   refs.rangeSalt.textContent = fmtRange(saltMin, saltMax, Math.round, ' ppm');
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
-  refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax, 0.05) : 'Not tested';
+  // pH uses absolute ±0.2 tolerance for Monitor (not % of span)
+  refs.sPh.textContent = tested.ph ? (() => {
+    if (!Number.isFinite(ph)) return '--';
+    if (ph >= phMin && ph <= phMax) return 'OK';
+    if (ph >= phMin - 0.2 && ph <= phMax + 0.2) return 'Monitor';
+    return 'Needs attention';
+  })() : 'Not tested';
   refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
   refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
@@ -965,7 +971,21 @@ function updateReport() {
   [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
 
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
-  setRangeState(refs.phCard, ph, phMin, phMax, 0.05);
+  // pH card uses absolute ±0.2 tolerance for near-range
+  if (refs.phCard && Number.isFinite(ph) && Number.isFinite(phMin) && Number.isFinite(phMax)) {
+    const hasNow = String(refs.phFrom.value ?? '').trim() !== '';
+    if (!hasNow) {
+      refs.phCard.classList.remove('within-range', 'out-of-range', 'near-range');
+    } else if (ph >= phMin && ph <= phMax) {
+      refs.phCard.classList.add('within-range');
+      refs.phCard.classList.remove('out-of-range', 'near-range');
+    } else {
+      refs.phCard.classList.remove('within-range');
+      const isNear = ph >= phMin - 0.2 && ph <= phMax + 0.2;
+      refs.phCard.classList.toggle('near-range', isNear);
+      refs.phCard.classList.toggle('out-of-range', !isNear);
+    }
+  }
   setRangeState(refs.taCard, ta, taMin, taMax);
   setRangeState(refs.chCard, ch, chMin, chMax);
   setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
