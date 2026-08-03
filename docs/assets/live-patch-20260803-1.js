@@ -90,6 +90,7 @@
         }
       }
     }
+  }
 
   function runAll() { PARAMS.forEach(applyParam); }
 
