@@ -13,7 +13,7 @@
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function parseRangeFromText(text) {
-    const m = text.match(/(\d+(?:\.\d+)?)\s*(?:[–\-])+\s*(\d+(?:\.\d+)?)/i);
+    const m = text.match(/(\d+(?:\.\d+)?)\s*(?:to|[–\-])+\s*(\d+(?:\.\d+)?)/i);
     if (m) return [Number(m[1]), Number(m[2])];
     const s = text.match(/(\d+(?:\.\d+)?)/);
     if (s) { const v = Number(s[1]); return [v, v]; }
@@ -31,12 +31,12 @@
 
   // ── Parameter map ─────────────────────────────────────────────────────────
   const PARAMS = [
-    { resultId: 'r-fc',   rangeId: 'range-fc',   statusId: 's-fc',   pillId: 'fc-target-range',   idealId: 'ideal-fc',   fmtFn: round2str, unit: ' ppm' },
-    { resultId: 'r-ph',   rangeId: 'range-ph',   statusId: 's-ph',   pillId: 'ph-target-range',   idealId: 'ideal-ph',   fmtFn: round2str, unit: '' },
-    { resultId: 'r-ta',   rangeId: 'range-ta',   statusId: 's-ta',   pillId: 'ta-target-range',   idealId: 'ideal-ta',   fmtFn: rndStr,    unit: ' ppm' },
-    { resultId: 'r-ch',   rangeId: 'range-ch',   statusId: 's-ch',   pillId: 'ch-target-range',   idealId: 'ideal-ch',   fmtFn: rndStr,    unit: ' ppm' },
-    { resultId: 'r-cya',  rangeId: 'range-cya',  statusId: 's-cya',  pillId: 'cya-target-range',  idealId: 'ideal-cya',  fmtFn: rndStr,    unit: ' ppm' },
-    { resultId: 'r-salt', rangeId: 'range-salt', statusId: 's-salt', pillId: 'salt-target-range', idealId: 'ideal-salt', fmtFn: rndStr,    unit: ' ppm' },
+    { resultId: 'r-fc',   rangeId: 'range-fc',   statusId: 's-fc',   pillId: 'fc-target-range',   idealId: 'ideal-fc',   fmtFn: round2str, unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-ph',   rangeId: 'range-ph',   statusId: 's-ph',   pillId: 'ph-target-range',   idealId: 'ideal-ph',   fmtFn: round2str, unit: '',      monitorBuf: 0 },
+    { resultId: 'r-ta',   rangeId: 'range-ta',   statusId: 's-ta',   pillId: 'ta-target-range',   idealId: 'ideal-ta',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-ch',   rangeId: 'range-ch',   statusId: 's-ch',   pillId: 'ch-target-range',   idealId: 'ideal-ch',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-cya',  rangeId: 'range-cya',  statusId: 's-cya',  pillId: 'cya-target-range',  idealId: 'ideal-cya',  fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-salt', rangeId: 'range-salt', statusId: 's-salt', pillId: 'salt-target-range', idealId: 'ideal-salt', fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
   ];
 
   // ── Core update (idempotent) ───────────────────────────────────────────────
@@ -54,12 +54,12 @@
 
     if (!statusEl || !resultEl) return;
 
-    // Upgrade "Needs attention" → "Monitor" when within 5% buffer
-    if (statusEl.textContent === 'Needs attention' && Number.isFinite(lo) && Number.isFinite(hi)) {
+    // Upgrade "Needs attention" → "Monitor" when within 10% buffer (pH excluded)
+    if (p.monitorBuf > 0 && statusEl.textContent === 'Needs attention' && Number.isFinite(lo) && Number.isFinite(hi)) {
       const valMatch = resultEl.textContent.match(/(\d+(?:\.\d+)?)/);
       if (valMatch) {
         const value = Number(valMatch[1]);
-        const buffer = (hi - lo) * 0.05;
+        const buffer = (hi - lo) * p.monitorBuf;
         if (value >= lo - buffer && value <= hi + buffer) {
           statusEl.textContent = 'Monitor';
         }

@@ -456,11 +456,13 @@ function statusBags(lbs) {
   return rem > 0 ? `${bags} (40 lb) bags and ${rem} lbs` : `${bags} (40 lb) bags`;
 }
 
-function statusMark(value, min, max) {
+function statusMark(value, min, max, allowMonitor = true) {
   if (!Number.isFinite(value)) return '--';
   if (value >= min && value <= max) return 'OK';
-  const buffer = (max - min) * 0.05;
-  if (value >= min - buffer && value <= max + buffer) return 'Monitor';
+  if (allowMonitor) {
+    const buffer = (max - min) * 0.10;
+    if (value >= min - buffer && value <= max + buffer) return 'Monitor';
+  }
   return 'Needs attention';
 }
 
@@ -946,7 +948,7 @@ function updateReport() {
   refs.rangeSalt.textContent = fmtRange(saltMin, saltMax, Math.round, ' ppm');
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
-  refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax) : 'Not tested';
+  refs.sPh.textContent = tested.ph ? statusMark(ph, phMin, phMax, false) : 'Not tested';
   refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
   refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
