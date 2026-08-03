@@ -1,5 +1,6 @@
-// Live patch 2026-08-03-2
-// - Adds amber near-range state to chemistry input cards (10% buffer, pH excluded)
+// Live patch 2026-08-03-3
+// - Fixes amber near-range card state: correctly downgrade near-range → out-of-range
+//   when goal source changes and value falls outside the 10% buffer
 (() => {
   const style = document.createElement('style');
   style.textContent = '.chem-card.near-range{border-color:#c07a00;background:#fff8e6;box-shadow:inset 0 0 0 1px rgba(160,92,0,0.2)}';
@@ -22,27 +23,36 @@
   function applyCardState(c) {
     const card = document.querySelector(c.sel);
     if (!card) return;
-    // If now within-range, strip any stale near-range class and return
+
+    // When card is back in range, strip any stale near-range
     if (card.classList.contains('within-range')) {
       card.classList.remove('near-range');
       return;
     }
-    // Only act when card is out-of-range or near-range (value entered, outside target)
-    if (!card.classList.contains('out-of-range') && !card.classList.contains('near-range')) return;
+
+    // Only act when an out-of-tolerance class is present
+    const hasFlag = card.classList.contains('out-of-range') || card.classList.contains('near-range');
+    if (!hasFlag) return;
+
     const resultEl = document.getElementById(c.resultId);
     const pillEl   = document.getElementById(c.pillId);
     if (!resultEl || !pillEl) { card.classList.remove('near-range'); return; }
+
     const valMatch = resultEl.textContent.match(/(\d+(?:\.\d+)?)/);
     if (!valMatch) { card.classList.remove('near-range'); return; }
+
     const [lo, hi] = parseRange(pillEl.textContent);
     if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo === hi) {
       card.classList.remove('near-range');
       return;
     }
+
     const value  = Number(valMatch[1]);
     const buffer = (hi - lo) * 0.10;
     const isNear = value >= lo - buffer && value <= hi + buffer;
-    card.classList.toggle('near-range', isNear);
+
+    // Toggle both classes atomically so the observer settles in one round
+    card.classList.toggle('near-range',   isNear);
     card.classList.toggle('out-of-range', !isNear);
   }
 
@@ -59,6 +69,10 @@
       const card = document.querySelector(c.sel);
       if (card) observer.observe(card, { attributes: true, attributeFilter: ['class'] });
     });
+
+    // Also re-run whenever the goal-source or any input changes (belt-and-suspenders)
+    document.addEventListener('input',  () => setTimeout(runAll, 50), true);
+    document.addEventListener('change', () => setTimeout(runAll, 50), true);
   }
 
   if (document.readyState === 'loading') {
