@@ -742,13 +742,16 @@ select:focus {
 }
 
 .report-qr {
-  width: 100%;
-  max-width: 100px;
-  height: auto;
-  display: block;
+  width: 60px;
+  height: 60px;
+  display: none;
   border: 1px solid #c7d8ee;
   padding: 4px;
   background: #fff;
+}
+
+body.report-mode .report-qr {
+  display: block;
 }
 
 .report-qr-label {
@@ -816,6 +819,10 @@ body.report-mode {
 
   .no-print {
     display: none !important;
+  }
+
+  .report-qr {
+    display: block;
   }
 
   .report-sheet {
