@@ -3,7 +3,7 @@
 .report-qr {
   width: 60px !important;
   height: 60px !important;
-  display: inline-block !important;
+  display: none !important;
   margin-right: 0.6rem;
   border: 1px solid #c7d8ee;
   padding: 4px;
@@ -11,8 +11,9 @@
   vertical-align: middle;
 }
 
-body:not(.report-mode) .report-qr {
-  display: none !important;
+.report-view .report-qr,
+body.report-mode .report-qr {
+  display: inline-block !important;
 }
 
 .report-qr-label {
@@ -21,13 +22,10 @@ body:not(.report-mode) .report-qr {
   margin-top: 0;
 }
 
-body.report-mode .report-qr {
-  display: inline-block !important;
-}
-
 @media print {
   .report-qr {
     display: inline-block !important;
   }
 }
+
 
