@@ -3,18 +3,31 @@
 .report-qr {
   width: 60px !important;
   height: 60px !important;
-  display: none !important;
+  display: inline-block !important;
+  margin-right: 0.6rem;
   border: 1px solid #c7d8ee;
   padding: 4px;
   background: #fff;
+  vertical-align: middle;
+}
+
+body:not(.report-mode) .report-qr {
+  display: none !important;
+}
+
+.report-qr-label {
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: 0;
 }
 
 body.report-mode .report-qr {
-  display: block !important;
+  display: inline-block !important;
 }
 
 @media print {
   .report-qr {
-    display: block !important;
+    display: inline-block !important;
   }
 }
+
