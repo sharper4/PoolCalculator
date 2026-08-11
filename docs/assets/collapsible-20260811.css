@@ -38,3 +38,14 @@
   outline: 2px solid #9bddd3;
   border-radius: 8px;
 }
+
+/* Suggested Levels + If You Do Nothing Today now share a .grid.two row. */
+body.report-mode .grid.two.reveal.stagger-3 {
+  display: none;
+}
+
+@media print {
+  .grid.two.reveal.stagger-3 {
+    display: none !important;
+  }
+}

@@ -220,21 +220,29 @@
         </div>
       </section>
 
-      <details class="panel reveal stagger-3 collapsible">
-        <summary><h2>Suggested Levels</h2></summary>
-        <div class="grid three">
-          <label>Goal Source
-            <select id="from-pop"></select>
-          </label>
-          <label>Primary Chlorine
-            <select id="chlorine-pop"></select>
-          </label>
-          <label>Pool Surface
-            <select id="surface-pop"></select>
-          </label>
-        </div>
-        <div id="goal-result" class="result-block"></div>
-      </details>
+      <section class="grid two reveal stagger-3">
+        <details class="panel collapsible">
+          <summary><h2>Suggested Levels</h2></summary>
+          <div class="grid three">
+            <label>Goal Source
+              <select id="from-pop"></select>
+            </label>
+            <label>Primary Chlorine
+              <select id="chlorine-pop"></select>
+            </label>
+            <label>Pool Surface
+              <select id="surface-pop"></select>
+            </label>
+          </div>
+          <div id="goal-result" class="result-block"></div>
+        </details>
+
+        <details class="panel collapsible">
+          <summary><h2>If You Do Nothing Today</h2></summary>
+          <p class="status">Modeled daily draw and drift using the same weather, UV, aeration, and forecast assumptions as the weekly plan.</p>
+          <div id="passive-outlook" class="result-block"></div>
+        </details>
+      </section>
 
       <section class="grid two reveal stagger-4">
         <details class="panel collapsible">
@@ -264,12 +272,6 @@
           <p id="eff-result" class="result-inline"></p>
         </details>
       </section>
-
-      <details class="panel reveal stagger-5 collapsible">
-        <summary><h2>If You Do Nothing Today</h2></summary>
-        <p class="status">Modeled daily draw and drift using the same weather, UV, aeration, and forecast assumptions as the weekly plan.</p>
-        <div id="passive-outlook" class="result-block"></div>
-      </details>
 
       <footer class="panel foot reveal">
         <p>
