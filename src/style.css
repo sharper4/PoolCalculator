@@ -724,6 +724,41 @@ select:focus {
   overflow-wrap: anywhere;
 }
 
+.report-footer-note {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #bdd2ee;
+  display: grid;
+  grid-template-columns: 1fr minmax(80px, 100px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.report-footer-note p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #385f92;
+  line-height: 1.2;
+}
+
+.report-qr {
+  width: 100%;
+  max-width: 100px;
+  height: auto;
+  display: block;
+  border: 1px solid #c7d8ee;
+  padding: 4px;
+  background: #fff;
+}
+
+.report-qr-label {
+  font-size: 0.65rem;
+  color: #1c3b6b;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 2px;
+}
+
 body.report-mode .orb,
 body.report-mode .hero,
 body.report-mode .controls,
