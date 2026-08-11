@@ -1958,6 +1958,21 @@ function calcAll() {
   updateReport();
 }
 
+// Opening/closing one collapsible panel in a two-column row mirrors its row partner.
+function linkRowCollapsibles() {
+  let syncing = false;
+  document.querySelectorAll('.grid.two > details.collapsible').forEach((panel) => {
+    panel.addEventListener('toggle', () => {
+      if (syncing) return;
+      syncing = true;
+      panel.parentElement.querySelectorAll(':scope > details.collapsible').forEach((sibling) => {
+        if (sibling !== panel) sibling.open = panel.open;
+      });
+      syncing = false;
+    });
+  });
+}
+
 function init() {
   setOptions(refs.fcJug, data.fcJugUS);
   setOptions(refs.fcPop, data.fcPop);
@@ -2058,6 +2073,7 @@ function init() {
   calcUnits();
   applyCustomerSectionsVisibility();
   calcAll();
+  linkRowCollapsibles();
   expandReportInsightsForPrint();
   loadWeather().then(() => {
     resolveWeatherForecastFallback(false);
