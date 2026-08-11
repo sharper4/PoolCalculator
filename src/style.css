@@ -729,12 +729,19 @@ select:focus {
   padding-top: 0.8rem;
   border-top: 1px solid #bdd2ee;
   display: grid;
-  grid-template-columns: 1fr minmax(80px, 100px);
-  gap: 1rem;
-  align-items: start;
+  grid-template-columns: minmax(80px, auto) 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
 }
 
-.report-footer-note p {
+.report-footer-qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.report-footer-text-section p {
   margin: 0;
   font-size: 0.75rem;
   color: #385f92;
