@@ -1,0 +1,40 @@
+/* Collapsible (details/summary) panels: Suggested Levels, Pool Volume Estimator,
+   Effects of Adding Chemicals, If You Do Nothing Today. */
+.collapsible > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible > summary::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.2rem;
+  border-right: 2px solid var(--brand);
+  border-bottom: 2px solid var(--brand);
+  transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+  transition: transform 0.18s ease;
+}
+
+.collapsible[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.collapsible[open] > summary {
+  margin-bottom: 0.75rem;
+}
+
+.collapsible > summary:focus-visible {
+  outline: 2px solid #9bddd3;
+  border-radius: 8px;
+}
