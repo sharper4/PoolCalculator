@@ -11,7 +11,10 @@
   vertical-align: middle;
 }
 
-.report-view .report-qr,
+.report-view .report-qr {
+  display: inline-block !important;
+}
+
 body.report-mode .report-qr {
   display: inline-block !important;
 }
