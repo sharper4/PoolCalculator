@@ -184,6 +184,9 @@ const effUnits = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
 const BAKING_SODA_TA_OZMUL = 4461.56;
 const TRICHLOR_EFFECT_INDEX = 4;
 const TRICHLOR_3IN_TABLET_OZ = 8;
+// FC/CYA ppm multipliers for trichlor (ppm = oz * mul / gallons), matching calcFC/effects math.
+const TRICHLOR_FC_OZMUL = 6854.95;
+const TRICHLOR_CYA_OZMUL = 4159.41;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
@@ -667,16 +670,16 @@ function bleachOzForDose(doseNeeded, gallons, percent) {
   if (doseNeeded <= 0) return 0;
   return doseNeeded * gallons / 482.202 * 6 / percent;
 }
-// FC ppm that one 3" trichlor puck (~8 oz, 90% Cl) contributes over 7 days
+// FC ppm that one 3" trichlor puck (~8 oz, ~90% available chlorine) contributes over 7 days
 // (slow-dissolve; effectively full puck dissolves in the week).
-// Using the same ozmul formula as calcFC: ozmul[trichlor] = 3565.44
+// Uses the same ozmul as calcFC: ozmul[trichlor] = 6854.95
 // ppm = oz * ozmul / gallons  (re-arranged from: oz = delta * gallons / ozmul)
 function ppmPerTrichlorPuck(gallons) {
-  return (8 * 3565.44) / gallons;
+  return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_FC_OZMUL) / gallons;
 }
 
 function cyaPpmPerTrichlorPuck(gallons) {
-  return (8 * 4159.41) / gallons;
+  return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_CYA_OZMUL) / gallons;
 }
 
 function shockLevelForCya(cyaPpm) {
