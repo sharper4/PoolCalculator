@@ -1,4 +1,4 @@
-/* QR Code sizing override */
+/* QR + footer layout override */
 
 .report-footer-note {
   display: grid !important;
@@ -30,31 +30,27 @@
   width: 60px !important;
   height: 60px !important;
   display: none !important;
-  margin-right: 0.6rem;
   border: 1px solid #c7d8ee;
   padding: 4px;
   background: #fff;
-  vertical-align: middle;
 }
 
 .report-view .report-qr {
-  display: inline-block !important;
+  display: block !important;
 }
 
 body.report-mode .report-qr {
-  display: inline-block !important;
+  display: block !important;
 }
 
 .report-qr-label {
-  display: block;
-  vertical-align: middle;
+  display: block !important;
+  text-align: left !important;
   margin-top: 0;
 }
 
 @media print {
   .report-qr {
-    display: inline-block !important;
+    display: block !important;
   }
 }
-
-
