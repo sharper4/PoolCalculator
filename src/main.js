@@ -2092,18 +2092,25 @@ function init() {
       refs.rInsights.style.minHeight = '140px';
       refs.rInsights.style.display = 'block';
       refs.rInsights.rows = 6;
+      refs.rInsights.style.resize = 'none';
       expandReportInsightsForPrint();
     }
 
     if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
     if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
 
+    updateReport();
+
     const clone = reportElement.cloneNode(true);
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
       const block = document.createElement('div');
-      block.textContent = value;
+      block.innerHTML = value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
       block.style.whiteSpace = 'pre-wrap';
       block.style.lineHeight = '1.5';
       block.style.color = '#071b43';
@@ -2126,21 +2133,27 @@ function init() {
       input.replaceWith(mark);
     });
 
-    clone.querySelectorAll('img').forEach(async (img) => {
+    const assetPromises = [...clone.querySelectorAll('img')].map(async (img) => {
       const src = img.getAttribute('src');
       if (!src || src.startsWith('data:')) return;
+
+      const absoluteSrc = src.startsWith('http') ? src : new URL(src, window.location.href).href;
       try {
-        const response = await fetch(src);
+        const response = await fetch(absoluteSrc);
         const blob = await response.blob();
         const reader = new FileReader();
-        reader.onloadend = () => {
-          img.setAttribute('src', reader.result);
-        };
-        reader.readAsDataURL(blob);
+        const dataUrl = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        img.setAttribute('src', dataUrl);
       } catch {
-        // Leave the original src intact when the asset cannot be embedded.
+        // Keep the original URL when the asset cannot be embedded.
       }
     });
+
+    await Promise.all(assetPromises);
 
     clone.style.width = '100%';
     clone.style.maxWidth = '820px';
@@ -2151,7 +2164,6 @@ function init() {
     clone.style.borderRadius = '14px';
     clone.style.padding = '22px';
 
-    updateReport();
     return buildHtmlEmailDocument({
       subject: 'Pool Chemistry Analysis Report from North Texas Elite Pool Care',
       reportHtml: clone.outerHTML

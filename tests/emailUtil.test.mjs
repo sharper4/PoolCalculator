@@ -41,7 +41,9 @@ test('buildGmailMessageRaw embeds an inline screenshot when provided', () => {
 
   assert.match(raw, /^[A-Za-z0-9_+=-]+$/);
   assert.ok(raw.length > 0);
-  assert.match(raw, /poolcalc-report-boundary|report-screenshot/i);
+
+  const decoded = Buffer.from(raw, 'base64').toString('utf8');
+  assert.match(decoded, /poolcalc-report-boundary|report-screenshot|image\/png/i);
 });
 
 test('buildHtmlEmailDocument keeps the printed report layout in HTML email format', () => {
