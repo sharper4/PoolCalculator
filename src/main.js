@@ -90,6 +90,7 @@ const refs = {
   openReport: document.getElementById('open-report'),
   backToApp: document.getElementById('back-to-app'),
   printReport: document.getElementById('print-report'),
+  sendReportEmail: document.getElementById('send-report-email'),
   reportView: document.getElementById('report-view'),
 
   rCustomer: document.getElementById('r-customer'),
@@ -2011,6 +2012,171 @@ function init() {
     expandReportInsightsForPrint();
     window.print();
   });
+
+  // Gmail email functionality
+  const POOL_CALC_CLIENT_ID = '401370888475-3mo4smpbf7r0l39gmk776d2g1vird0eu.apps.googleusercontent.com';
+  const POOL_CALC_SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
+  let poolCalcTokenClient = null;
+  let poolCalcAccessToken = null;
+  let poolCalcGisLoaded = false;
+
+  function initPoolCalcTokenClient() {
+    try {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        console.error('Google library not loaded yet');
+        setTimeout(initPoolCalcTokenClient, 500);
+        return;
+      }
+
+      poolCalcTokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: POOL_CALC_CLIENT_ID,
+        scope: POOL_CALC_SCOPES.join(' '),
+        callback: (tokenResponse) => {
+          if (tokenResponse.error !== undefined) {
+            console.error('OAuth error:', tokenResponse.error);
+            alert('Authentication failed: ' + tokenResponse.error);
+            return;
+          }
+          poolCalcAccessToken = tokenResponse.access_token;
+          console.log('Pool Calc: Access token obtained');
+          sendPoolCalcReport();
+        },
+      });
+      poolCalcGisLoaded = true;
+      console.log('Pool Calc: Token client initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize token client:', error);
+      setTimeout(initPoolCalcTokenClient, 500);
+    }
+  }
+
+  function requestPoolCalcAccessToken() {
+    if (poolCalcTokenClient && poolCalcGisLoaded) {
+      poolCalcTokenClient.requestAccessToken({ hint: '' });
+    } else {
+      alert('Google authentication not ready. Please refresh the page.');
+    }
+  }
+
+  async function sendPoolCalcReport() {
+    const emailAddress = refs.emailAddress.value;
+    const reportHTML = document.querySelector('.report-sheet').innerHTML;
+
+    if (!emailAddress) {
+      alert('Please enter a customer email address.');
+      return;
+    }
+
+    if (!poolCalcAccessToken) {
+      alert('Not authenticated. Please click "Send via Email" again.');
+      return;
+    }
+
+    try {
+      // Create email with full report
+      const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
+      const fullHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Space Mono', monospace;
+              background: white;
+              color: #0b2a5b;
+              line-height: 1.6;
+            }
+            .report-sheet {
+              max-width: 8.5in;
+              margin: 0;
+              padding: 0.75in;
+              background: white;
+              font-size: 0.9rem;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+            }
+            h2, h3 {
+              color: #0e4f97;
+              margin: 0.5rem 0 0.25rem;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 0.5rem 0;
+            }
+            td, th {
+              padding: 0.4rem;
+              border: 1px solid #bdd2ee;
+              text-align: left;
+            }
+            th {
+              background: #f0f4f9;
+              font-weight: 600;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report-sheet">
+            ${reportHTML}
+          </div>
+        </body>
+        </html>
+      `;
+
+      const emailHeaders = `To: ${emailAddress}\r\nSubject: ${emailSubject}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`;
+      const emailBody = emailHeaders + fullHTML;
+
+      // Base64 encode the message
+      const encodedMessage = btoa(unescape(encodeURIComponent(emailBody)));
+
+      const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${poolCalcAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          raw: encodedMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Gmail API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      }
+
+      const result = await response.json();
+      alert(`✅ Report sent successfully to ${emailAddress}!`);
+      console.log('Report sent. ID:', result.id);
+    } catch (error) {
+      console.error('Error sending report:', error);
+      alert('Failed to send report: ' + error.message);
+    }
+  }
+
+  refs.sendReportEmail.addEventListener('click', () => {
+    if (poolCalcAccessToken) {
+      sendPoolCalcReport();
+    } else {
+      requestPoolCalcAccessToken();
+    }
+  });
+
+  // Initialize token client when page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPoolCalcTokenClient);
+  } else {
+    initPoolCalcTokenClient();
+  }
 
   if (refs.rInsights) {
     refs.rInsights.addEventListener('input', expandReportInsightsForPrint);
