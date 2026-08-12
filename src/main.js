@@ -2078,19 +2078,14 @@ function init() {
     return cleanedValue;
   }
 
-  function prepareReportForEmailCapture() {
+  async function buildEmailReadyReportHtml() {
     const reportElement = document.querySelector('.report-sheet');
-    if (!reportElement) return;
+    if (!reportElement) return '';
 
     customerSectionsVisible = true;
     applyCustomerSectionsVisibility();
-    document.body.classList.add('report-mode');
     refs.reportView.hidden = false;
     refs.reportView.style.display = 'block';
-    reportElement.style.width = '100%';
-    reportElement.style.maxWidth = '820px';
-    reportElement.style.margin = '0 auto';
-    reportElement.style.boxSizing = 'border-box';
 
     if (refs.rInsights) {
       refs.rInsights.style.height = 'auto';
@@ -2100,54 +2095,70 @@ function init() {
       expandReportInsightsForPrint();
     }
 
-    if (refs.reportTechInsights) {
-      refs.reportTechInsights.hidden = false;
-    }
-    if (refs.reportEliteDifference) {
-      refs.reportEliteDifference.hidden = false;
-    }
+    if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
+    if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
+
+    const clone = reportElement.cloneNode(true);
+
+    clone.querySelectorAll('textarea').forEach((textarea) => {
+      const value = textarea.value || '';
+      const block = document.createElement('div');
+      block.textContent = value;
+      block.style.whiteSpace = 'pre-wrap';
+      block.style.lineHeight = '1.5';
+      block.style.color = '#071b43';
+      block.style.fontSize = '12px';
+      block.style.minHeight = '120px';
+      block.style.padding = '8px';
+      block.style.border = '1px solid #c7d8ee';
+      block.style.borderRadius = '6px';
+      block.style.background = '#fdfefe';
+      textarea.replaceWith(block);
+    });
+
+    clone.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      const mark = document.createElement('span');
+      mark.textContent = input.checked ? '☑' : '☐';
+      mark.style.display = 'inline-block';
+      mark.style.minWidth = '16px';
+      mark.style.fontSize = '14px';
+      mark.style.color = '#071b43';
+      input.replaceWith(mark);
+    });
+
+    clone.querySelectorAll('img').forEach(async (img) => {
+      const src = img.getAttribute('src');
+      if (!src || src.startsWith('data:')) return;
+      try {
+        const response = await fetch(src);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          img.setAttribute('src', reader.result);
+        };
+        reader.readAsDataURL(blob);
+      } catch {
+        // Leave the original src intact when the asset cannot be embedded.
+      }
+    });
+
+    clone.style.width = '100%';
+    clone.style.maxWidth = '820px';
+    clone.style.margin = '0 auto';
+    clone.style.boxSizing = 'border-box';
+    clone.style.background = '#ffffff';
+    clone.style.border = '1px solid #bdd2ee';
+    clone.style.borderRadius = '14px';
+    clone.style.padding = '22px';
 
     updateReport();
-  }
-
-  async function captureReportScreenshotDataUrl() {
-    const reportElement = document.querySelector('.report-sheet');
-    if (!reportElement) return '';
-
-    try {
-      prepareReportForEmailCapture();
-
-      if (!window.html2canvas) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-          script.async = true;
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      const canvas = await window.html2canvas(reportElement, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight
-      });
-
-      return canvas.toDataURL('image/png');
-    } catch (error) {
-      console.warn('Screenshot capture failed:', error);
-      return '';
-    }
+    return buildHtmlEmailDocument({
+      subject: 'Pool Chemistry Analysis Report from North Texas Elite Pool Care',
+      reportHtml: clone.outerHTML
+    });
   }
 
   async function sendPoolCalcReport() {
-    const reportHTML = document.querySelector('.report-sheet')?.outerHTML || '';
     const emailAddress = resolveReportEmailAddress();
 
     if (!emailAddress) {
@@ -2156,24 +2167,10 @@ function init() {
     }
 
     const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
-    const screenshotDataUrl = await captureReportScreenshotDataUrl();
-    const emailHtml = screenshotDataUrl
-      ? buildHtmlEmailDocument({
-          subject: emailSubject,
-          reportHtml: `
-            <div style="margin:0 0 16px; font-family:Segoe UI, Arial, sans-serif; color:#071b43;">
-              <p style="margin:0 0 12px; font-size:16px; font-weight:700;">Pool Chemistry Analysis Report</p>
-              <img src="cid:report-screenshot" alt="Pool Chemistry Report" style="display:block; width:100%; max-width:760px; border:1px solid #bdd2ee; border-radius:10px; background:#fff;" />
-            </div>
-          `
-        })
-      : buildHtmlEmailDocument({
-          subject: emailSubject,
-          reportHtml: reportHTML
-        });
+    const emailHtml = await buildEmailReadyReportHtml();
 
     const fallbackPayload = {
-      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Please view the report image in the email body.')}`
+      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Please open the email with the report attachment or check the rendered HTML report.')}`
     };
 
     if (!poolCalcAccessToken) {
@@ -2192,8 +2189,7 @@ function init() {
           raw: buildGmailMessageRaw({
             to: emailAddress,
             subject: emailSubject,
-            htmlBody: emailHtml,
-            imageDataUrl: screenshotDataUrl
+            htmlBody: emailHtml
           })
         }),
       });
