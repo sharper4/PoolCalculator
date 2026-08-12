@@ -146,12 +146,17 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
 </html>`;
 }
 
-export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '' }) {
-  if (imageDataUrl) {
-    const base64Image = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl;
+export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '', inlineImages = [] }) {
+  const images = Array.isArray(inlineImages) && inlineImages.length > 0
+    ? inlineImages
+    : imageDataUrl
+      ? [{ cid: 'report-screenshot', dataUrl: imageDataUrl, filename: 'report-screenshot.png' }]
+      : [];
+
+  if (images.length > 0) {
     const boundary = 'poolcalc-report-boundary';
     const htmlBase64 = btoa(unescape(encodeURIComponent(htmlBody)));
-    const mimeBody = [
+    const parts = [
       `To: ${to}`,
       `Subject: ${subject}`,
       'MIME-Version: 1.0',
@@ -162,18 +167,25 @@ export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '' 
       'Content-Transfer-Encoding: base64',
       '',
       htmlBase64,
-      '',
-      `--${boundary}`,
-      'Content-Type: image/png; name="pool-report.png"',
-      'Content-Transfer-Encoding: base64',
-      'Content-ID: <report-screenshot>',
-      'Content-Disposition: inline; filename="pool-report.png"',
-      '',
-      base64Image,
-      '',
-      `--${boundary}--`
-    ].join('\r\n');
+      ''
+    ];
 
+    images.forEach(({ cid, dataUrl, filename }) => {
+      const base64Image = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+      parts.push(
+        `--${boundary}`,
+        `Content-Type: image/png; name="${filename}"`,
+        'Content-Transfer-Encoding: base64',
+        `Content-ID: <${cid}>`,
+        `Content-Disposition: inline; filename="${filename}"`,
+        '',
+        base64Image,
+        ''
+      );
+    });
+
+    parts.push(`--${boundary}--`);
+    const mimeBody = parts.join('\r\n');
     return btoa(unescape(encodeURIComponent(mimeBody)));
   }
 

@@ -193,7 +193,7 @@ const TRICHLOR_CYA_OZMUL = 4159.41;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
-let customerSectionsVisible = false;
+let customerSectionsVisible = true;
 const manualTargetOverride = {
   fc: false,
   ta: false,
@@ -1311,13 +1311,8 @@ function applyCustomerSectionsVisibility() {
   if (refs.rRowCustomer) refs.rRowCustomer.hidden = !customerSectionsVisible;
   if (refs.rRowAddress) refs.rRowAddress.hidden = !customerSectionsVisible;
   if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible;
-  if (refs.reportTechInsights) refs.reportTechInsights.hidden = !customerSectionsVisible;
-  if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = !customerSectionsVisible;
-}
-
-function resolveWeatherForecastFallback(force = false) {
-  if (!refs.weatherForecast) return;
-
+  if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
+  if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
   const text = String(refs.weatherForecast.value || '').trim();
   const pendingText = /^(loading\s*5-?day\s*forecast|waiting for weather permission and forecast data)/i.test(text);
   const shouldFallback = !text || pendingText;
@@ -2087,7 +2082,7 @@ function init() {
 
   async function buildEmailReadyReportHtml() {
     const reportElement = document.querySelector('.report-sheet');
-    if (!reportElement) return '';
+    if (!reportElement) return { html: '', images: [] };
 
     customerSectionsVisible = true;
     applyCustomerSectionsVisibility();
@@ -2095,11 +2090,11 @@ function init() {
     refs.reportView.style.display = 'block';
 
     if (refs.rInsights) {
-      refs.rInsights.style.height = 'auto';
+      refs.rInsights.style.height = '120px';
       refs.rInsights.style.minHeight = '120px';
       refs.rInsights.style.display = 'block';
-      refs.rInsights.rows = 6;
-      refs.rInsights.style.resize = 'none';
+      refs.rInsights.rows = 5;
+      refs.rInsights.style.resize = 'vertical';
       expandReportInsightsForPrint();
     }
 
@@ -2109,6 +2104,7 @@ function init() {
     updateReport();
 
     const clone = reportElement.cloneNode(true);
+    const inlineImages = [];
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
@@ -2137,9 +2133,10 @@ function init() {
       input.replaceWith(mark);
     });
 
-    clone.querySelectorAll('img').forEach((img) => {
+    const imageElements = Array.from(clone.querySelectorAll('img'));
+    for (const [index, img] of imageElements.entries()) {
       const src = img.getAttribute('src');
-      if (!src) return;
+      if (!src) continue;
 
       const absoluteSrc = src.startsWith('http')
         ? src
@@ -2147,9 +2144,25 @@ function init() {
           ? `https://sharper4.github.io/PoolCalculator${src}`
           : new URL(src, window.location.href).href;
 
-      img.setAttribute('src', absoluteSrc);
-      img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
-    });
+      try {
+        const response = await fetch(absoluteSrc);
+        const blob = await response.blob();
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        const cid = `report-inline-${index + 1}`;
+        img.setAttribute('src', `cid:${cid}`);
+        img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
+        inlineImages.push({ cid, dataUrl, filename: `report-inline-${index + 1}.png` });
+      } catch {
+        img.setAttribute('src', absoluteSrc);
+        img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
+      }
+    }
 
     clone.style.width = '100%';
     clone.style.maxWidth = '820px';
@@ -2160,10 +2173,13 @@ function init() {
     clone.style.borderRadius = '14px';
     clone.style.padding = '22px';
 
-    return buildHtmlEmailDocument({
-      subject: 'Pool Chemistry Analysis Report from North Texas Elite Pool Care',
-      reportHtml: clone.outerHTML
-    });
+    return {
+      html: buildHtmlEmailDocument({
+        subject: 'Pool Chemistry Analysis Report from North Texas Elite Pool Care',
+        reportHtml: clone.outerHTML
+      }),
+      images: inlineImages
+    };
   }
 
   async function sendPoolCalcReport() {
@@ -2180,7 +2196,9 @@ function init() {
     }
 
     const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
-    const emailHtml = await buildEmailReadyReportHtml();
+    const emailReport = await buildEmailReadyReportHtml();
+    const emailHtml = emailReport.html;
+    const inlineImages = emailReport.images || [];
 
     const fallbackPayload = {
       mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Please open the email with the report attachment or check the rendered HTML report.')}`
@@ -2202,7 +2220,8 @@ function init() {
           raw: buildGmailMessageRaw({
             to: emailAddress,
             subject: emailSubject,
-            htmlBody: emailHtml
+            htmlBody: emailHtml,
+            inlineImages
           })
         }),
       });
