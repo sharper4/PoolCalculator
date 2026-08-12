@@ -1,0 +1,150 @@
+/* Mobile display improvements: larger type, no horizontal scrolling. */
+html,
+body {
+  overflow-x: hidden;
+}
+
+.chem-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+
+.mini-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+}
+
+.inline-text {
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 1.05rem;
+  }
+
+  .layout {
+    width: 100%;
+    max-width: 1220px;
+    margin: 0.9rem auto 2rem;
+    padding: 0 0.6rem;
+    gap: 0.8rem;
+  }
+
+  .panel {
+    padding: 0.85rem 0.75rem;
+    border-radius: 16px;
+  }
+
+  .chem-grid,
+  .mini-grid,
+  .mini-grid-compact-two,
+  .report-meta,
+  .report-two-col,
+  .static-grid,
+  .next-steps-grid,
+  .grid.two,
+  .grid.three,
+  .grid.four {
+    grid-template-columns: 1fr;
+  }
+
+  .pair {
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  label,
+  .hero-weather,
+  .service-weather,
+  .status,
+  .foot {
+    font-size: 1rem;
+  }
+
+  input,
+  select,
+  textarea,
+  .inline-text {
+    font-size: 1rem;
+    min-height: 2.75rem;
+  }
+
+  input[type='checkbox'] {
+    width: 1.15rem;
+    height: 1.15rem;
+    min-height: 0;
+    min-width: 1.15rem;
+  }
+
+  .action-btn {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+  }
+
+  .hero-actions,
+  .brand-title-actions {
+    width: 100%;
+  }
+
+  .result-block,
+  .range-pill,
+  .check-line,
+  .check-row label,
+  .check-list label,
+  .report-block h3,
+  .report-table,
+  .note,
+  .report-note-inline,
+  .report-note-muted {
+    font-size: 0.95rem;
+  }
+
+  .unit-pill {
+    font-size: 0.9rem;
+  }
+
+  .report-phone,
+  .report-note-inline,
+  .report-table td:has(#s-fc, #s-ph, #s-ta, #s-ch, #s-cya, #s-salt) {
+    white-space: normal;
+  }
+
+  .inline-text {
+    width: 100%;
+  }
+
+  .result-block,
+  .result-inline,
+  .report-table td,
+  .report-table th {
+    overflow-wrap: anywhere;
+  }
+
+  .orb {
+    display: none;
+  }
+
+  .report-sheet {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .report-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .report-header-title {
+    align-items: center;
+  }
+
+  .report-header-title h2 {
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  .report-toolbar {
+    flex-direction: column;
+  }
+}

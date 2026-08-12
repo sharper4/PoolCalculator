@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>North Texas Elite Pool Care - Pool Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="./assets/index-DfLsSyTU.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Meb5smCX.css">
+    <style>
+      .build-badge{position:fixed;right:.85rem;bottom:.8rem;z-index:20;border:1px solid rgba(14,79,151,.25);border-radius:999px;background:rgba(255,255,255,.9);color:#45658f;padding:.18rem .55rem;font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.04em;box-shadow:0 8px 18px rgba(7,27,67,.08);backdrop-filter:blur(8px)}
+      .hero-weather-stack{display:grid;gap:.55rem;width:100%;max-width:420px;justify-self:end}
+      body.report-mode .panel.reveal.stagger-5{display:none}
+      @media print{.build-badge{display:none}.panel.reveal.stagger-5{display:none!important}}
+      @media (width<=980px){.build-badge{right:.55rem;bottom:.55rem}.hero-weather-stack{justify-self:stretch;max-width:none}}
+    </style>
+    <link rel="stylesheet" href="./assets/mobile-20260811.css">
+    <link rel="stylesheet" href="./assets/collapsible-20260811.css">
+    <link rel="stylesheet" href="./assets/qr-sizing-20260811-3.css">
+    <script defer src="./assets/live-patch-20260722-9.js"></script>
+    <script defer src="./assets/live-patch-20260803-5.js"></script>
+    <script defer src="./assets/live-patch-20260803-6.js"></script>
+    <script defer src="./assets/linked-collapsibles-20260811.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      // Ensure send-report-email button exists in DOM before Vite bundle runs
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          const toolbar = document.querySelector('.report-toolbar');
+          if (toolbar && !document.getElementById('send-report-email')) {
+            const btn = document.createElement('button');
+            btn.id = 'send-report-email';
+            btn.type = 'button';
+            btn.className = 'action-btn';
+            btn.style.backgroundColor = '#0ea5e9';
+            btn.style.cursor = 'pointer';
+            btn.textContent = 'Send via Email';
+            toolbar.appendChild(btn);
+            
+            // Add event listener for email functionality
+            btn.addEventListener('click', function() {
+              if (window.poolCalcAccessToken) {
+                window.sendPoolCalcReport && window.sendPoolCalcReport();
+              } else {
+                window.requestPoolCalcAccessToken && window.requestPoolCalcAccessToken();
+              }
+            });
+          }
+        }, 100);
+      });
+    </script>
+  </head>
+  <body>
+    <div class="orb orb-one" aria-hidden="true"></div>
+    <div class="orb orb-two" aria-hidden="true"></div>
+
+    <main class="layout">
+      <header class="hero panel reveal">
+        <div class="brand-row">
+          <a href="https://sharper4.github.io/NTXElitePoolCare/" aria-label="North Texas Elite Pool Care home">
+            <img class="brand-logo" src="./PrimaryLogo.png" alt="North Texas Elite Pool Care logo" />
+          </a>
+          <div class="brand-title-actions">
+            <h1>Pool Calculator</h1>
+            <div class="hero-actions">
+              <button id="open-report" type="button" class="action-btn">Customer Report</button>
+            </div>
+          </div>
+        </div>
+        <div class="hero-detail-row">
+          <p class="hero-copy">
+            Professional water chemistry tools for clean pools and elite service. This calculator includes
+            complete chemistry balancing, CSI, goal ranges, volume estimation, and chemical-effects math.
+          </p>
+          <div class="hero-weather-stack">
+            <label id="weather-label" class="hero-weather"><span id="weather-label-text">Current weather conditions</span>
+              <input id="weather-conditions" type="text" value="Loading current weather..." />
+            </label>
+            <label class="hero-weather"><span>5-day forecast average</span>
+              <input id="weather-forecast" type="text" value="Waiting for weather permission and forecast data..." />
+            </label>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel controls reveal stagger-1">
+        <div class="grid three">
+          <label>
+            Units
+            <select id="units">
+              <option value="0">U.S.</option>
+              <option value="1">Metric</option>
+              <option value="2">Imperial</option>
+            </select>
+          </label>
+          <label>
+            Pool Size
+            <div class="input-line">
+              <input id="size" type="number" min="0" step="1" value="15000" />
+              <span id="size-unit" class="unit-pill">gallons</span>
+            </div>
+          </label>
+          <label>
+            Pool Water Temperature
+            <div class="input-line">
+              <input id="temp" type="number" min="0" step="1" value="84" />
+              <span id="temp-unit" class="unit-pill">Fahrenheit</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section id="service-details-section" class="panel reveal stagger-1" hidden>
+        <div class="section-head">
+          <h2>Service Details</h2>
+        </div>
+        <div class="grid three">
+          <label>Customer
+            <input id="customer-name" type="text" placeholder="Customer name" />
+          </label>
+          <label>Address
+            <input id="customer-address" type="text" placeholder="Service address" />
+          </label>
+          <label>Email Address
+              <input id="email-address" type="email" value="" placeholder="customer@example.com" />
+          </label>
+        </div>
+      </section>
+
+      <div hidden aria-hidden="true">
+        <input id="tc-now" type="number" step="0.1" value="0" />
+        <input id="phosphates-now" type="number" step="1" value="0" />
+      </div>
+
+      <section class="panel reveal stagger-2">
+        <div class="section-head">
+          <h2>Chemistry Targets</h2>
+        </div>
+        <div class="chem-grid">
+          <article class="chem-card cya">
+            <div class="chem-head">
+              <h3>CYA</h3>
+              <p id="cya-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="cya-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="cya-to" type="number" step="1" value="40" /></label>
+            </div>
+            <div id="cya-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card fc">
+            <div class="chem-head">
+              <h3>FC</h3>
+              <p id="fc-target-range" class="range-pill">Target range: -- ppm</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="fc-from" type="number" step="0.1" value="" /></label>
+              <label>Target <input id="fc-to" type="number" step="0.1" value="4" /></label>
+            </div>
+            <label class="check-line"><input id="fc-auto-target" type="checkbox" checked /> Auto-set FC target from CYA</label>
+            <div class="mini-grid mini-grid-compact-two">
+              <label>Bleach % <input id="fc-percent" type="number" step="0.1" value="8.25" /></label>
+              <label>Jug Size
+                <select id="fc-jug"></select>
+              </label>
+            </div>
+            <div class="mini-grid">
+              <label>Alt Chlorine
+                <select id="fc-pop"></select>
+              </label>
+            </div>
+            <div id="fc-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ph">
+            <div class="chem-head">
+              <h3>pH</h3>
+              <p id="ph-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ph-from" type="number" step="0.1" value="" /></label>
+              <label>Target <input id="ph-to" type="number" step="0.1" value="7.5" /></label>
+            </div>
+            <div class="mini-grid">
+              <label>Acid Strength
+                <select id="ma-pop"></select>
+              </label>
+              <label>Aeration
+                <select id="ph-aeration">
+                  <option value="none">None</option>
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+            </div>
+            <p class="note">pH math depends on current TA and Borate; large pH shifts are approximate.</p>
+            <div id="ph-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ta">
+            <div class="chem-head">
+              <h3>TA</h3>
+              <p id="ta-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ta-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="ta-to" type="number" step="1" value="100" /></label>
+            </div>
+            <div id="ta-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ch">
+            <div class="chem-head">
+              <h3>CH</h3>
+              <p id="ch-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ch-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="ch-to" type="number" step="1" value="260" /></label>
+            </div>
+            <label>Fill Water CH <input id="ch-fill" type="number" step="1" value="0" /></label>
+            <div id="ch-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card salt">
+            <div class="chem-head">
+              <h3>Salt</h3>
+              <p id="salt-target-range" class="range-pill">Target range: 2700-3400</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="salt-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="salt-to" type="number" step="1" value="3100" /></label>
+            </div>
+            <div class="pair">
+              <label>SWG Runtime (hrs/day) <input id="swg-runtime" type="number" step="0.5" min="1" max="24" value="10" /></label>
+            </div>
+            <p class="note">Note: leave this blank if this is not a salt water pool</p>
+            <div id="salt-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card bor">
+            <div class="chem-head">
+              <h3>Borate</h3>
+              <p id="bor-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="bor-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="bor-to" type="number" step="1" value="0" /></label>
+            </div>
+            <label>Borate Product
+              <select id="bor-pop"></select>
+            </label>
+            <div id="bor-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card csi">
+            <h3>CSI</h3>
+            <div id="csi-result" class="result-block"></div>
+            <p class="note">Less than -0.6 suggests corrosive conditions. Greater than 0.6 suggests scaling risk.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="grid two reveal stagger-3">
+        <details class="panel collapsible">
+          <summary><h2>Suggested Levels</h2></summary>
+          <div class="grid three">
+            <label>Goal Source
+              <select id="from-pop"></select>
+            </label>
+            <label>Primary Chlorine
+              <select id="chlorine-pop"></select>
+            </label>
+            <label>Pool Surface
+              <select id="surface-pop"></select>
+            </label>
+          </div>
+          <div id="goal-result" class="result-block"></div>
+        </details>
+
+        <details class="panel collapsible">
+          <summary><h2>If You Do Nothing Today</h2></summary>
+          <p class="status">Modeled daily draw and drift using the same weather, UV, aeration, and forecast assumptions as the weekly plan.</p>
+          <div id="passive-outlook" class="result-block"></div>
+        </details>
+      </section>
+
+      <section class="grid two reveal stagger-4">
+        <details class="panel collapsible">
+          <summary><h2>Pool Volume Estimator</h2></summary>
+          <div class="grid four">
+            <label>Width <input id="sz-wid" type="number" step="0.1" value="0" /></label>
+            <label>Length <input id="sz-len" type="number" step="0.1" value="0" /></label>
+            <label>Avg Depth <input id="sz-deep" type="number" step="0.1" value="0" /></label>
+            <label>Shape
+              <select id="sz-pop"></select>
+            </label>
+          </div>
+          <p id="sz-result" class="result-inline"></p>
+        </details>
+
+        <details class="panel collapsible">
+          <summary><h2>Effects of Adding Chemicals</h2></summary>
+          <div class="grid three">
+            <label>Amount <input id="eff-oz" type="number" step="0.1" value="0" /></label>
+            <label>Unit
+              <select id="eff-unit"></select>
+            </label>
+            <label>Chemical
+              <select id="eff-pop"></select>
+            </label>
+          </div>
+          <p id="eff-result" class="result-inline"></p>
+        </details>
+      </section>
+
+      <footer class="panel foot reveal">
+        <p>
+          Tips: Add less than the full amount first, circulate, retest, then fine-tune. Powder volumes vary by manufacturer.
+        </p>
+      </footer>
+
+      <section id="report-view" class="report-view">
+        <div class="report-toolbar">
+          <button id="back-to-app" type="button" class="action-btn subtle">Back to Calculator</button>
+          <button id="print-report" type="button" class="action-btn">Print Report</button>
+          <button id="send-report-email" type="button" class="action-btn" style="background-color: #0ea5e9; cursor: pointer;">Send via Email</button>
+        </div>
+
+        <article class="report-sheet">
+          <header class="report-header">
+            <a href="https://sharper4.github.io/NTXElitePoolCare/" aria-label="North Texas Elite Pool Care home">
+              <img class="report-logo" src="./LogoAlone.png" alt="North Texas Elite Pool Care logo" />
+            </a>
+            <div class="report-header-center">
+              <img class="report-phone-img" src="./PhoneNumber.png" alt="940-808-POOL" />
+            </div>
+            <div class="report-header-title">
+              <h2>CHEMICAL BALANCING</h2>
+              <h2>WATER QUALITY REPORT</h2>
+            </div>
+          </header>
+
+          <section class="report-meta">
+            <p id="r-row-customer" hidden><strong>Customer:</strong> <span id="r-customer"></span></p>
+            <p id="r-row-address" hidden><strong>Address:</strong> <span id="r-address"></span></p>
+            <p><strong>Date:</strong> <span id="r-date"></span></p>
+            <p id="r-row-email-address" hidden><strong>Email Address:</strong> <span id="r-email-address"></span></p>
+            <p><strong>Current weather conditions:</strong> <span id="r-weather"></span></p>
+            <p><strong>Pool size:</strong> <span id="r-pool-size"></span></p>
+            <p><strong>5-day forecast average:</strong> <span id="r-weather-forecast"></span></p>
+            <p><strong>Pool temperature:</strong> <span id="r-pool-temp"></span></p>
+          </section>
+
+          <section class="report-block">
+            <h3>WATER CONDITION SUMMARY</h3>
+            <div class="condition-three-col check-row">
+              <label><input id="status-clear" type="checkbox" /> Crystal Clear &amp; Balanced</label>
+              <label><input id="status-immediate" type="checkbox" /> Immediate Attention Required</label>
+              <label><input id="status-minor" type="checkbox" checked /> Minor Adjustments Needed</label>
+            </div>
+          </section>
+
+          <section class="report-block">
+            <h3>PRECISION WATER ANALYSIS</h3>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Result</th>
+                  <th>Ideal</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="s-cya"></td></tr>
+                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="s-fc"></td></tr>
+                <tr><td>pH</td><td id="r-ph">--</td><td id="ideal-ph">--</td><td id="s-ph"></td></tr>
+                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="s-ta"></td></tr>
+                <tr><td>Calcium</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="s-ch"></td></tr>
+                <tr><td>Salt</td><td id="r-salt">--</td><td id="ideal-salt">--</td><td id="s-salt"></td></tr>
+                <tr><td>Borate</td><td id="r-bor">--</td><td id="ideal-bor">--</td><td id="s-bor"></td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="report-block report-two-col">
+            <div>
+              <div class="report-title-row">
+                <h3>ELITE TREATMENT PLAN</h3>
+                <p class="report-note-inline">to <u>perfectly</u> balance your water to the target today</p>
+              </div>
+              <ul id="r-treatment-list" class="check-list chemical-checklist"></ul>
+              <p class="report-note-muted">...only items checked were completed in today's action plan</p>
+            </div>
+            <div>
+              <div class="report-title-row">
+                <h3>ELITE FORECAST PLAN</h3>
+                <p class="report-note-inline">maintain water balance for 1 week in target range</p>
+              </div>
+              <ul id="r-forecast-list" class="check-list chemical-checklist"></ul>
+              <p class="report-note-muted">...only items checked were completed in today's action plan</p>
+            </div>
+          </section>
+
+          <section id="report-tech-insights" class="report-block" hidden>
+            <h3>TECHNICIAN INSIGHTS</h3>
+            <textarea id="r-insights" rows="2">Water chemistry adjusted based on maintaining target levels for one week. Continue circulation and retest as scheduled.</textarea>
+            <p id="r-insights-print" class="report-insights-print"></p>
+          </section>
+
+          <section id="report-elite-difference" class="report-block" hidden>
+            <h3>THE ELITE DIFFERENCE</h3>
+            <p>We do not just clean pools, we protect your investment.</p>
+            <ul class="check-list static static-grid">
+              <li>Precision water chemistry (not guesswork)</li>
+              <li>Pro-grade chemicals &amp; equipment</li>
+              <li>Consistent, reliable weekly service</li>
+              <li>Clear communication every visit</li>
+            </ul>
+          </section>
+
+            <footer class="report-footer-note">
+              <div class="report-footer-qr-section">
+                <img class="report-qr" src="./qr-website.svg" alt="QR code to North Texas Elite Pool Care website" />
+                <div class="report-qr-label">Visit Us Online</div>
+              </div>
+              <div class="report-footer-text-section">
+                <p>&copy; 2026 North Texas Elite Pool Care LLC. All rights reserved.</p>
+                <p>Serving Denton County and Surrounding Areas | Professional Pool Maintenance &amp; Care</p>
+              </div>
+            </footer>
+        </article>
+      </section>
+    </main>
+
+    <div class="build-badge" id="build-badge">Build --</div>
+
+  </body>
+</html>

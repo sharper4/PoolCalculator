@@ -1,0 +1,131 @@
+// Live patch 2026-08-03-4
+// - Adds "Range" column to Precision Water Analysis table
+// - "Monitor" status for values within 10% of boundary (pH excluded)
+// - Hides ELITE TREATMENT/FORECAST plans from print
+(() => {
+  const style = document.createElement('style');
+  style.textContent = [
+    '@media print { .no-print { display: none !important; } }',
+    '.report-table tr.monitor-row td { font-weight: 600; color: #a05c00; }',
+  ].join('\n');
+  document.head.appendChild(style);
+
+  function parseRangeFromText(text) {
+    const m = text.match(/(\d+(?:\.\d+)?)\s*(?:to|[–\-])+\s*(\d+(?:\.\d+)?)/i);
+    if (m) return [Number(m[1]), Number(m[2])];
+    const s = text.match(/(\d+(?:\.\d+)?)/);
+    if (s) { const v = Number(s[1]); return [v, v]; }
+    return [NaN, NaN];
+  }
+
+  function round2str(v) { return String(Math.round(v * 100) / 100); }
+  function rndStr(v)    { return String(Math.round(v)); }
+
+  function fmtRange(lo, hi, fmtFn, unit) {
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return '--';
+    if (lo === hi) return `${fmtFn(lo)}${unit}`;
+    return `${fmtFn(lo)}\u2013${fmtFn(hi)}${unit}`;
+  }
+
+  const PARAMS = [
+    { resultId: 'r-fc',   rangeId: 'range-fc',   statusId: 's-fc',   pillId: 'fc-target-range',   idealId: 'ideal-fc',   fmtFn: round2str, unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-ph',   rangeId: 'range-ph',   statusId: 's-ph',   pillId: 'ph-target-range',   idealId: 'ideal-ph',   fmtFn: round2str, unit: '',      monitorBuf: 0 },
+    { resultId: 'r-ta',   rangeId: 'range-ta',   statusId: 's-ta',   pillId: 'ta-target-range',   idealId: 'ideal-ta',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-ch',   rangeId: 'range-ch',   statusId: 's-ch',   pillId: 'ch-target-range',   idealId: 'ideal-ch',   fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-cya',  rangeId: 'range-cya',  statusId: 's-cya',  pillId: 'cya-target-range',  idealId: 'ideal-cya',  fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+    { resultId: 'r-salt', rangeId: 'range-salt', statusId: 's-salt', pillId: 'salt-target-range', idealId: 'ideal-salt', fmtFn: rndStr,    unit: ' ppm', monitorBuf: 0.10 },
+  ];
+
+  function applyParam(p) {
+    const rangeEl  = document.getElementById(p.rangeId);
+    const statusEl = document.getElementById(p.statusId);
+    const pillEl   = document.getElementById(p.pillId);
+    const resultEl = document.getElementById(p.resultId);
+    if (!rangeEl || !pillEl) return;
+
+    const [lo, hi] = parseRangeFromText(pillEl.textContent);
+    const rangeText = fmtRange(lo, hi, p.fmtFn, p.unit);
+    if (rangeEl.textContent !== rangeText) rangeEl.textContent = rangeText;
+
+    if (!statusEl || !resultEl) return;
+
+    if (p.monitorBuf > 0 && statusEl.textContent === 'Needs attention' && Number.isFinite(lo) && Number.isFinite(hi)) {
+      const valMatch = resultEl.textContent.match(/(\d+(?:\.\d+)?)/);
+      if (valMatch) {
+        const value = Number(valMatch[1]);
+        const buffer = (hi - lo) * p.monitorBuf;
+        if (value >= lo - buffer && value <= hi + buffer) {
+          statusEl.textContent = 'Monitor';
+        }
+      }
+    }
+
+    const row = statusEl.parentElement;
+    if (row) {
+      const s = statusEl.textContent;
+      row.classList.toggle('needs-attention-row', s === 'Needs attention');
+      row.classList.toggle('monitor-row', s === 'Monitor');
+    }
+  }
+
+  function runAll() { PARAMS.forEach(applyParam); }
+
+  function initDom() {
+    // Hide elite plans from print
+    document.querySelectorAll('.report-two-col').forEach(section => {
+      if (section.querySelector('h3')?.textContent.includes('ELITE TREATMENT')) {
+        section.classList.add('no-print');
+      }
+    });
+
+    // Add Range column header
+    const table = document.querySelector('.report-table');
+    if (table) {
+      const headerRow = table.querySelector('thead tr');
+      const idealTh = headerRow &&
+        Array.from(headerRow.querySelectorAll('th')).find(th => th.textContent.trim() === 'Ideal');
+      if (idealTh && !headerRow.querySelector('th[data-range-col]')) {
+        const th = document.createElement('th');
+        th.dataset.rangeCol = '1';
+        th.textContent = 'Range';
+        idealTh.insertAdjacentElement('afterend', th);
+      }
+
+      // Add Range cells
+      PARAMS.forEach(p => {
+        const idealEl = document.getElementById(p.idealId);
+        if (idealEl && !document.getElementById(p.rangeId)) {
+          const td = document.createElement('td');
+          td.id = p.rangeId;
+          td.textContent = '--';
+          idealEl.insertAdjacentElement('afterend', td);
+        }
+      });
+    }
+
+    runAll();
+
+    // Watch status cells and range pills for bundle recalculations
+    const watchEls = [
+      ...PARAMS.map(p => document.getElementById(p.statusId)),
+      ...PARAMS.map(p => document.getElementById(p.pillId)),
+    ].filter(Boolean);
+
+    let debounce = null;
+    const observer = new MutationObserver(() => {
+      clearTimeout(debounce);
+      debounce = setTimeout(runAll, 0);
+    });
+    watchEls.forEach(el => observer.observe(el, { characterData: true, childList: true, subtree: true }));
+
+    // Belt-and-suspenders: re-run on any input/change
+    document.addEventListener('input',  () => setTimeout(runAll, 60), true);
+    document.addEventListener('change', () => setTimeout(runAll, 60), true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDom);
+  } else {
+    initDom();
+  }
+})();
