@@ -198,7 +198,7 @@ const TRICHLOR_CYA_OZMUL = 4159.41;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
-let customerSectionsVisible = true;
+let customerSectionsVisible = false;
 const manualTargetOverride = {
   fc: false,
   ta: false,
