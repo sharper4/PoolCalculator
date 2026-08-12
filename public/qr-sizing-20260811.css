@@ -5,6 +5,7 @@
   grid-template-columns: minmax(80px, auto) 1fr !important;
   gap: 1.5rem;
   align-items: flex-start;
+  text-align: left !important;
 }
 
 .report-footer-qr-section {
@@ -15,7 +16,7 @@
 }
 
 .report-footer-text-section {
-  text-align: right;
+  text-align: right !important;
 }
 
 .report-footer-text-section p {
@@ -45,7 +46,7 @@ body.report-mode .report-qr {
 }
 
 .report-qr-label {
-  display: inline-block;
+  display: block;
   vertical-align: middle;
   margin-top: 0;
 }

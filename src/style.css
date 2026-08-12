@@ -732,6 +732,7 @@ select:focus {
   grid-template-columns: minmax(80px, auto) 1fr;
   gap: 1.5rem;
   align-items: flex-start;
+  text-align: left;
 }
 
 .report-footer-qr-section {
