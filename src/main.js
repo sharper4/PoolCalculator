@@ -2078,6 +2078,40 @@ function init() {
     return cleanedValue;
   }
 
+  async function captureReportScreenshotDataUrl() {
+    const reportElement = document.querySelector('.report-sheet');
+    if (!reportElement) return '';
+
+    try {
+      if (!window.html2canvas) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      const canvas = await window.html2canvas(reportElement, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight
+      });
+
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.warn('Screenshot capture failed:', error);
+      return '';
+    }
+  }
+
   async function sendPoolCalcReport() {
     const reportHTML = document.querySelector('.report-sheet')?.outerHTML || '';
     const emailAddress = resolveReportEmailAddress();
@@ -2088,13 +2122,24 @@ function init() {
     }
 
     const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
-    const emailHtml = buildHtmlEmailDocument({
-      subject: emailSubject,
-      reportHtml
-    });
+    const screenshotDataUrl = await captureReportScreenshotDataUrl();
+    const emailHtml = screenshotDataUrl
+      ? buildHtmlEmailDocument({
+          subject: emailSubject,
+          reportHtml: `
+            <div style="margin:0 0 16px; font-family:Segoe UI, Arial, sans-serif; color:#071b43;">
+              <p style="margin:0 0 12px; font-size:16px; font-weight:700;">Pool Chemistry Analysis Report</p>
+              <img src="cid:report-screenshot" alt="Pool Chemistry Report" style="display:block; width:100%; max-width:760px; border:1px solid #bdd2ee; border-radius:10px; background:#fff;" />
+            </div>
+          `
+        })
+      : buildHtmlEmailDocument({
+          subject: emailSubject,
+          reportHtml: reportHTML
+        });
 
     const fallbackPayload = {
-      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailHtml)}`
+      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Please view the report image in the email body.')}`
     };
 
     if (!poolCalcAccessToken) {
@@ -2113,7 +2158,8 @@ function init() {
           raw: buildGmailMessageRaw({
             to: emailAddress,
             subject: emailSubject,
-            htmlBody: emailHtml
+            htmlBody: emailHtml,
+            imageDataUrl: screenshotDataUrl
           })
         }),
       });

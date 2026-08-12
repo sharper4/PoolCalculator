@@ -127,7 +127,36 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
 </html>`;
 }
 
-export function buildGmailMessageRaw({ to, subject, htmlBody }) {
+export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '' }) {
+  if (imageDataUrl) {
+    const base64Image = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl;
+    const boundary = 'poolcalc-report-boundary';
+    const mimeBody = [
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/related; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
+      'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      btoa(unescape(encodeURIComponent(htmlBody))),
+      '',
+      `--${boundary}`,
+      'Content-Type: image/png; name="pool-report.png"',
+      'Content-Transfer-Encoding: base64',
+      'Content-ID: <report-screenshot>',
+      'Content-Disposition: inline; filename="pool-report.png"',
+      '',
+      base64Image,
+      '',
+      `--${boundary}--`
+    ].join('\r\n');
+
+    return btoa(unescape(encodeURIComponent(mimeBody)));
+  }
+
   const headers = [
     `To: ${to}`,
     `Subject: ${subject}`,
