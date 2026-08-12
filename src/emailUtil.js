@@ -68,6 +68,13 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
         height: auto;
         display: block;
       }
+      .report-sheet .report-brand-text {
+        font-weight: 700;
+        font-size: 15px;
+        color: #0e4f97;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
       .report-sheet textarea,
       .report-sheet .report-notes {
         width: 100%;

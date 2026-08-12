@@ -1313,6 +1313,11 @@ function applyCustomerSectionsVisibility() {
   if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible;
   if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
   if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
+}
+
+function resolveWeatherForecastFallback(force = false) {
+  if (!refs.weatherForecast) return;
+
   const text = String(refs.weatherForecast.value || '').trim();
   const pendingText = /^(loading\s*5-?day\s*forecast|waiting for weather permission and forecast data)/i.test(text);
   const shouldFallback = !text || pendingText;
@@ -2135,6 +2140,16 @@ function init() {
 
     const imageElements = Array.from(clone.querySelectorAll('img'));
     for (const [index, img] of imageElements.entries()) {
+      const isBrandImage = img.classList.contains('report-logo') || img.classList.contains('report-phone-img');
+
+      if (isBrandImage) {
+        const brandText = document.createElement('div');
+        brandText.className = 'report-brand-text';
+        brandText.textContent = 'North Texas Elite Pool Care | 940-808-POOL';
+        img.replaceWith(brandText);
+        continue;
+      }
+
       const src = img.getAttribute('src');
       if (!src) continue;
 
