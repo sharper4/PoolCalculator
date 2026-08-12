@@ -2210,6 +2210,14 @@ function init() {
           ? `https://sharper4.github.io/PoolCalculator${src}`
           : new URL(src, window.location.href).href;
 
+      const isLogo = img.classList.contains('report-logo');
+      const isPhone = img.classList.contains('report-phone-img');
+      const imageStyle = isLogo
+        ? 'height: 56px; width: auto; display: block;'
+        : isPhone
+          ? 'height: 34px; width: auto; display: block;'
+          : 'max-width: 100%; height: auto; display: block;';
+
       try {
         const response = await fetch(absoluteSrc);
         const blob = await response.blob();
@@ -2222,19 +2230,40 @@ function init() {
 
         const cid = `report-inline-${index + 1}`;
         img.setAttribute('src', `cid:${cid}`);
-        img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
+        img.setAttribute('style', imageStyle);
         inlineImages.push({ cid, dataUrl, filename: `report-inline-${index + 1}.png` });
       } catch {
         img.setAttribute('src', absoluteSrc);
-        img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
+        img.setAttribute('style', imageStyle);
       }
+    }
+
+    const reportHeader = clone.querySelector('.report-header');
+    if (reportHeader) {
+      reportHeader.setAttribute(
+        'style',
+        'display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; border-bottom: 2px solid #0e4f97; margin-bottom: 0.5rem; padding-bottom: 0.3rem;'
+      );
+    }
+
+    const headerCenter = clone.querySelector('.report-header-center');
+    if (headerCenter) {
+      headerCenter.setAttribute('style', 'flex: 1; display: flex; align-items: center; justify-content: center;');
     }
 
     const headerTitle = clone.querySelector('.report-header-title');
     if (headerTitle) {
+      headerTitle.setAttribute(
+        'style',
+        'display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0;'
+      );
       headerTitle.innerHTML = '';
       const combinedHeading = document.createElement('h2');
       combinedHeading.textContent = 'CHEMICAL BALANCING AND WATER QUALITY REPORT';
+      combinedHeading.setAttribute(
+        'style',
+        'margin: 0; font-size: 0.85rem; text-align: right; letter-spacing: 0.04em; line-height: 1.3; color: #0e4f97;'
+      );
       headerTitle.appendChild(combinedHeading);
     }
 
