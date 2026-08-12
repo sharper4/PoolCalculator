@@ -118,6 +118,9 @@ const refs = {
   rCya: document.getElementById('r-cya'),
   rPhos: document.getElementById('r-phos'),
   rSalt: document.getElementById('r-salt'),
+  rBor: document.getElementById('r-bor'),
+  rowSalt: document.getElementById('row-salt'),
+  rowBor: document.getElementById('row-bor'),
   idealFc: document.getElementById('ideal-fc'),
   idealPh: document.getElementById('ideal-ph'),
   idealTa: document.getElementById('ideal-ta'),
@@ -125,12 +128,14 @@ const refs = {
   idealCya: document.getElementById('ideal-cya'),
   idealPhos: document.getElementById('ideal-phos'),
   idealSalt: document.getElementById('ideal-salt'),
+  idealBor: document.getElementById('ideal-bor'),
   rangeFc: document.getElementById('range-fc'),
   rangePh: document.getElementById('range-ph'),
   rangeTa: document.getElementById('range-ta'),
   rangeCh: document.getElementById('range-ch'),
   rangeCya: document.getElementById('range-cya'),
   rangeSalt: document.getElementById('range-salt'),
+  rangeBor: document.getElementById('range-bor'),
   sFc: document.getElementById('s-fc'),
   sPh: document.getElementById('s-ph'),
   sTa: document.getElementById('s-ta'),
@@ -138,6 +143,7 @@ const refs = {
   sCya: document.getElementById('s-cya'),
   sPhos: document.getElementById('s-phos'),
   sSalt: document.getElementById('s-salt'),
+  sBor: document.getElementById('s-bor'),
   rTreatmentList: document.getElementById('r-treatment-list'),
   rForecastList: document.getElementById('r-forecast-list'),
   rInsights: document.getElementById('r-insights'),
@@ -921,6 +927,7 @@ function updateReport() {
   const ch = n(refs.chFrom);
   const cya = n(refs.cyaFrom);
   const salt = n(refs.saltFrom);
+  const bor = n(refs.borFrom);
   const tested = {
     fc: refs.fcFrom.value.trim() !== '',
     ph: refs.phFrom.value.trim() !== '',
@@ -938,6 +945,7 @@ function updateReport() {
   refs.rCh.textContent = tested.ch ? `${Math.round(ch)} ppm` : 'Not tested';
   refs.rCya.textContent = tested.cya ? `${Math.round(cya)} ppm` : 'Not tested';
   refs.rSalt.textContent = tested.salt ? `${Math.round(salt)} ppm` : 'Not tested';
+  refs.rBor.textContent = tested.bor ? `${Math.round(bor)} ppm` : 'Not tested';
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
   refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
@@ -945,6 +953,7 @@ function updateReport() {
   refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
   refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
   refs.idealSalt.textContent = exactTarget(Math.round(n(refs.saltTo)), ' ppm');
+  refs.idealBor.textContent = exactTarget(Math.round(n(refs.borTo)), ' ppm');
 
   const [fcMin, fcMax] = parseRange(refs.fcTargetRange.textContent, n(refs.fcTo), n(refs.fcTo));
   const [phMin, phMax] = parseRange(refs.phTargetRange.textContent, n(refs.phTo), n(refs.phTo));
@@ -965,6 +974,7 @@ function updateReport() {
   refs.rangeCh.textContent = fmtRange(chMin, chMax, Math.round, ' ppm');
   refs.rangeCya.textContent = fmtRange(cyaMin, cyaMax, Math.round, ' ppm');
   refs.rangeSalt.textContent = fmtRange(saltMin, saltMax, Math.round, ' ppm');
+  refs.rangeBor.textContent = fmtRange(borMin, borMax, Math.round, ' ppm');
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
   // pH uses absolute ±0.2 tolerance for Monitor (not % of span)
@@ -978,8 +988,12 @@ function updateReport() {
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
   refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
   refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
+  refs.sBor.textContent = tested.bor ? statusMark(bor, borMin, borMax) : 'Not tested';
 
-  [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt].forEach(syncAttentionRow);
+  [refs.sFc, refs.sPh, refs.sTa, refs.sCh, refs.sCya, refs.sSalt, refs.sBor].forEach(syncAttentionRow);
+
+  if (refs.rowSalt) refs.rowSalt.style.display = tested.salt ? '' : 'none';
+  if (refs.rowBor) refs.rowBor.style.display = tested.bor ? '' : 'none';
 
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
   // pH card uses absolute ±0.2 tolerance for near-range

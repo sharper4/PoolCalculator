@@ -746,7 +746,7 @@ select:focus {
   color: #a05c00;
 }
 
-.report-table td:has(#s-fc, #s-ph, #s-ta, #s-ch, #s-cya, #s-salt) {
+.report-table td:has(#s-fc, #s-ph, #s-ta, #s-ch, #s-cya, #s-salt, #s-bor) {
   white-space: nowrap;
 }
 
@@ -1295,7 +1295,7 @@ body.report-mode {
   /* Nothing should push the page sideways */
   .report-phone,
   .report-note-inline,
-  .report-table td:has(#s-fc, #s-ph, #s-ta, #s-ch, #s-cya, #s-salt) {
+  .report-table td:has(#s-fc, #s-ph, #s-ta, #s-ch, #s-cya, #s-salt, #s-bor) {
     white-space: normal;
   }
 
