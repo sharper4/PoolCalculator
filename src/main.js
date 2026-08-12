@@ -2200,23 +2200,7 @@ function init() {
     });
 
     const imageElements = Array.from(clone.querySelectorAll('img'));
-    let brandTextInserted = false;
     for (const [index, img] of imageElements.entries()) {
-      const isBrandImage = img.classList.contains('report-logo') || img.classList.contains('report-phone-img');
-
-      if (isBrandImage) {
-        if (!brandTextInserted) {
-          const brandText = document.createElement('div');
-          brandText.className = 'report-brand-text';
-          brandText.textContent = 'North Texas Elite Pool Care | 940-808-POOL';
-          img.replaceWith(brandText);
-          brandTextInserted = true;
-        } else {
-          img.remove();
-        }
-        continue;
-      }
-
       const src = img.getAttribute('src');
       if (!src) continue;
 
