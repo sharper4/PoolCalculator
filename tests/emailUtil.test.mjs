@@ -10,10 +10,12 @@ test('buildEmailPayload creates a valid mailto URL for the customer', () => {
     reportHtml: '<h1>Pool Report</h1><p>Chlorine: 2 ppm</p>'
   });
 
-  assert.equal(payload.mailtoUrl.startsWith('mailto:customer@example.com?'), true);
-  assert.ok(payload.mailtoUrl.includes('subject='));
-  assert.ok(payload.mailtoUrl.includes('body='));
-  assert.match(decodeURIComponent(payload.mailtoUrl), /Pool Chemistry Analysis Report/);
+  const parsed = new URL(payload.mailtoUrl);
+  assert.equal(parsed.protocol, 'mailto:');
+  assert.equal(parsed.pathname, 'customer@example.com');
+  assert.equal(parsed.searchParams.get('subject'), 'Pool Chemistry Analysis Report');
+  assert.ok(parsed.searchParams.get('body').includes('Pool Report'));
+  assert.ok(parsed.searchParams.get('body').includes('Chlorine: 2 ppm'));
   assert.match(payload.textBody, /Pool Report/);
   assert.match(payload.textBody, /Chlorine: 2 ppm/);
 });
