@@ -810,6 +810,16 @@ function updatePassiveOutlook() {
     lines.push('Note: Weather inputs are unavailable, so this model is using baseline assumptions (80F, UV 7).');
   }
 
+  if (tested.cya) {
+    const cya = n(refs.cyaFrom);
+    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
+    const cyaDailyLoss = Math.round((cyaWeeklyLoss / 7) * 10) / 10;
+    const cyaProjected = Math.max(0, Math.round(cya - cyaWeeklyLoss));
+    lines.push(
+      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) → ~${cyaProjected} ppm in 7 days.`
+    );
+  }
+
   if (tested.fc) {
     const fc = n(refs.fcFrom);
     const cyaForModel = tested.cya ? n(refs.cyaFrom) : n(refs.cyaTo);
@@ -840,16 +850,6 @@ function updatePassiveOutlook() {
     const taProjected = Math.max(0, Math.round(ta - taWeeklyLoss));
     lines.push(
       `TA: If untreated, model ~${taDailyLoss.toFixed(1)} ppm/day reduction (~${taWeeklyLoss} ppm this week) → ~${taProjected} ppm in 7 days.`
-    );
-  }
-
-  if (tested.cya) {
-    const cya = n(refs.cyaFrom);
-    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
-    const cyaDailyLoss = Math.round((cyaWeeklyLoss / 7) * 10) / 10;
-    const cyaProjected = Math.max(0, Math.round(cya - cyaWeeklyLoss));
-    lines.push(
-      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) → ~${cyaProjected} ppm in 7 days.`
     );
   }
 

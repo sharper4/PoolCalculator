@@ -737,9 +737,9 @@ select:focus {
 
 .report-footer-qr-section {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
 .report-footer-text-section {
@@ -762,7 +762,14 @@ select:focus {
   background: #fff;
 }
 
-body.report-mode .report-qr {
+.report-qr-label {
+  display: none;
+  margin: 0 0 0.15rem 0;
+  line-height: 1.1;
+}
+
+body.report-mode .report-qr,
+body.report-mode .report-qr-label {
   display: block;
 }
 
@@ -834,6 +841,10 @@ body.report-mode {
   }
 
   .report-qr {
+    display: block;
+  }
+
+  .report-qr-label {
     display: block;
   }
 
