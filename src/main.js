@@ -1285,8 +1285,15 @@ function updateReport() {
 
 function expandReportInsightsForPrint() {
   if (!refs.rInsights) return;
-  refs.rInsights.style.height = '0px';
-  refs.rInsights.style.height = `${refs.rInsights.scrollHeight}px`;
+
+  refs.rInsights.rows = 5;
+  refs.rInsights.style.height = '120px';
+  refs.rInsights.style.minHeight = '120px';
+  refs.rInsights.style.lineHeight = '1.4';
+
+  if (refs.rInsights.scrollHeight > 120) {
+    refs.rInsights.style.height = `${Math.max(refs.rInsights.scrollHeight, 120)}px`;
+  }
 
   if (refs.rInsightsPrint) {
     refs.rInsightsPrint.textContent = refs.rInsights.value;
