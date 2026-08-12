@@ -95,6 +95,11 @@ const refs = {
   sendReportEmail: document.getElementById('send-report-email'),
   reportView: document.getElementById('report-view'),
 
+  emailModalOverlay: document.getElementById('email-modal-overlay'),
+  emailModalInput: document.getElementById('email-modal-input'),
+  emailModalConfirm: document.getElementById('email-modal-confirm'),
+  emailModalCancel: document.getElementById('email-modal-cancel'),
+
   rCustomer: document.getElementById('r-customer'),
   rAddress: document.getElementById('r-address'),
   rRowCustomer: document.getElementById('r-row-customer'),
@@ -2029,6 +2034,7 @@ function init() {
   let poolCalcTokenClient = null;
   let poolCalcAccessToken = null;
   let poolCalcGisLoaded = false;
+  let pendingSendEmailAddress = null;
 
   function initPoolCalcTokenClient() {
     try {
@@ -2068,7 +2074,61 @@ function init() {
     }
   }
 
-  function resolveReportEmailAddress() {
+  function promptForEmailAddress(defaultValue) {
+    return new Promise((resolve) => {
+      const overlay = refs.emailModalOverlay;
+      const input = refs.emailModalInput;
+      const confirmBtn = refs.emailModalConfirm;
+      const cancelBtn = refs.emailModalCancel;
+
+      if (!overlay || !input || !confirmBtn || !cancelBtn) {
+        resolve(window.prompt('Enter the email address to send the report to:', defaultValue || '') || '');
+        return;
+      }
+
+      input.value = defaultValue || '';
+      overlay.hidden = false;
+      input.focus();
+      input.select();
+
+      function cleanup(result) {
+        overlay.hidden = true;
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
+        overlay.removeEventListener('click', onOverlayClick);
+        input.removeEventListener('keydown', onKeydown);
+        resolve(result);
+      }
+
+      function onConfirm() {
+        cleanup(input.value.trim());
+      }
+
+      function onCancel() {
+        cleanup('');
+      }
+
+      function onOverlayClick(event) {
+        if (event.target === overlay) cleanup('');
+      }
+
+      function onKeydown(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          onConfirm();
+        } else if (event.key === 'Escape') {
+          onCancel();
+        }
+      }
+
+      confirmBtn.addEventListener('click', onConfirm);
+      cancelBtn.addEventListener('click', onCancel);
+      overlay.addEventListener('click', onOverlayClick);
+      input.addEventListener('keydown', onKeydown);
+    });
+  }
+
+  async function resolveReportEmailAddress() {
     const currentEmail = refs.emailAddress.value.trim();
     const shouldPrompt = !customerSectionsVisible || !currentEmail;
 
@@ -2076,14 +2136,13 @@ function init() {
       return currentEmail;
     }
 
-    const promptValue = window.prompt('Enter the email address to send the report to:', currentEmail || '');
+    const promptValue = await promptForEmailAddress(currentEmail);
     if (!promptValue) {
       return '';
     }
 
-    const cleanedValue = promptValue.trim();
-    refs.emailAddress.value = cleanedValue;
-    return cleanedValue;
+    refs.emailAddress.value = promptValue;
+    return promptValue;
   }
 
   async function buildEmailReadyReportHtml() {
@@ -2213,12 +2272,13 @@ function init() {
   }
 
   async function sendPoolCalcReport() {
-    const emailAddress = resolveReportEmailAddress();
+    const emailAddress = pendingSendEmailAddress || await resolveReportEmailAddress();
 
     if (!emailAddress) {
-      alert('Please enter a customer email address.');
+      pendingSendEmailAddress = null;
       return;
     }
+    pendingSendEmailAddress = emailAddress;
 
     if (!poolCalcAccessToken && poolCalcTokenClient && poolCalcGisLoaded) {
       requestPoolCalcAccessToken();
@@ -2235,6 +2295,7 @@ function init() {
     };
 
     if (!poolCalcAccessToken) {
+      pendingSendEmailAddress = null;
       window.location.href = fallbackPayload.mailtoUrl;
       return;
     }
@@ -2268,6 +2329,8 @@ function init() {
       console.warn('Gmail send failed, falling back to mail client:', error);
       window.location.href = fallbackPayload.mailtoUrl;
       alert('The Gmail send failed, so your email app opened instead.');
+    } finally {
+      pendingSendEmailAddress = null;
     }
   }
 

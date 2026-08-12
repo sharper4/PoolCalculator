@@ -384,6 +384,20 @@
 
     <div class="build-badge" id="build-badge">Build --</div>
 
+    <div class="modal-overlay" id="email-modal-overlay" hidden>
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="email-modal-title">
+        <h3 id="email-modal-title">Send Report via Email</h3>
+        <p class="modal-sub">Enter the email address you'd like to send this report to.</p>
+        <label>Email Address
+          <input id="email-modal-input" type="email" placeholder="you@example.com" />
+        </label>
+        <div class="modal-actions">
+          <button id="email-modal-cancel" type="button" class="action-btn subtle">Cancel</button>
+          <button id="email-modal-confirm" type="button" class="action-btn">Send</button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
