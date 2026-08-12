@@ -2255,14 +2255,14 @@ function init() {
     if (headerTitle) {
       headerTitle.setAttribute(
         'style',
-        'display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0;'
+        'flex: 1 1 100%; display: flex; flex-direction: column; align-items: center; margin-top: 0.4rem;'
       );
       headerTitle.innerHTML = '';
       const combinedHeading = document.createElement('h2');
       combinedHeading.textContent = 'CHEMICAL BALANCING AND WATER QUALITY REPORT';
       combinedHeading.setAttribute(
         'style',
-        'margin: 0; font-size: 0.85rem; text-align: right; letter-spacing: 0.04em; line-height: 1.3; color: #0e4f97;'
+        'margin: 0; font-size: 0.85rem; text-align: center; letter-spacing: 0.04em; line-height: 1.3; color: #0e4f97;'
       );
       headerTitle.appendChild(combinedHeading);
     }
