@@ -2078,11 +2078,45 @@ function init() {
     return cleanedValue;
   }
 
+  function prepareReportForEmailCapture() {
+    const reportElement = document.querySelector('.report-sheet');
+    if (!reportElement) return;
+
+    customerSectionsVisible = true;
+    applyCustomerSectionsVisibility();
+    document.body.classList.add('report-mode');
+    refs.reportView.hidden = false;
+    refs.reportView.style.display = 'block';
+    reportElement.style.width = '100%';
+    reportElement.style.maxWidth = '820px';
+    reportElement.style.margin = '0 auto';
+    reportElement.style.boxSizing = 'border-box';
+
+    if (refs.rInsights) {
+      refs.rInsights.style.height = 'auto';
+      refs.rInsights.style.minHeight = '140px';
+      refs.rInsights.style.display = 'block';
+      refs.rInsights.rows = 6;
+      expandReportInsightsForPrint();
+    }
+
+    if (refs.reportTechInsights) {
+      refs.reportTechInsights.hidden = false;
+    }
+    if (refs.reportEliteDifference) {
+      refs.reportEliteDifference.hidden = false;
+    }
+
+    updateReport();
+  }
+
   async function captureReportScreenshotDataUrl() {
     const reportElement = document.querySelector('.report-sheet');
     if (!reportElement) return '';
 
     try {
+      prepareReportForEmailCapture();
+
       if (!window.html2canvas) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');

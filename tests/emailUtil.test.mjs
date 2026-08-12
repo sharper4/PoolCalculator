@@ -31,6 +31,19 @@ test('buildGmailMessageRaw returns valid base64', () => {
   assert.ok(raw.length > 0);
 });
 
+test('buildGmailMessageRaw embeds an inline screenshot when provided', () => {
+  const raw = buildGmailMessageRaw({
+    to: 'customer@example.com',
+    subject: 'Pool Report',
+    htmlBody: '<img src="cid:report-screenshot" />',
+    imageDataUrl: 'data:image/png;base64,AAAA'
+  });
+
+  assert.match(raw, /^[A-Za-z0-9_+=-]+$/);
+  assert.ok(raw.length > 0);
+  assert.match(raw, /poolcalc-report-boundary|report-screenshot/i);
+});
+
 test('buildHtmlEmailDocument keeps the printed report layout in HTML email format', () => {
   const html = buildHtmlEmailDocument({
     subject: 'Pool Chemistry Analysis Report',

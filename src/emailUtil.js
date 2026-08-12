@@ -131,6 +131,7 @@ export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '' 
   if (imageDataUrl) {
     const base64Image = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl;
     const boundary = 'poolcalc-report-boundary';
+    const htmlBase64 = btoa(unescape(encodeURIComponent(htmlBody)));
     const mimeBody = [
       `To: ${to}`,
       `Subject: ${subject}`,
@@ -141,7 +142,7 @@ export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '' 
       'Content-Type: text/html; charset=UTF-8',
       'Content-Transfer-Encoding: base64',
       '',
-      btoa(unescape(encodeURIComponent(htmlBody))),
+      htmlBase64,
       '',
       `--${boundary}`,
       'Content-Type: image/png; name="pool-report.png"',
