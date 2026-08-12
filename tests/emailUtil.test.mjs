@@ -58,6 +58,6 @@ test('buildHtmlEmailDocument keeps the printed report layout in HTML email forma
   assert.match(html, /font-family:/i);
   assert.match(html, /@media\s+screen/i);
   assert.match(html, /white-space:\s*pre-wrap/i);
-  assert.match(html, /min-height:\s*120px/i);
+  assert.match(html, /min-height:\s*72px/i);
   assert.match(html, /https:\/\/sharper4\.github\.io\/PoolCalculator\/LogoAlone\.png/i);
 });

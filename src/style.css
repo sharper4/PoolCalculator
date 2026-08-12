@@ -710,8 +710,8 @@ select:focus {
 
 #r-insights {
   width: 100%;
-  min-height: 120px;
-  height: 120px;
+  min-height: 72px;
+  height: 72px;
   border: 1px solid #bdd2ee;
   border-radius: 6px;
   padding: 0.5rem 0.6rem;

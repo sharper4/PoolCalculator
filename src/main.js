@@ -1286,13 +1286,14 @@ function updateReport() {
 function expandReportInsightsForPrint() {
   if (!refs.rInsights) return;
 
-  refs.rInsights.rows = 5;
-  refs.rInsights.style.height = '120px';
-  refs.rInsights.style.minHeight = '120px';
+  const baseHeight = 72;
+  refs.rInsights.rows = 3;
+  refs.rInsights.style.height = `${baseHeight}px`;
+  refs.rInsights.style.minHeight = `${baseHeight}px`;
   refs.rInsights.style.lineHeight = '1.4';
 
-  if (refs.rInsights.scrollHeight > 120) {
-    refs.rInsights.style.height = `${Math.max(refs.rInsights.scrollHeight, 120)}px`;
+  if (refs.rInsights.scrollHeight > refs.rInsights.clientHeight) {
+    refs.rInsights.style.height = `${refs.rInsights.scrollHeight + 2}px`;
   }
 
   if (refs.rInsightsPrint) {
@@ -2095,10 +2096,10 @@ function init() {
     refs.reportView.style.display = 'block';
 
     if (refs.rInsights) {
-      refs.rInsights.style.height = '120px';
-      refs.rInsights.style.minHeight = '120px';
+      refs.rInsights.style.height = '72px';
+      refs.rInsights.style.minHeight = '72px';
       refs.rInsights.style.display = 'block';
-      refs.rInsights.rows = 5;
+      refs.rInsights.rows = 3;
       refs.rInsights.style.resize = 'vertical';
       expandReportInsightsForPrint();
     }
@@ -2117,7 +2118,7 @@ function init() {
       block.className = 'report-notes';
       block.textContent = value;
       block.style.whiteSpace = 'pre-wrap';
-      block.style.minHeight = '120px';
+      block.style.minHeight = '72px';
       block.style.lineHeight = '1.5';
       block.style.color = '#071b43';
       block.style.fontSize = '12px';
@@ -2139,14 +2140,20 @@ function init() {
     });
 
     const imageElements = Array.from(clone.querySelectorAll('img'));
+    let brandTextInserted = false;
     for (const [index, img] of imageElements.entries()) {
       const isBrandImage = img.classList.contains('report-logo') || img.classList.contains('report-phone-img');
 
       if (isBrandImage) {
-        const brandText = document.createElement('div');
-        brandText.className = 'report-brand-text';
-        brandText.textContent = 'North Texas Elite Pool Care | 940-808-POOL';
-        img.replaceWith(brandText);
+        if (!brandTextInserted) {
+          const brandText = document.createElement('div');
+          brandText.className = 'report-brand-text';
+          brandText.textContent = 'North Texas Elite Pool Care | 940-808-POOL';
+          img.replaceWith(brandText);
+          brandTextInserted = true;
+        } else {
+          img.remove();
+        }
         continue;
       }
 
@@ -2177,6 +2184,14 @@ function init() {
         img.setAttribute('src', absoluteSrc);
         img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
       }
+    }
+
+    const headerTitle = clone.querySelector('.report-header-title');
+    if (headerTitle) {
+      headerTitle.innerHTML = '';
+      const combinedHeading = document.createElement('h2');
+      combinedHeading.textContent = 'CHEMICAL BALANCING AND WATER QUALITY REPORT';
+      headerTitle.appendChild(combinedHeading);
     }
 
     clone.style.width = '100%';

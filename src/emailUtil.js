@@ -78,7 +78,7 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
       .report-sheet textarea,
       .report-sheet .report-notes {
         width: 100%;
-        min-height: 120px;
+        min-height: 72px;
         white-space: pre-wrap;
         line-height: 1.5;
         padding: 8px 10px;
