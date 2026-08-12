@@ -2058,86 +2058,44 @@ function init() {
     }
   }
 
+  function resolveReportEmailAddress() {
+    const currentEmail = refs.emailAddress.value.trim();
+    const shouldPrompt = !customerSectionsVisible || !currentEmail;
+
+    if (!shouldPrompt) {
+      return currentEmail;
+    }
+
+    const promptValue = window.prompt('Enter the email address to send the report to:', currentEmail || '');
+    if (!promptValue) {
+      return '';
+    }
+
+    const cleanedValue = promptValue.trim();
+    refs.emailAddress.value = cleanedValue;
+    return cleanedValue;
+  }
+
   async function sendPoolCalcReport() {
-    const emailAddress = refs.emailAddress.value;
-    const reportHTML = document.querySelector('.report-sheet').innerHTML;
+    const reportHTML = document.querySelector('.report-sheet')?.innerHTML || '';
+    const emailAddress = resolveReportEmailAddress();
 
     if (!emailAddress) {
       alert('Please enter a customer email address.');
       return;
     }
 
+    const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
+    const fallbackPayload = {
+      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(reportHTML)}`
+    };
+
     if (!poolCalcAccessToken) {
-      alert('Not authenticated. Please click "Send via Email" again.');
+      window.location.href = fallbackPayload.mailtoUrl;
       return;
     }
 
     try {
-      // Create email with full report
-      const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
-      const fullHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body {
-              font-family: 'Space Mono', monospace;
-              background: white;
-              color: #0b2a5b;
-              line-height: 1.6;
-            }
-            .report-sheet {
-              max-width: 8.5in;
-              margin: 0;
-              padding: 0.75in;
-              background: white;
-              font-size: 0.9rem;
-            }
-            img {
-              max-width: 100%;
-              height: auto;
-            }
-            h2, h3 {
-              color: #0e4f97;
-              margin: 0.5rem 0 0.25rem;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 0.5rem 0;
-            }
-            td, th {
-              padding: 0.4rem;
-              border: 1px solid #bdd2ee;
-              text-align: left;
-            }
-            th {
-              background: #f0f4f9;
-              font-weight: 600;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="report-sheet">
-            ${reportHTML}
-          </div>
-        </body>
-        </html>
-      `;
-
-      const emailHeaders = `To: ${emailAddress}\r\nSubject: ${emailSubject}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`;
-      const emailBody = emailHeaders + fullHTML;
-
-      // Base64 encode the message
-      const encodedMessage = btoa(unescape(encodeURIComponent(emailBody)));
-
       const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages/send', {
         method: 'POST',
         headers: {
@@ -2145,12 +2103,12 @@ function init() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          raw: encodedMessage,
+          raw: btoa(unescape(encodeURIComponent(`To: ${emailAddress}\r\nSubject: ${emailSubject}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${reportHTML}`)))
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(`Gmail API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
@@ -2158,17 +2116,14 @@ function init() {
       alert(`✅ Report sent successfully to ${emailAddress}!`);
       console.log('Report sent. ID:', result.id);
     } catch (error) {
-      console.error('Error sending report:', error);
-      alert('Failed to send report: ' + error.message);
+      console.warn('Gmail send failed, falling back to mail client:', error);
+      window.location.href = fallbackPayload.mailtoUrl;
+      alert('The Gmail send failed, so your email app opened instead.');
     }
   }
 
   refs.sendReportEmail.addEventListener('click', () => {
-    if (poolCalcAccessToken) {
-      sendPoolCalcReport();
-    } else {
-      requestPoolCalcAccessToken();
-    }
+    sendPoolCalcReport();
   });
 
   // Initialize token client when page loads

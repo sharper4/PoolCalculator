@@ -7,50 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/index-DfLsSyTU.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Meb5smCX.css">
-    <style>
-      .build-badge{position:fixed;right:.85rem;bottom:.8rem;z-index:20;border:1px solid rgba(14,79,151,.25);border-radius:999px;background:rgba(255,255,255,.9);color:#45658f;padding:.18rem .55rem;font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.04em;box-shadow:0 8px 18px rgba(7,27,67,.08);backdrop-filter:blur(8px)}
-      .hero-weather-stack{display:grid;gap:.55rem;width:100%;max-width:420px;justify-self:end}
-      body.report-mode .panel.reveal.stagger-5{display:none}
-      @media print{.build-badge{display:none}.panel.reveal.stagger-5{display:none!important}}
-      @media (width<=980px){.build-badge{right:.55rem;bottom:.55rem}.hero-weather-stack{justify-self:stretch;max-width:none}}
-    </style>
-    <link rel="stylesheet" href="./assets/mobile-20260811.css">
-    <link rel="stylesheet" href="./assets/collapsible-20260811.css">
-    <link rel="stylesheet" href="./assets/qr-sizing-20260811-3.css">
-    <script defer src="./assets/live-patch-20260722-9.js"></script>
-    <script defer src="./assets/live-patch-20260803-5.js"></script>
-    <script defer src="./assets/live-patch-20260803-6.js"></script>
-    <script defer src="./assets/linked-collapsibles-20260811.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script>
-      // Ensure send-report-email button exists in DOM before Vite bundle runs
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          const toolbar = document.querySelector('.report-toolbar');
-          if (toolbar && !document.getElementById('send-report-email')) {
-            const btn = document.createElement('button');
-            btn.id = 'send-report-email';
-            btn.type = 'button';
-            btn.className = 'action-btn';
-            btn.style.backgroundColor = '#0ea5e9';
-            btn.style.cursor = 'pointer';
-            btn.textContent = 'Send via Email';
-            toolbar.appendChild(btn);
-            
-            // Add event listener for email functionality
-            btn.addEventListener('click', function() {
-              if (window.poolCalcAccessToken) {
-                window.sendPoolCalcReport && window.sendPoolCalcReport();
-              } else {
-                window.requestPoolCalcAccessToken && window.requestPoolCalcAccessToken();
-              }
-            });
-          }
-        }, 100);
-      });
-    </script>
+    <script type="module" crossorigin src="./assets/index-Bjs5zYiq.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CkceYKOB.css">
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -59,9 +18,7 @@
     <main class="layout">
       <header class="hero panel reveal">
         <div class="brand-row">
-          <a href="https://sharper4.github.io/NTXElitePoolCare/" aria-label="North Texas Elite Pool Care home">
-            <img class="brand-logo" src="./PrimaryLogo.png" alt="North Texas Elite Pool Care logo" />
-          </a>
+          <img class="brand-logo" src="./PrimaryLogo.png" alt="North Texas Elite Pool Care logo" />
           <div class="brand-title-actions">
             <h1>Pool Calculator</h1>
             <div class="hero-actions">
@@ -333,9 +290,7 @@
 
         <article class="report-sheet">
           <header class="report-header">
-            <a href="https://sharper4.github.io/NTXElitePoolCare/" aria-label="North Texas Elite Pool Care home">
-              <img class="report-logo" src="./LogoAlone.png" alt="North Texas Elite Pool Care logo" />
-            </a>
+            <img class="report-logo" src="./LogoAlone.png" alt="North Texas Elite Pool Care logo" />
             <div class="report-header-center">
               <img class="report-phone-img" src="./PhoneNumber.png" alt="940-808-POOL" />
             </div>
@@ -373,22 +328,23 @@
                   <th>Test</th>
                   <th>Result</th>
                   <th>Ideal</th>
+                  <th>Range</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="s-cya"></td></tr>
-                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="s-fc"></td></tr>
-                <tr><td>pH</td><td id="r-ph">--</td><td id="ideal-ph">--</td><td id="s-ph"></td></tr>
-                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="s-ta"></td></tr>
-                <tr><td>Calcium</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="s-ch"></td></tr>
-                <tr><td>Salt</td><td id="r-salt">--</td><td id="ideal-salt">--</td><td id="s-salt"></td></tr>
-                <tr><td>Borate</td><td id="r-bor">--</td><td id="ideal-bor">--</td><td id="s-bor"></td></tr>
+                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="range-cya">--</td><td id="s-cya"></td></tr>
+                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="range-fc">--</td><td id="s-fc"></td></tr>
+                <tr><td>pH</td><td id="r-ph">--</td><td id="ideal-ph">--</td><td id="range-ph">--</td><td id="s-ph"></td></tr>
+                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="range-ta">--</td><td id="s-ta"></td></tr>
+                <tr><td>Calcium</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="range-ch">--</td><td id="s-ch"></td></tr>
+                <tr><td>Salt</td><td id="r-salt">--</td><td id="ideal-salt">--</td><td id="range-salt">--</td><td id="s-salt"></td></tr>
+                <tr><td>Borate</td><td id="r-bor">--</td><td id="ideal-bor">--</td><td id="range-bor">--</td><td id="s-bor"></td></tr>
               </tbody>
             </table>
           </section>
 
-          <section class="report-block report-two-col">
+          <section class="report-block report-two-col no-print">
             <div>
               <div class="report-title-row">
                 <h3>ELITE TREATMENT PLAN</h3>
@@ -423,17 +379,6 @@
               <li>Clear communication every visit</li>
             </ul>
           </section>
-
-            <footer class="report-footer-note">
-              <div class="report-footer-qr-section">
-                <img class="report-qr" src="./qr-website.svg" alt="QR code to North Texas Elite Pool Care website" />
-                <div class="report-qr-label">Visit Us Online</div>
-              </div>
-              <div class="report-footer-text-section">
-                <p>&copy; 2026 North Texas Elite Pool Care LLC. All rights reserved.</p>
-                <p>Serving Denton County and Surrounding Areas | Professional Pool Maintenance &amp; Care</p>
-              </div>
-            </footer>
         </article>
       </section>
     </main>
