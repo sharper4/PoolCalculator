@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildEmailPayload, buildGmailMessageRaw } from '../src/emailUtil.js';
+import { buildEmailPayload, buildGmailMessageRaw, buildHtmlEmailDocument } from '../src/emailUtil.js';
 
 test('buildEmailPayload creates a valid mailto URL for the customer', () => {
   const payload = buildEmailPayload({
@@ -29,4 +29,17 @@ test('buildGmailMessageRaw returns valid base64', () => {
 
   assert.match(raw, /^[A-Za-z0-9_+=-]+$/);
   assert.ok(raw.length > 0);
+});
+
+test('buildHtmlEmailDocument keeps the printed report layout in HTML email format', () => {
+  const html = buildHtmlEmailDocument({
+    subject: 'Pool Chemistry Analysis Report',
+    reportHtml: '<article class="report-sheet"><h2>Water Quality Report</h2><p>Test result</p></article>'
+  });
+
+  assert.match(html, /<style>/i);
+  assert.match(html, /report-sheet/i);
+  assert.match(html, /Water Quality Report/i);
+  assert.match(html, /font-family:/i);
+  assert.match(html, /@media\s+screen/i);
 });

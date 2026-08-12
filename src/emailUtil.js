@@ -25,6 +25,108 @@ export function buildEmailPayload({ to, subject, reportHtml }) {
   };
 }
 
+export function buildHtmlEmailDocument({ subject, reportHtml }) {
+  const safeReportHtml = String(reportHtml || '').trim();
+  const style = `
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #edf3fb;
+        color: #071b43;
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+      .report-sheet {
+        max-width: 760px;
+        background: #ffffff;
+        border: 1px solid #bdd2ee;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 14px 28px rgba(7, 27, 67, 0.08);
+        color: #071b43;
+      }
+      .report-sheet * {
+        box-sizing: border-box;
+      }
+      .report-sheet h2,
+      .report-sheet h3,
+      .report-sheet p,
+      .report-sheet ul,
+      .report-sheet li,
+      .report-sheet td,
+      .report-sheet th,
+      .report-sheet span,
+      .report-sheet strong {
+        color: #071b43;
+      }
+      .report-sheet table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .report-sheet th,
+      .report-sheet td {
+        border: 1px solid #c7d8ee;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .report-sheet th {
+        background: #edf5ff;
+      }
+      .report-sheet .report-header {
+        border-bottom: 2px solid #0e4f97;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+      }
+      .report-sheet .report-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 20px;
+        margin: 12px 0;
+      }
+      .report-sheet .report-block {
+        margin-top: 16px;
+        border-top: 1px solid #cedcf0;
+        padding-top: 12px;
+      }
+      .report-sheet .check-row,
+      .report-sheet .check-list {
+        margin: 10px 0 0;
+      }
+      .report-sheet .check-row label,
+      .report-sheet .check-list li {
+        display: block;
+        margin: 4px 0;
+      }
+      .report-sheet .report-two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+      }
+      @media screen and (max-width: 640px) {
+        body { padding: 12px; }
+        .report-sheet { padding: 14px; }
+        .report-sheet .report-meta,
+        .report-sheet .report-two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  `;
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${subject}</title>
+    ${style}
+  </head>
+  <body>
+    ${safeReportHtml}
+  </body>
+</html>`;
+}
+
 export function buildGmailMessageRaw({ to, subject, htmlBody }) {
   const headers = [
     `To: ${to}`,

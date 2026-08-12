@@ -1,3 +1,5 @@
+import { buildGmailMessageRaw, buildHtmlEmailDocument } from './emailUtil.js';
+
 const refs = {
   units: document.getElementById('units'),
   size: document.getElementById('size'),
@@ -2077,7 +2079,7 @@ function init() {
   }
 
   async function sendPoolCalcReport() {
-    const reportHTML = document.querySelector('.report-sheet')?.innerHTML || '';
+    const reportHTML = document.querySelector('.report-sheet')?.outerHTML || '';
     const emailAddress = resolveReportEmailAddress();
 
     if (!emailAddress) {
@@ -2086,8 +2088,13 @@ function init() {
     }
 
     const emailSubject = 'Pool Chemistry Analysis Report from North Texas Elite Pool Care';
+    const emailHtml = buildHtmlEmailDocument({
+      subject: emailSubject,
+      reportHtml
+    });
+
     const fallbackPayload = {
-      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(reportHTML)}`
+      mailtoUrl: `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailHtml)}`
     };
 
     if (!poolCalcAccessToken) {
@@ -2103,7 +2110,11 @@ function init() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          raw: btoa(unescape(encodeURIComponent(`To: ${emailAddress}\r\nSubject: ${emailSubject}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${reportHTML}`)))
+          raw: buildGmailMessageRaw({
+            to: emailAddress,
+            subject: emailSubject,
+            htmlBody: emailHtml
+          })
         }),
       });
 
