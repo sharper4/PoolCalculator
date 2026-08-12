@@ -24,6 +24,33 @@
     <script defer src="./assets/live-patch-20260803-6.js"></script>
     <script defer src="./assets/linked-collapsibles-20260811.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      // Ensure send-report-email button exists in DOM before Vite bundle runs
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          const toolbar = document.querySelector('.report-toolbar');
+          if (toolbar && !document.getElementById('send-report-email')) {
+            const btn = document.createElement('button');
+            btn.id = 'send-report-email';
+            btn.type = 'button';
+            btn.className = 'action-btn';
+            btn.style.backgroundColor = '#0ea5e9';
+            btn.style.cursor = 'pointer';
+            btn.textContent = 'Send via Email';
+            toolbar.appendChild(btn);
+            
+            // Add event listener for email functionality
+            btn.addEventListener('click', function() {
+              if (window.poolCalcAccessToken) {
+                window.sendPoolCalcReport && window.sendPoolCalcReport();
+              } else {
+                window.requestPoolCalcAccessToken && window.requestPoolCalcAccessToken();
+              }
+            });
+          }
+        }, 100);
+      });
+    </script>
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
