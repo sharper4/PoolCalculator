@@ -2171,6 +2171,8 @@ function init() {
     const clone = reportElement.cloneNode(true);
     const inlineImages = [];
 
+    clone.querySelectorAll('.report-insights-print').forEach((el) => el.remove());
+
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
       const block = document.createElement('div');
@@ -2180,7 +2182,6 @@ function init() {
       block.style.minHeight = '72px';
       block.style.lineHeight = '1.5';
       block.style.color = '#071b43';
-      block.style.fontSize = '12px';
       block.style.padding = '8px 10px';
       block.style.border = '1px solid #c7d8ee';
       block.style.borderRadius = '6px';

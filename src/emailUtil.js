@@ -86,7 +86,6 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
         border-radius: 6px;
         background: #f9fbff;
         font-family: 'Segoe UI', Arial, sans-serif;
-        font-size: 12px;
         color: #071b43;
       }
       .report-sheet th,
