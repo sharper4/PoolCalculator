@@ -2089,7 +2089,7 @@ function init() {
 
     if (refs.rInsights) {
       refs.rInsights.style.height = 'auto';
-      refs.rInsights.style.minHeight = '140px';
+      refs.rInsights.style.minHeight = '120px';
       refs.rInsights.style.display = 'block';
       refs.rInsights.rows = 6;
       refs.rInsights.style.resize = 'none';
@@ -2106,20 +2106,17 @@ function init() {
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
       const block = document.createElement('div');
-      block.innerHTML = value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\n/g, '<br>');
+      block.className = 'report-notes';
+      block.textContent = value;
       block.style.whiteSpace = 'pre-wrap';
+      block.style.minHeight = '120px';
       block.style.lineHeight = '1.5';
       block.style.color = '#071b43';
       block.style.fontSize = '12px';
-      block.style.minHeight = '120px';
-      block.style.padding = '8px';
+      block.style.padding = '8px 10px';
       block.style.border = '1px solid #c7d8ee';
       block.style.borderRadius = '6px';
-      block.style.background = '#fdfefe';
+      block.style.background = '#f9fbff';
       textarea.replaceWith(block);
     });
 
@@ -2133,27 +2130,19 @@ function init() {
       input.replaceWith(mark);
     });
 
-    const assetPromises = [...clone.querySelectorAll('img')].map(async (img) => {
+    clone.querySelectorAll('img').forEach((img) => {
       const src = img.getAttribute('src');
-      if (!src || src.startsWith('data:')) return;
+      if (!src) return;
 
-      const absoluteSrc = src.startsWith('http') ? src : new URL(src, window.location.href).href;
-      try {
-        const response = await fetch(absoluteSrc);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        const dataUrl = await new Promise((resolve, reject) => {
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-        img.setAttribute('src', dataUrl);
-      } catch {
-        // Keep the original URL when the asset cannot be embedded.
-      }
+      const absoluteSrc = src.startsWith('http')
+        ? src
+        : src.startsWith('/')
+          ? `https://sharper4.github.io/PoolCalculator${src}`
+          : new URL(src, window.location.href).href;
+
+      img.setAttribute('src', absoluteSrc);
+      img.setAttribute('style', 'max-width: 100%; height: auto; display: block;');
     });
-
-    await Promise.all(assetPromises);
 
     clone.style.width = '100%';
     clone.style.maxWidth = '820px';
@@ -2175,6 +2164,11 @@ function init() {
 
     if (!emailAddress) {
       alert('Please enter a customer email address.');
+      return;
+    }
+
+    if (!poolCalcAccessToken && poolCalcTokenClient && poolCalcGisLoaded) {
+      requestPoolCalcAccessToken();
       return;
     }
 

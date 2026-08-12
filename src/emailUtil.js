@@ -63,6 +63,25 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
         width: 100%;
         border-collapse: collapse;
       }
+      .report-sheet img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .report-sheet textarea,
+      .report-sheet .report-notes {
+        width: 100%;
+        min-height: 120px;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        padding: 8px 10px;
+        border: 1px solid #c7d8ee;
+        border-radius: 6px;
+        background: #f9fbff;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 12px;
+        color: #071b43;
+      }
       .report-sheet th,
       .report-sheet td {
         border: 1px solid #c7d8ee;

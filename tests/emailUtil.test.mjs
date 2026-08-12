@@ -49,7 +49,7 @@ test('buildGmailMessageRaw embeds an inline screenshot when provided', () => {
 test('buildHtmlEmailDocument keeps the printed report layout in HTML email format', () => {
   const html = buildHtmlEmailDocument({
     subject: 'Pool Chemistry Analysis Report',
-    reportHtml: '<article class="report-sheet"><h2>Water Quality Report</h2><p>Test result</p></article>'
+    reportHtml: '<article class="report-sheet"><h2>Water Quality Report</h2><p>Test result</p><textarea>Line 1\nLine 2\nLine 3\nLine 4</textarea><img src="https://sharper4.github.io/PoolCalculator/LogoAlone.png" /></article>'
   });
 
   assert.match(html, /<style>/i);
@@ -57,4 +57,7 @@ test('buildHtmlEmailDocument keeps the printed report layout in HTML email forma
   assert.match(html, /Water Quality Report/i);
   assert.match(html, /font-family:/i);
   assert.match(html, /@media\s+screen/i);
+  assert.match(html, /white-space:\s*pre-wrap/i);
+  assert.match(html, /min-height:\s*120px/i);
+  assert.match(html, /https:\/\/sharper4\.github\.io\/PoolCalculator\/LogoAlone\.png/i);
 });
