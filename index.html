@@ -109,17 +109,17 @@
             <div id="tcl-result" class="result-block"></div>
           </article>
 
-          <article class="chem-card th">
+          <article class="chem-card ch">
             <div class="chem-head">
-              <h3>TH</h3>
-              <p id="th-target-range" class="range-pill">Target range: 200-400 ppm</p>
+              <h3>CH</h3>
+              <p id="ch-target-range" class="range-pill">Target: --</p>
             </div>
             <div class="pair">
-              <label>Now <input id="th-from" type="number" step="1" value="" /></label>
-              <label>Target <input id="th-to" type="number" step="1" value="260" tabindex="-1" /></label>
+              <label>Now <input id="ch-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="ch-to" type="number" step="1" value="260" tabindex="-1" /></label>
             </div>
-            <label>Fill Water TH <input id="th-fill" type="number" step="1" value="0" tabindex="-1" /></label>
-            <div id="th-result" class="result-block"></div>
+            <label>Fill Water CH <input id="ch-fill" type="number" step="1" value="0" tabindex="-1" /></label>
+            <div id="ch-result" class="result-block"></div>
           </article>
 
           <article class="chem-card fc">
@@ -194,19 +194,6 @@
             </div>
             <p class="note">pH math depends on current Alk and Borate; large pH shifts are approximate.</p>
             <div id="ph-result" class="result-block"></div>
-          </article>
-
-          <article class="chem-card ch">
-            <div class="chem-head">
-              <h3>CH</h3>
-              <p id="ch-target-range" class="range-pill">Target: --</p>
-            </div>
-            <div class="pair">
-              <label>Now <input id="ch-from" type="number" step="1" value="" /></label>
-              <label>Target <input id="ch-to" type="number" step="1" value="260" tabindex="-1" /></label>
-            </div>
-            <label>Fill Water CH <input id="ch-fill" type="number" step="1" value="0" tabindex="-1" /></label>
-            <div id="ch-result" class="result-block"></div>
           </article>
 
           <article class="chem-card salt">
@@ -359,13 +346,12 @@
                 </tr>
               </thead>
               <tbody>
-                <tr id="row-tcl"><td>Total Chlorine</td><td id="r-tcl">--</td><td id="ideal-tcl">--</td><td id="range-tcl">--</td><td id="s-tcl"></td></tr>
-                <tr id="row-th"><td>Total Hardness</td><td id="r-th">--</td><td id="ideal-th">--</td><td id="range-th">--</td><td id="s-th"></td></tr>
-                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="range-fc">--</td><td id="s-fc"></td></tr>
-                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="range-cya">--</td><td id="s-cya"></td></tr>
-                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="range-ta">--</td><td id="s-ta"></td></tr>
+                <tr><td>FC (Free Chlorine)</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="range-fc">--</td><td id="s-fc"></td></tr>
+                <tr><td>TC (Total Chlorine)</td><td id="r-tcl">--</td><td id="ideal-tcl">--</td><td id="range-tcl">--</td><td id="s-tcl"></td></tr>
+                <tr><td>CYA (Stabilizer)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="range-cya">--</td><td id="s-cya"></td></tr>
                 <tr><td>pH</td><td id="r-ph">--</td><td id="ideal-ph">--</td><td id="range-ph">--</td><td id="s-ph"></td></tr>
-                <tr><td>Calcium</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="range-ch">--</td><td id="s-ch"></td></tr>
+                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="range-ta">--</td><td id="s-ta"></td></tr>
+                <tr><td>CH (Calcium)</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="range-ch">--</td><td id="s-ch"></td></tr>
                 <tr id="row-salt"><td>Salt</td><td id="r-salt">--</td><td id="ideal-salt">--</td><td id="range-salt">--</td><td id="s-salt"></td></tr>
                 <tr id="row-bor"><td>Borate</td><td id="r-bor">--</td><td id="ideal-bor">--</td><td id="range-bor">--</td><td id="s-bor"></td></tr>
               </tbody>
