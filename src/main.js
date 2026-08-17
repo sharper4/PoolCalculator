@@ -481,12 +481,17 @@ function statusBags(lbs) {
   return rem > 0 ? `${bags} (40 lb) bags and ${rem} lbs` : `${bags} (40 lb) bags`;
 }
 
-function statusMark(value, min, max, monitorBuf = 0.10) {
+function statusMark(value, min, max, monitorBuf = 0.10, monitorBounds = null) {
   if (!Number.isFinite(value)) return '--';
   if (value >= min && value <= max) return 'OK';
-  if (monitorBuf > 0) {
-    const buffer = (max - min) * monitorBuf;
-    if (value >= min - buffer && value <= max + buffer) return 'Monitor';
+  let loBound = min - (max - min) * monitorBuf;
+  let hiBound = max + (max - min) * monitorBuf;
+  if (monitorBounds) {
+    if (Number.isFinite(monitorBounds.min)) loBound = monitorBounds.min;
+    if (Number.isFinite(monitorBounds.max)) hiBound = monitorBounds.max;
+  }
+  if (monitorBuf > 0 || monitorBounds) {
+    if (value >= loBound && value <= hiBound) return 'Monitor';
   }
   return 'Needs attention';
 }
@@ -551,7 +556,7 @@ function syncAttentionRow(statusCell) {
   row.classList.toggle('monitor-row', statusCell.textContent === 'Monitor');
 }
 
-function setRangeState(card, value, min, max, monitorBuf = 0.10) {
+function setRangeState(card, value, min, max, monitorBuf = 0.10, monitorBounds = null) {
   const hasNow = (raw) => String(raw ?? '').trim() !== '';
   if (
     (card === refs.fcCard && !hasNow(refs.fcFrom.value))
@@ -574,8 +579,13 @@ function setRangeState(card, value, min, max, monitorBuf = 0.10) {
     card.classList.remove('out-of-range', 'near-range');
   } else {
     card.classList.remove('within-range');
-    const buffer = (max - min) * monitorBuf;
-    const isNear = monitorBuf > 0 && value >= min - buffer && value <= max + buffer;
+    let loBound = min - (max - min) * monitorBuf;
+    let hiBound = max + (max - min) * monitorBuf;
+    if (monitorBounds) {
+      if (Number.isFinite(monitorBounds.min)) loBound = monitorBounds.min;
+      if (Number.isFinite(monitorBounds.max)) hiBound = monitorBounds.max;
+    }
+    const isNear = (monitorBuf > 0 || monitorBounds) && value >= loBound && value <= hiBound;
     card.classList.toggle('near-range', isNear);
     card.classList.toggle('out-of-range', !isNear);
   }
@@ -1003,7 +1013,7 @@ function updateReport() {
     return 'Needs attention';
   })() : 'Not tested';
   refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
-  refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
+  refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax, undefined, { max: 500 }) : 'Not tested';
   refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
   refs.sBor.textContent = tested.bor ? statusMark(bor, borMin, borMax) : 'Not tested';
 
@@ -1031,7 +1041,7 @@ function updateReport() {
     }
   }
   setRangeState(refs.taCard, ta, taMin, taMax);
-  setRangeState(refs.chCard, ch, chMin, chMax);
+  setRangeState(refs.chCard, ch, chMin, chMax, undefined, { max: 500 });
   setRangeState(refs.saltCard, salt, saltMin, saltMax);
   setRangeState(refs.borCard, n(refs.borFrom), borMin, borMax);
 
