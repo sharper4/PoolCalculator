@@ -95,6 +95,33 @@
           <h2>Chemistry Targets</h2>
         </div>
         <div class="chem-grid">
+          <article class="chem-card tcl">
+            <div class="chem-head">
+              <h3>TCL</h3>
+              <p id="tcl-target-range" class="range-pill">Target range: -- ppm</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="tcl-from" type="number" step="0.1" value="" /></label>
+              <label>Target <input id="tcl-to" type="number" step="0.1" value="4" tabindex="-1" /></label>
+            </div>
+            <label class="check-line"><input id="tcl-auto-target" type="checkbox" checked tabindex="-1" /> Auto-set TCL target from FC</label>
+            <p class="note">Total Chlorine should track Free Chlorine; the difference is Combined Chlorine.</p>
+            <div id="tcl-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card th">
+            <div class="chem-head">
+              <h3>TH</h3>
+              <p id="th-target-range" class="range-pill">Target range: 200-400 ppm</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="th-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="th-to" type="number" step="1" value="260" tabindex="-1" /></label>
+            </div>
+            <label>Fill Water TH <input id="th-fill" type="number" step="1" value="0" tabindex="-1" /></label>
+            <div id="th-result" class="result-block"></div>
+          </article>
+
           <article class="chem-card fc">
             <div class="chem-head">
               <h3>FC</h3>
@@ -117,6 +144,30 @@
               </label>
             </div>
             <div id="fc-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card cya">
+            <div class="chem-head">
+              <h3>CYA</h3>
+              <p id="cya-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="cya-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="cya-to" type="number" step="1" value="40" tabindex="-1" /></label>
+            </div>
+            <div id="cya-result" class="result-block"></div>
+          </article>
+
+          <article class="chem-card ta">
+            <div class="chem-head">
+              <h3>Alk</h3>
+              <p id="ta-target-range" class="range-pill">Target: --</p>
+            </div>
+            <div class="pair">
+              <label>Now <input id="ta-from" type="number" step="1" value="" /></label>
+              <label>Target <input id="ta-to" type="number" step="1" value="100" tabindex="-1" /></label>
+            </div>
+            <div id="ta-result" class="result-block"></div>
           </article>
 
           <article class="chem-card ph">
@@ -145,30 +196,6 @@
             <div id="ph-result" class="result-block"></div>
           </article>
 
-          <article class="chem-card ta">
-            <div class="chem-head">
-              <h3>Alk</h3>
-              <p id="ta-target-range" class="range-pill">Target: --</p>
-            </div>
-            <div class="pair">
-              <label>Now <input id="ta-from" type="number" step="1" value="" /></label>
-              <label>Target <input id="ta-to" type="number" step="1" value="100" tabindex="-1" /></label>
-            </div>
-            <div id="ta-result" class="result-block"></div>
-          </article>
-
-          <article class="chem-card cya">
-            <div class="chem-head">
-              <h3>CYA</h3>
-              <p id="cya-target-range" class="range-pill">Target: --</p>
-            </div>
-            <div class="pair">
-              <label>Now <input id="cya-from" type="number" step="1" value="" /></label>
-              <label>Target <input id="cya-to" type="number" step="1" value="40" tabindex="-1" /></label>
-            </div>
-            <div id="cya-result" class="result-block"></div>
-          </article>
-
           <article class="chem-card ch">
             <div class="chem-head">
               <h3>CH</h3>
@@ -180,33 +207,6 @@
             </div>
             <label>Fill Water CH <input id="ch-fill" type="number" step="1" value="0" tabindex="-1" /></label>
             <div id="ch-result" class="result-block"></div>
-          </article>
-
-          <article class="chem-card th">
-            <div class="chem-head">
-              <h3>TH</h3>
-              <p id="th-target-range" class="range-pill">Target range: 200-400 ppm</p>
-            </div>
-            <div class="pair">
-              <label>Now <input id="th-from" type="number" step="1" value="" /></label>
-              <label>Target <input id="th-to" type="number" step="1" value="260" tabindex="-1" /></label>
-            </div>
-            <label>Fill Water TH <input id="th-fill" type="number" step="1" value="0" tabindex="-1" /></label>
-            <div id="th-result" class="result-block"></div>
-          </article>
-
-          <article class="chem-card tcl">
-            <div class="chem-head">
-              <h3>TCL</h3>
-              <p id="tcl-target-range" class="range-pill">Target range: -- ppm</p>
-            </div>
-            <div class="pair">
-              <label>Now <input id="tcl-from" type="number" step="0.1" value="" /></label>
-              <label>Target <input id="tcl-to" type="number" step="0.1" value="4" tabindex="-1" /></label>
-            </div>
-            <label class="check-line"><input id="tcl-auto-target" type="checkbox" checked tabindex="-1" /> Auto-set TCL target from FC</label>
-            <p class="note">Total Chlorine should track Free Chlorine; the difference is Combined Chlorine.</p>
-            <div id="tcl-result" class="result-block"></div>
           </article>
 
           <article class="chem-card salt">
@@ -359,13 +359,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="range-fc">--</td><td id="s-fc"></td></tr>
-                <tr><td>pH</td><td id="r-ph">--</td><td id="ideal-ph">--</td><td id="range-ph">--</td><td id="s-ph"></td></tr>
-                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="range-ta">--</td><td id="s-ta"></td></tr>
-                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="range-cya">--</td><td id="s-cya"></td></tr>
-                <tr><td>Calcium</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="range-ch">--</td><td id="s-ch"></td></tr>
-                <tr id="row-th"><td>Total Hardness</td><td id="r-th">--</td><td id="ideal-th">--</td><td id="range-th">--</td><td id="s-th"></td></tr>
                 <tr id="row-tcl"><td>Total Chlorine</td><td id="r-tcl">--</td><td id="ideal-tcl">--</td><td id="range-tcl">--</td><td id="s-tcl"></td></tr>
+                <tr id="row-th"><td>Total Hardness</td><td id="r-th">--</td><td id="ideal-th">--</td><td id="range-th">--</td><td id="s-th"></td></tr>
+                <tr><td>Free Chlorine</td><td id="r-fc">--</td><td id="ideal-fc">--</td><td id="range-fc">--</td><td id="s-fc"></td></tr>
+                <tr><td>Stabilizer (CYA)</td><td id="r-cya">--</td><td id="ideal-cya">--</td><td id="range-cya">--</td><td id="s-cya"></td></tr>
+                <tr><td>Alkalinity</td><td id="r-ta">--</td><td id="ideal-ta">--</td><td id="range-ta">--</td><td id="s-ta"></td></tr>
+                <tr><td>pH</td><td id="r-ph">--</td><td id="ideal-ph">--</td><td id="range-ph">--</td><td id="s-ph"></td></tr>
+                <tr><td>Calcium</td><td id="r-ch">--</td><td id="ideal-ch">--</td><td id="range-ch">--</td><td id="s-ch"></td></tr>
                 <tr id="row-salt"><td>Salt</td><td id="r-salt">--</td><td id="ideal-salt">--</td><td id="range-salt">--</td><td id="s-salt"></td></tr>
                 <tr id="row-bor"><td>Borate</td><td id="r-bor">--</td><td id="ideal-bor">--</td><td id="range-bor">--</td><td id="s-bor"></td></tr>
               </tbody>

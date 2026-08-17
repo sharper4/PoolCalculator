@@ -230,12 +230,12 @@ let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
 let customerSectionsVisible = false;
 const manualTargetOverride = {
-  fc: false,
-  ta: false,
-  ch: false,
-  cya: false,
+  tcl: false,
   th: false,
-  tcl: false
+  fc: false,
+  cya: false,
+  ta: false,
+  ch: false
 };
 
 function n(el, fallback = 0) {
@@ -833,13 +833,13 @@ function updatePassiveOutlook() {
   if (!refs.passiveOutlook) return;
 
   const tested = {
-    fc: refs.fcFrom.value.trim() !== '',
-    ph: refs.phFrom.value.trim() !== '',
-    ta: refs.taFrom.value.trim() !== '',
-    cya: refs.cyaFrom.value.trim() !== '',
-    ch: refs.chFrom.value.trim() !== '',
-    th: refs.thFrom.value.trim() !== '',
     tcl: refs.tclFrom.value.trim() !== '',
+    th: refs.thFrom.value.trim() !== '',
+    fc: refs.fcFrom.value.trim() !== '',
+    cya: refs.cyaFrom.value.trim() !== '',
+    ta: refs.taFrom.value.trim() !== '',
+    ph: refs.phFrom.value.trim() !== '',
+    ch: refs.chFrom.value.trim() !== '',
     salt: refs.saltFrom.value.trim() !== '',
     bor: refs.borFrom.value.trim() !== ''
   };
@@ -854,6 +854,14 @@ function updatePassiveOutlook() {
     lines.push('Note: Weather inputs are unavailable, so this model is using baseline assumptions (80F, UV 7).');
   }
 
+  if (tested.tcl) {
+    lines.push('TCL: If untreated, Combined Chlorine (TCL minus FC) can build up as FC is consumed; retest alongside FC.');
+  }
+
+  if (tested.th) {
+    lines.push('TH: If untreated, no meaningful weekly draw is modeled under normal conditions.');
+  }
+
   if (tested.fc) {
     const fc = n(refs.fcFrom);
     const cyaForModel = tested.cya ? n(refs.cyaFrom) : n(refs.cyaTo);
@@ -862,6 +870,26 @@ function updatePassiveOutlook() {
     const fcProjected = Math.max(0, Math.round((fc - weeklyLoss) * 10) / 10);
     lines.push(
       `FC: If untreated, expect ~${dailyLoss.toFixed(1)} ppm/day reduction (~${weeklyLoss.toFixed(1)} ppm this week) → ~${fcProjected.toFixed(1)} ppm in 7 days.`
+    );
+  }
+
+  if (tested.cya) {
+    const cya = n(refs.cyaFrom);
+    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
+    const cyaDailyLoss = Math.round((cyaWeeklyLoss / 7) * 10) / 10;
+    const cyaProjected = Math.max(0, Math.round(cya - cyaWeeklyLoss));
+    lines.push(
+      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) → ~${cyaProjected} ppm in 7 days.`
+    );
+  }
+
+  if (tested.ta) {
+    const ta = n(refs.taFrom);
+    const taWeeklyLoss = 3;
+    const taDailyLoss = Math.round((taWeeklyLoss / 7) * 10) / 10;
+    const taProjected = Math.max(0, Math.round(ta - taWeeklyLoss));
+    lines.push(
+      `Alk: If untreated, model ~${taDailyLoss.toFixed(1)} ppm/day reduction (~${taWeeklyLoss} ppm this week) → ~${taProjected} ppm in 7 days.`
     );
   }
 
@@ -877,36 +905,8 @@ function updatePassiveOutlook() {
     );
   }
 
-  if (tested.ta) {
-    const ta = n(refs.taFrom);
-    const taWeeklyLoss = 3;
-    const taDailyLoss = Math.round((taWeeklyLoss / 7) * 10) / 10;
-    const taProjected = Math.max(0, Math.round(ta - taWeeklyLoss));
-    lines.push(
-      `Alk: If untreated, model ~${taDailyLoss.toFixed(1)} ppm/day reduction (~${taWeeklyLoss} ppm this week) → ~${taProjected} ppm in 7 days.`
-    );
-  }
-
-  if (tested.cya) {
-    const cya = n(refs.cyaFrom);
-    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
-    const cyaDailyLoss = Math.round((cyaWeeklyLoss / 7) * 10) / 10;
-    const cyaProjected = Math.max(0, Math.round(cya - cyaWeeklyLoss));
-    lines.push(
-      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) → ~${cyaProjected} ppm in 7 days.`
-    );
-  }
-
   if (tested.ch) {
     lines.push('CH: If untreated, no meaningful weekly draw is modeled under normal conditions.');
-  }
-
-  if (tested.th) {
-    lines.push('TH: If untreated, no meaningful weekly draw is modeled under normal conditions.');
-  }
-
-  if (tested.tcl) {
-    lines.push('TCL: If untreated, Combined Chlorine (TCL minus FC) can build up as FC is consumed; retest alongside FC.');
   }
 
   if (tested.salt) {
@@ -958,56 +958,56 @@ function updateReport() {
   refs.rPoolSize.textContent = `${Math.round(n(refs.size))} ${refs.sizeUnit.textContent}`;
   refs.rPoolTemp.textContent = `${Math.round(n(refs.temp))} ${refs.tempUnit.textContent === 'Celsius' ? 'C' : 'F'}`;
 
+  const tcl = n(refs.tclFrom);
+  const th = n(refs.thFrom);
   const fc = n(refs.fcFrom);
-  const ph = n(refs.phFrom);
+  const cya = n(refs.cyaFrom);
   const ta = n(refs.taFrom);
   const taForPhModel = i(refs.taFrom, 100);
-  const cya = n(refs.cyaFrom);
+  const ph = n(refs.phFrom);
   const ch = n(refs.chFrom);
-  const th = n(refs.thFrom);
-  const tcl = n(refs.tclFrom);
   const salt = n(refs.saltFrom);
   const bor = n(refs.borFrom);
   const tested = {
-    fc: refs.fcFrom.value.trim() !== '',
-    ph: refs.phFrom.value.trim() !== '',
-    ta: refs.taFrom.value.trim() !== '',
-    cya: refs.cyaFrom.value.trim() !== '',
-    ch: refs.chFrom.value.trim() !== '',
-    th: refs.thFrom.value.trim() !== '',
     tcl: refs.tclFrom.value.trim() !== '',
+    th: refs.thFrom.value.trim() !== '',
+    fc: refs.fcFrom.value.trim() !== '',
+    cya: refs.cyaFrom.value.trim() !== '',
+    ta: refs.taFrom.value.trim() !== '',
+    ph: refs.phFrom.value.trim() !== '',
+    ch: refs.chFrom.value.trim() !== '',
     salt: refs.saltFrom.value.trim() !== '',
     bor: refs.borFrom.value.trim() !== ''
   };
   const gallons = getGallons();
 
-  refs.rFc.textContent = tested.fc ? `${round2(fc)} ppm` : 'Not tested';
-  refs.rPh.textContent = tested.ph ? `${round2(ph)} ppm` : 'Not tested';
-  refs.rTa.textContent = tested.ta ? `${Math.round(ta)} ppm` : 'Not tested';
-  refs.rCya.textContent = tested.cya ? `${Math.round(cya)} ppm` : 'Not tested';
-  refs.rCh.textContent = tested.ch ? `${Math.round(ch)} ppm` : 'Not tested';
-  refs.rTh.textContent = tested.th ? `${Math.round(th)} ppm` : 'Not tested';
   refs.rTcl.textContent = tested.tcl ? `${round2(tcl)} ppm` : 'Not tested';
+  refs.rTh.textContent = tested.th ? `${Math.round(th)} ppm` : 'Not tested';
+  refs.rFc.textContent = tested.fc ? `${round2(fc)} ppm` : 'Not tested';
+  refs.rCya.textContent = tested.cya ? `${Math.round(cya)} ppm` : 'Not tested';
+  refs.rTa.textContent = tested.ta ? `${Math.round(ta)} ppm` : 'Not tested';
+  refs.rPh.textContent = tested.ph ? `${round2(ph)} ppm` : 'Not tested';
+  refs.rCh.textContent = tested.ch ? `${Math.round(ch)} ppm` : 'Not tested';
   refs.rSalt.textContent = tested.salt ? `${Math.round(salt)} ppm` : 'Not tested';
   refs.rBor.textContent = tested.bor ? `${Math.round(bor)} ppm` : 'Not tested';
 
-  refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
-  refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
-  refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
-  refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
-  refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
-  refs.idealTh.textContent = exactTarget(Math.round(n(refs.thTo)), ' ppm');
   refs.idealTcl.textContent = exactTarget(round2(n(refs.tclTo)), ' ppm');
+  refs.idealTh.textContent = exactTarget(Math.round(n(refs.thTo)), ' ppm');
+  refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
+  refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
+  refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
+  refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
+  refs.idealCh.textContent = exactTarget(Math.round(n(refs.chTo)), ' ppm');
   refs.idealSalt.textContent = exactTarget(Math.round(n(refs.saltTo)), ' ppm');
   refs.idealBor.textContent = exactTarget(Math.round(n(refs.borTo)), ' ppm');
 
-  const [fcMin, fcMax] = parseRange(refs.fcTargetRange.textContent, n(refs.fcTo), n(refs.fcTo));
-  const [phMin, phMax] = parseRange(refs.phTargetRange.textContent, n(refs.phTo), n(refs.phTo));
-  const [taMin, taMax] = parseRange(refs.taTargetRange.textContent, n(refs.taTo), n(refs.taTo));
-  const [cyaMin, cyaMax] = parseRange(refs.cyaTargetRange.textContent, n(refs.cyaTo), n(refs.cyaTo));
-  const [chMin, chMax] = parseRange(refs.chTargetRange.textContent, n(refs.chTo), n(refs.chTo));
-  const [thMin, thMax] = parseRange(refs.thTargetRange.textContent, n(refs.thTo), n(refs.thTo));
   const [tclMin, tclMax] = parseRange(refs.tclTargetRange.textContent, n(refs.tclTo), n(refs.tclTo));
+  const [thMin, thMax] = parseRange(refs.thTargetRange.textContent, n(refs.thTo), n(refs.thTo));
+  const [fcMin, fcMax] = parseRange(refs.fcTargetRange.textContent, n(refs.fcTo), n(refs.fcTo));
+  const [cyaMin, cyaMax] = parseRange(refs.cyaTargetRange.textContent, n(refs.cyaTo), n(refs.cyaTo));
+  const [taMin, taMax] = parseRange(refs.taTargetRange.textContent, n(refs.taTo), n(refs.taTo));
+  const [phMin, phMax] = parseRange(refs.phTargetRange.textContent, n(refs.phTo), n(refs.phTo));
+  const [chMin, chMax] = parseRange(refs.chTargetRange.textContent, n(refs.chTo), n(refs.chTo));
   const [saltMin, saltMax] = parseRange(refs.saltTargetRange.textContent, n(refs.saltTo), n(refs.saltTo));
   const [borMin, borMax] = parseRange(refs.borTargetRange.textContent, n(refs.borTo), n(refs.borTo));
 
@@ -1016,17 +1016,21 @@ function updateReport() {
     if (lo === hi) return `${rounder(lo)}${unit}`;
     return `${rounder(lo)}–${rounder(hi)}${unit}`;
   };
-  refs.rangeFc.textContent = fmtRange(fcMin, fcMax, round2, ' ppm');
-  refs.rangePh.textContent = fmtRange(phMin, phMax, round2, '');
-  refs.rangeTa.textContent = fmtRange(taMin, taMax, Math.round, ' ppm');
-  refs.rangeCya.textContent = fmtRange(cyaMin, cyaMax, Math.round, ' ppm');
-  refs.rangeCh.textContent = fmtRange(chMin, chMax, Math.round, ' ppm');
-  refs.rangeTh.textContent = fmtRange(thMin, thMax, Math.round, ' ppm');
   refs.rangeTcl.textContent = fmtRange(tclMin, tclMax, round2, ' ppm');
+  refs.rangeTh.textContent = fmtRange(thMin, thMax, Math.round, ' ppm');
+  refs.rangeFc.textContent = fmtRange(fcMin, fcMax, round2, ' ppm');
+  refs.rangeCya.textContent = fmtRange(cyaMin, cyaMax, Math.round, ' ppm');
+  refs.rangeTa.textContent = fmtRange(taMin, taMax, Math.round, ' ppm');
+  refs.rangePh.textContent = fmtRange(phMin, phMax, round2, '');
+  refs.rangeCh.textContent = fmtRange(chMin, chMax, Math.round, ' ppm');
   refs.rangeSalt.textContent = fmtRange(saltMin, saltMax, Math.round, ' ppm');
   refs.rangeBor.textContent = fmtRange(borMin, borMax, Math.round, ' ppm');
 
+  refs.sTcl.textContent = tested.tcl ? statusMark(tcl, tclMin, tclMax) : 'Not tested';
+  refs.sTh.textContent = tested.th ? statusMark(th, thMin, thMax) : 'Not tested';
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
+  refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
+  refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
   // pH uses absolute ±0.2 tolerance for Monitor (not % of span)
   refs.sPh.textContent = tested.ph ? (() => {
     if (!Number.isFinite(ph)) return '--';
@@ -1034,22 +1038,22 @@ function updateReport() {
     if (ph >= phMin - 0.2 && ph <= phMax + 0.2) return 'Monitor';
     return 'Needs attention';
   })() : 'Not tested';
-  refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
-  refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax) : 'Not tested';
-  refs.sTh.textContent = tested.th ? statusMark(th, thMin, thMax) : 'Not tested';
-  refs.sTcl.textContent = tested.tcl ? statusMark(tcl, tclMin, tclMax) : 'Not tested';
   refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
   refs.sBor.textContent = tested.bor ? statusMark(bor, borMin, borMax) : 'Not tested';
 
-  [refs.sFc, refs.sPh, refs.sTa, refs.sCya, refs.sCh, refs.sTh, refs.sTcl, refs.sSalt, refs.sBor].forEach(syncAttentionRow);
+  [refs.sTcl, refs.sTh, refs.sFc, refs.sCya, refs.sTa, refs.sPh, refs.sCh, refs.sSalt, refs.sBor].forEach(syncAttentionRow);
 
+  if (refs.rowTcl) refs.rowTcl.style.display = tested.tcl ? '' : 'none';
+  if (refs.rowTh) refs.rowTh.style.display = tested.th ? '' : 'none';
   if (refs.rowSalt) refs.rowSalt.style.display = tested.salt ? '' : 'none';
   if (refs.rowBor) refs.rowBor.style.display = tested.bor ? '' : 'none';
-  if (refs.rowTh) refs.rowTh.style.display = tested.th ? '' : 'none';
-  if (refs.rowTcl) refs.rowTcl.style.display = tested.tcl ? '' : 'none';
 
+  setRangeState(refs.tclCard, tcl, tclMin, tclMax);
+  setRangeState(refs.thCard, th, thMin, thMax);
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
+  setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
+  setRangeState(refs.taCard, ta, taMin, taMax);
   // pH card uses absolute ±0.2 tolerance for near-range
   if (refs.phCard && Number.isFinite(ph) && Number.isFinite(phMin) && Number.isFinite(phMax)) {
     const hasNow = String(refs.phFrom.value ?? '').trim() !== '';
@@ -1065,23 +1069,19 @@ function updateReport() {
       refs.phCard.classList.toggle('out-of-range', !isNear);
     }
   }
-  setRangeState(refs.taCard, ta, taMin, taMax);
-  setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
   setRangeState(refs.chCard, ch, chMin, chMax);
-  setRangeState(refs.thCard, th, thMin, thMax);
-  setRangeState(refs.tclCard, tcl, tclMin, tclMax);
   setRangeState(refs.saltCard, salt, saltMin, saltMax);
   setRangeState(refs.borCard, n(refs.borFrom), borMin, borMax);
 
 
   const outCount = [
-    refs.sFc.textContent,
-    refs.sPh.textContent,
-    refs.sTa.textContent,
-    refs.sCya.textContent,
-    refs.sCh.textContent,
-    refs.sTh.textContent,
     refs.sTcl.textContent,
+    refs.sTh.textContent,
+    refs.sFc.textContent,
+    refs.sCya.textContent,
+    refs.sTa.textContent,
+    refs.sPh.textContent,
+    refs.sCh.textContent,
     refs.sSalt.textContent
   ].filter((state) => state === 'Needs attention').length;
 
@@ -1089,30 +1089,30 @@ function updateReport() {
   refs.statusMinor.checked = outCount > 0 && outCount < 3;
   refs.statusImmediate.checked = outCount >= 3;
 
-  const fcPlan = cleanResult(refs.fcResult.textContent);
-  const phPlan = cleanResult(refs.phResult.textContent);
-  const taPlan = cleanResult(refs.taResult.textContent);
-  const cyaPlan = cleanResult(refs.cyaResult.textContent);
-  const chPlan = cleanResult(refs.chResult.textContent);
-  const thPlan = cleanResult(refs.thResult.textContent);
   const tclPlan = cleanResult(refs.tclResult.textContent);
+  const thPlan = cleanResult(refs.thResult.textContent);
+  const fcPlan = cleanResult(refs.fcResult.textContent);
+  const cyaPlan = cleanResult(refs.cyaResult.textContent);
+  const taPlan = cleanResult(refs.taResult.textContent);
+  const phPlan = cleanResult(refs.phResult.textContent);
+  const chPlan = cleanResult(refs.chResult.textContent);
   const borPlan = cleanResult(refs.borResult.textContent);
 
   const saltPlan = cleanResult(refs.saltResult.textContent);
   const fcTarget = n(refs.fcTo);
+  const tclAction = tested.tcl && hasAction(tclPlan, 'No Total Chlorine') ? `TCL: ${tclPlan}` : '';
+  const thAction = tested.th && hasAction(thPlan, 'No TH') ? `TH: ${thPlan}` : '';
   const fcAction = tested.fc
     ? buildFcTreatmentAction(fc, fcTarget, gallons, Math.max(0.1, n(refs.fcPercent, 6)))
     : '';
-  const phAction = tested.ph && hasAction(phPlan, 'No pH') ? `pH: ${phPlan}` : '';
-  const taAction = tested.ta && hasAction(taPlan, 'No Alk') ? `Alk: ${taPlan}` : '';
   const cyaAction = tested.cya && hasAction(cyaPlan, 'No CYA') ? `CYA: ${cyaPlan}` : '';
+  const taAction = tested.ta && hasAction(taPlan, 'No Alk') ? `Alk: ${taPlan}` : '';
+  const phAction = tested.ph && hasAction(phPlan, 'No pH') ? `pH: ${phPlan}` : '';
   const chAction = tested.ch && hasAction(chPlan, 'No CH') ? `CH: ${chPlan}` : '';
-  const thAction = tested.th && hasAction(thPlan, 'No TH') ? `TH: ${thPlan}` : '';
-  const tclAction = tested.tcl && hasAction(tclPlan, 'No Total Chlorine') ? `TCL: ${tclPlan}` : '';
   const borAction = tested.bor && hasAction(borPlan, 'No borate') ? `Borate: ${borPlan}` : '';
   const saltAction = tested.salt && !saltPlan.startsWith('No salt') ? `Salt: ${saltPlan}` : '';
 
-  const treatmentItems = [fcAction, phAction, taAction, cyaAction, chAction, thAction, tclAction, borAction, saltAction].filter(Boolean);
+  const treatmentItems = [tclAction, thAction, fcAction, cyaAction, taAction, phAction, chAction, saltAction, borAction].filter(Boolean);
   if (Number(n(refs.chlorinePop)) === 2) {
     const swgRuntime = n(refs.swgRuntime, 8);
     const swgAction = buildSwgRecommendation(gallons, cya, weeklyAvgTemp, weeklyAvgUV, swgRuntime);
@@ -1138,6 +1138,39 @@ function updateReport() {
     forecastItems.push('Weather model note: 5-day forecast inputs were unavailable, so this forecast plan is temporarily using current weather conditions.');
   } else if (weatherModelSource === 'baseline') {
     forecastItems.push('Weather model note: Weather inputs are unavailable, so this forecast plan is using baseline assumptions (80F, UV 7).');
+  }
+
+  // ── TCL ─────────────────────────────────────────────────────────────────
+  // Total Chlorine tracks Free Chlorine plus any Combined Chlorine (chloramines).
+  if (tested.tcl) {
+    const combined = tested.fc ? round2(tcl - fc) : null;
+    if (combined !== null && combined > 0.5) {
+      forecastItems.push(
+        `TCL: Combined Chlorine is ~${combined.toFixed(1)} ppm today. Shocking to break down chloramines (see FC card) should bring Total Chlorine back in line with Free Chlorine within the week.`
+      );
+    } else if (combined !== null) {
+      forecastItems.push(
+        `TCL: Combined Chlorine is ~${combined.toFixed(1)} ppm \u2014 within normal range. Total Chlorine should continue tracking Free Chlorine through the week.`
+      );
+    } else {
+      forecastItems.push('TCL: Enter Free Chlorine to project Combined Chlorine drift.');
+    }
+  }
+
+  // ── TH ──────────────────────────────────────────────────────────────────
+  // TH (Total Hardness) is stable over 7 days — no dose needed for the forecast window.
+  if (tested.th) {
+    if (th >= thMin && th <= thMax) {
+      forecastItems.push(
+        `TH: Stable \u2014 no hardness dose needed today. Projected to hold near ${Math.round(th)} ppm at next visit (target: ${thMin}\u2013${thMax} ppm).`
+      );
+    } else {
+      forecastItems.push(
+        thAction
+          ? `TH: ${thAction.replace(/^TH:\s*/, '')} \u2014 no further change expected after today's dose.`
+          : `TH: At ${Math.round(th)} ppm against target ${thMin}\u2013${thMax} ppm \u2014 review at next visit.`
+      );
+    }
   }
 
   // ── FC ──────────────────────────────────────────────────────────────────
@@ -1208,6 +1241,52 @@ function updateReport() {
     }
   }
 
+  // ── CYA ─────────────────────────────────────────────────────────────────
+  // CYA degrades ~1-2 ppm/week (faster above 85°F per TFP). Dose today if projected low.
+  if (tested.cya) {
+    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
+    const cyaProjected  = Math.round(cya - cyaWeeklyLoss);
+
+    if (cyaProjected >= cyaMin) {
+      forecastItems.push(
+        `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}\u00b0F).`
+      );
+    } else {
+      forecastItems.push(
+        `CYA: Add stabilizer today to at least ${cyaMin} ppm (currently ${Math.round(cya)} ppm; ` +
+        `will lose ~${cyaWeeklyLoss} ppm this week). Low CYA accelerates FC burn-off.`
+      );
+    }
+  }
+
+  // ── Alk ─────────────────────────────────────────────────────────────────
+  // Alk (Total Alkalinity) is influenced by acid additions for pH and can be corrected with baking soda when low.
+  if (tested.ta) {
+    const taWeeklyDrop = phAction ? 8 : 3;
+    const taProjected  = Math.round(ta - taWeeklyDrop);
+
+    if (ta > taMax) {
+      forecastItems.push(
+        `Alk: High at ${Math.round(ta)} ppm \u2014 no bicarbonate dose today. pH-control acid will reduce it ~${taWeeklyDrop} ppm/week toward target (${taMin}\u2013${taMax} ppm).`
+      );
+    } else if (taProjected >= taMin) {
+      forecastItems.push(
+        `Alk: Stable \u2014 no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}\u2013${taMax} ppm).`
+      );
+    } else {
+      const taBoostNeeded = taMin - taProjected;
+      const bakingSodaOz = taBoostNeeded * gallons / BAKING_SODA_TA_OZMUL;
+      const taImmediate = Math.round(ta + taBoostNeeded);
+      const taNextVisit = Math.round(taImmediate - taWeeklyDrop);
+      forecastItems.push(
+        `Alk: Projected ~${taProjected} ppm \u2014 below minimum (${taMin} ppm). ` +
+        `Add ~${putWeightLbsOz(bakingSodaOz)} (${Math.round(bakingSodaOz)} oz) of baking soda today. ` +
+        `Immediate effect today: Alk ~${Math.round(ta)} \u2192 ~${taImmediate} ppm. ` +
+        `1-week projection after normal drift (~${taWeeklyDrop} ppm): ~${taNextVisit} ppm (target: ${taMin}\u2013${taMax} ppm).`
+      );
+    }
+  }
+
   // ── pH ──────────────────────────────────────────────────────────────────
   // Strategy: lower pH today toward the BOTTOM of range so natural CO2 off-gassing
   // (driven by aeration) rises through the week. Aeration level selected in pH card.
@@ -1269,52 +1348,6 @@ function updateReport() {
     }
   }
 
-  // ── Alk ─────────────────────────────────────────────────────────────────
-  // Alk (Total Alkalinity) is influenced by acid additions for pH and can be corrected with baking soda when low.
-  if (tested.ta) {
-    const taWeeklyDrop = phAction ? 8 : 3;
-    const taProjected  = Math.round(ta - taWeeklyDrop);
-
-    if (ta > taMax) {
-      forecastItems.push(
-        `Alk: High at ${Math.round(ta)} ppm \u2014 no bicarbonate dose today. pH-control acid will reduce it ~${taWeeklyDrop} ppm/week toward target (${taMin}\u2013${taMax} ppm).`
-      );
-    } else if (taProjected >= taMin) {
-      forecastItems.push(
-        `Alk: Stable \u2014 no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}\u2013${taMax} ppm).`
-      );
-    } else {
-      const taBoostNeeded = taMin - taProjected;
-      const bakingSodaOz = taBoostNeeded * gallons / BAKING_SODA_TA_OZMUL;
-      const taImmediate = Math.round(ta + taBoostNeeded);
-      const taNextVisit = Math.round(taImmediate - taWeeklyDrop);
-      forecastItems.push(
-        `Alk: Projected ~${taProjected} ppm \u2014 below minimum (${taMin} ppm). ` +
-        `Add ~${putWeightLbsOz(bakingSodaOz)} (${Math.round(bakingSodaOz)} oz) of baking soda today. ` +
-        `Immediate effect today: Alk ~${Math.round(ta)} \u2192 ~${taImmediate} ppm. ` +
-        `1-week projection after normal drift (~${taWeeklyDrop} ppm): ~${taNextVisit} ppm (target: ${taMin}\u2013${taMax} ppm).`
-      );
-    }
-  }
-
-  // ── CYA ─────────────────────────────────────────────────────────────────
-  // CYA degrades ~1-2 ppm/week (faster above 85°F per TFP). Dose today if projected low.
-  if (tested.cya) {
-    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
-    const cyaProjected  = Math.round(cya - cyaWeeklyLoss);
-
-    if (cyaProjected >= cyaMin) {
-      forecastItems.push(
-        `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}\u00b0F).`
-      );
-    } else {
-      forecastItems.push(
-        `CYA: Add stabilizer today to at least ${cyaMin} ppm (currently ${Math.round(cya)} ppm; ` +
-        `will lose ~${cyaWeeklyLoss} ppm this week). Low CYA accelerates FC burn-off.`
-      );
-    }
-  }
-
   // ── CH ──────────────────────────────────────────────────────────────────
   // CH is stable over 7 days — no dose needed for the forecast window.
   if (tested.ch) {
@@ -1328,39 +1361,6 @@ function updateReport() {
           ? `CH: ${chAction.replace(/^CH:\s*/, '')} \u2014 no further change expected after today's dose.`
           : `CH: At ${Math.round(ch)} ppm against target ${chMin}\u2013${chMax} ppm \u2014 review at next visit.`
       );
-    }
-  }
-
-  // ── TH ──────────────────────────────────────────────────────────────────
-  // TH (Total Hardness) is stable over 7 days — no dose needed for the forecast window.
-  if (tested.th) {
-    if (th >= thMin && th <= thMax) {
-      forecastItems.push(
-        `TH: Stable \u2014 no hardness dose needed today. Projected to hold near ${Math.round(th)} ppm at next visit (target: ${thMin}\u2013${thMax} ppm).`
-      );
-    } else {
-      forecastItems.push(
-        thAction
-          ? `TH: ${thAction.replace(/^TH:\s*/, '')} \u2014 no further change expected after today's dose.`
-          : `TH: At ${Math.round(th)} ppm against target ${thMin}\u2013${thMax} ppm \u2014 review at next visit.`
-      );
-    }
-  }
-
-  // ── TCL ─────────────────────────────────────────────────────────────────
-  // Total Chlorine tracks Free Chlorine plus any Combined Chlorine (chloramines).
-  if (tested.tcl) {
-    const combined = tested.fc ? round2(tcl - fc) : null;
-    if (combined !== null && combined > 0.5) {
-      forecastItems.push(
-        `TCL: Combined Chlorine is ~${combined.toFixed(1)} ppm today. Shocking to break down chloramines (see FC card) should bring Total Chlorine back in line with Free Chlorine within the week.`
-      );
-    } else if (combined !== null) {
-      forecastItems.push(
-        `TCL: Combined Chlorine is ~${combined.toFixed(1)} ppm \u2014 within normal range. Total Chlorine should continue tracking Free Chlorine through the week.`
-      );
-    } else {
-      forecastItems.push('TCL: Enter Free Chlorine to project Combined Chlorine drift.');
     }
   }
 
@@ -1967,7 +1967,7 @@ function calcSuggested() {
   replaceWithBreaks(refs.goalResult, [
     `Suggested FC Levels: SWG ${swg}, Normal ${min}-${targ}, Shock ${shock}, Mustard ${mustard}.`,
     `FC Goal Band: ${fcGoal} (target ${fcRangeMin}-${targ} ppm).`,
-    `Suggested Goals -> pH: ${phGoal}, Alk: ${taGoal}, CYA: ${cyaGoal}, CH: ${chGoal}.`,
+    `Suggested Goals -> CYA: ${cyaGoal}, Alk: ${taGoal}, pH: ${phGoal}, CH: ${chGoal}.`,
     `Shock and SLAM use the same FC level here: ${shock} ppm at the current CYA. Reach it with liquid chlorine, then test and re-dose often enough to hold that FC until the water is clear, combined chlorine is 0.5 ppm or less, and overnight FC loss is 1 ppm or less.`,
     `Mustard algae cleanup is ${mustard} ppm after SLAM is complete.`
   ]);
@@ -2132,13 +2132,13 @@ function calcAll() {
   // instead of a stale one from the previous render.
   calcSuggested();
 
-  calcFC();
-  calcPH();
-  calcTA();
-  calcCYA();
-  calcCH();
-  calcTH();
   calcTCL();
+  calcTH();
+  calcFC();
+  calcCYA();
+  calcTA();
+  calcPH();
+  calcCH();
   calcSalt();
   calcBorate();
 
