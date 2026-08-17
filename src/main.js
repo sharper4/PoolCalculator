@@ -122,7 +122,6 @@ const refs = {
   rPh: document.getElementById('r-ph'),
   rTa: document.getElementById('r-ta'),
   rCh: document.getElementById('r-ch'),
-  rTcl: document.getElementById('r-tcl'),
   rCya: document.getElementById('r-cya'),
   rPhos: document.getElementById('r-phos'),
   rSalt: document.getElementById('r-salt'),
@@ -133,7 +132,6 @@ const refs = {
   idealPh: document.getElementById('ideal-ph'),
   idealTa: document.getElementById('ideal-ta'),
   idealCh: document.getElementById('ideal-ch'),
-  idealTcl: document.getElementById('ideal-tcl'),
   idealCya: document.getElementById('ideal-cya'),
   idealPhos: document.getElementById('ideal-phos'),
   idealSalt: document.getElementById('ideal-salt'),
@@ -142,7 +140,6 @@ const refs = {
   rangePh: document.getElementById('range-ph'),
   rangeTa: document.getElementById('range-ta'),
   rangeCh: document.getElementById('range-ch'),
-  rangeTcl: document.getElementById('range-tcl'),
   rangeCya: document.getElementById('range-cya'),
   rangeSalt: document.getElementById('range-salt'),
   rangeBor: document.getElementById('range-bor'),
@@ -150,7 +147,6 @@ const refs = {
   sPh: document.getElementById('s-ph'),
   sTa: document.getElementById('s-ta'),
   sCh: document.getElementById('s-ch'),
-  sTcl: document.getElementById('s-tcl'),
   sCya: document.getElementById('s-cya'),
   sPhos: document.getElementById('s-phos'),
   sSalt: document.getElementById('s-salt'),
@@ -960,7 +956,6 @@ function updateReport() {
   const gallons = getGallons();
 
   refs.rFc.textContent = tested.fc ? `${round2(fc)} ppm` : 'Not tested';
-  refs.rTcl.textContent = tested.tcl ? `${round2(tcl)} ppm` : 'Not tested';
   refs.rCya.textContent = tested.cya ? `${Math.round(cya)} ppm` : 'Not tested';
   refs.rPh.textContent = tested.ph ? `${round2(ph)} ppm` : 'Not tested';
   refs.rTa.textContent = tested.ta ? `${Math.round(ta)} ppm` : 'Not tested';
@@ -969,7 +964,6 @@ function updateReport() {
   refs.rBor.textContent = tested.bor ? `${Math.round(bor)} ppm` : 'Not tested';
 
   refs.idealFc.textContent = exactTarget(round2(n(refs.fcTo)), ' ppm');
-  refs.idealTcl.textContent = exactTarget(round2(n(refs.tclTo)), ' ppm');
   refs.idealCya.textContent = exactTarget(Math.round(n(refs.cyaTo)), ' ppm');
   refs.idealPh.textContent = exactTarget(round2(n(refs.phTo)), ' ppm');
   refs.idealTa.textContent = exactTarget(Math.round(n(refs.taTo)), ' ppm');
@@ -992,7 +986,6 @@ function updateReport() {
     return `${rounder(lo)}–${rounder(hi)}${unit}`;
   };
   refs.rangeFc.textContent = fmtRange(fcMin, fcMax, round2, ' ppm');
-  refs.rangeTcl.textContent = fmtRange(tclMin, tclMax, round2, ' ppm');
   refs.rangeCya.textContent = fmtRange(cyaMin, cyaMax, Math.round, ' ppm');
   refs.rangePh.textContent = fmtRange(phMin, phMax, round2, '');
   refs.rangeTa.textContent = fmtRange(taMin, taMax, Math.round, ' ppm');
@@ -1001,7 +994,6 @@ function updateReport() {
   refs.rangeBor.textContent = fmtRange(borMin, borMax, Math.round, ' ppm');
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
-  refs.sTcl.textContent = tested.tcl ? statusMark(tcl, tclMin, tclMax) : 'Not tested';
   refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
   // pH uses absolute ±0.2 tolerance for Monitor (not % of span)
   refs.sPh.textContent = tested.ph ? (() => {
@@ -1015,7 +1007,7 @@ function updateReport() {
   refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
   refs.sBor.textContent = tested.bor ? statusMark(bor, borMin, borMax) : 'Not tested';
 
-  [refs.sFc, refs.sTcl, refs.sCya, refs.sPh, refs.sTa, refs.sCh, refs.sSalt, refs.sBor].forEach(syncAttentionRow);
+  [refs.sFc, refs.sCya, refs.sPh, refs.sTa, refs.sCh, refs.sSalt, refs.sBor].forEach(syncAttentionRow);
 
   if (refs.rowSalt) refs.rowSalt.style.display = tested.salt ? '' : 'none';
   if (refs.rowBor) refs.rowBor.style.display = tested.bor ? '' : 'none';
@@ -1046,7 +1038,6 @@ function updateReport() {
 
   const outCount = [
     refs.sFc.textContent,
-    refs.sTcl.textContent,
     refs.sCya.textContent,
     refs.sPh.textContent,
     refs.sTa.textContent,
