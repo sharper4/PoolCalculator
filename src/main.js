@@ -1176,23 +1176,6 @@ function updateReport() {
     }
   }
 
-  // ── TCL ─────────────────────────────────────────────────────────────────
-  // Total Chlorine tracks Free Chlorine plus any Combined Chlorine (chloramines).
-  if (tested.tcl) {
-    const combined = tested.fc ? round2(tcl - fc) : null;
-    if (combined !== null && combined > 0.5) {
-      forecastItems.push(
-        `TCL: Combined Chlorine is ~${combined.toFixed(1)} ppm today. Shocking to break down chloramines (see FC card) should bring Total Chlorine back in line with Free Chlorine within the week.`
-      );
-    } else if (combined !== null) {
-      forecastItems.push(
-        `TCL: Combined Chlorine is ~${combined.toFixed(1)} ppm \u2014 within normal range. Total Chlorine should continue tracking Free Chlorine through the week.`
-      );
-    } else {
-      forecastItems.push('TCL: Enter Free Chlorine to project Combined Chlorine drift.');
-    }
-  }
-
   // ── CYA ─────────────────────────────────────────────────────────────────
   // CYA degrades ~1-2 ppm/week (faster above 85°F per TFP). Dose today if projected low.
   if (tested.cya) {
@@ -1594,10 +1577,8 @@ function calcPH() {
   }
 
   if (from > to) {
-    let down = delta / -240.15 * mamul[ma] + extra / -240.15 * mamul[ma];
+    const down = delta / -240.15 * mamul[ma] + extra / -240.15 * mamul[ma];
     lines.push(`Add ${formatPhVolume(down)} of ${data.maPop[ma]} muriatic acid today → pH ~${round2(from)} to ~${round2(to)}.`);
-    down = delta / -178.66 + extra / -178.66;
-    lines.push(`Or add ${putWeight(down)} by weight or ${formatPhVolume(down * 0.6657)} by volume of dry acid today → pH ~${round2(from)} to ~${round2(to)}.`);
   }
 
   refs.phResult.innerHTML = lines.length ? lines.join('<br>') : 'No pH adjustment required.';
