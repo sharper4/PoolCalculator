@@ -499,10 +499,10 @@ select:focus {
 
 .report-website {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.6rem;
-  margin-top: 0.8rem;
+  margin-top: 0.2rem;
   color: #0d2f62;
   font-size: 0.72rem;
   line-height: 1.25;
@@ -723,6 +723,13 @@ select:focus {
 
 .static-grid li {
   margin: 0;
+}
+
+.elite-difference-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
 }
 
 .next-steps-grid {
@@ -1255,11 +1262,16 @@ body.report-mode {
   .report-meta,
   .report-two-col,
   .static-grid,
+  .elite-difference-layout,
   .next-steps-grid,
   .grid.two,
   .grid.three,
   .grid.four {
     grid-template-columns: 1fr;
+  }
+
+  .report-website {
+    justify-self: end;
   }
 
   /* Larger, easier-to-read type on phones (16px+ also stops iOS zoom-on-focus) */

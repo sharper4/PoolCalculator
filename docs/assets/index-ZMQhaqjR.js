@@ -104,12 +104,23 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
       }
+      .report-sheet .elite-difference-layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .report-sheet .static-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 16px;
+      }
       .report-sheet .report-website {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: flex-end;
         gap: 10px;
-        margin-top: 16px;
+        margin-top: 4px;
         color: #0d2f62;
         font-size: 12px;
         line-height: 1.3;
@@ -128,6 +139,15 @@
         .report-sheet .report-meta,
         .report-sheet .report-two-col {
           grid-template-columns: 1fr;
+        }
+        .report-sheet .elite-difference-layout {
+          flex-direction: column;
+        }
+        .report-sheet .static-grid {
+          grid-template-columns: 1fr;
+        }
+        .report-sheet .report-website {
+          align-self: flex-end;
         }
       }
     </style>
