@@ -133,6 +133,10 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
         align-items: flex-start;
         gap: 16px;
       }
+      .report-sheet .elite-difference-content {
+        flex: 1;
+        min-width: 0;
+      }
       .report-sheet .static-grid {
         flex: 1;
         display: grid;
