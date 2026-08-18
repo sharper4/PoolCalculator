@@ -2239,7 +2239,6 @@ function init() {
     if (refs.rInsights) {
       refs.rInsights.style.height = '72px';
       refs.rInsights.style.minHeight = '72px';
-      refs.rInsights.style.display = 'block';
       refs.rInsights.rows = 3;
       refs.rInsights.style.resize = 'vertical';
       expandReportInsightsForPrint();

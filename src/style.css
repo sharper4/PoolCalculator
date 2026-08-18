@@ -1075,13 +1075,15 @@ body.report-mode {
     max-height: none;
     overflow: visible;
     resize: none;
-    display: none;
+    display: none !important;
   }
 
   .report-insights-print {
-    display: block;
+    display: block !important;
     font-size: 0.883rem;
     line-height: 1.2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   #r-insights,
