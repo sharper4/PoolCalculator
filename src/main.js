@@ -2281,6 +2281,93 @@ function init() {
       input.replaceWith(mark);
     });
 
+    const eliteLayout = clone.querySelector('.elite-difference-layout');
+    const eliteContent = eliteLayout?.querySelector('.elite-difference-content');
+    const reportWebsite = eliteLayout?.querySelector('.report-website');
+    if (eliteLayout && eliteContent && reportWebsite) {
+      const websiteText = reportWebsite.querySelector('span');
+      const websiteQr = reportWebsite.querySelector('img');
+      const layoutTable = document.createElement('table');
+      const layoutRow = layoutTable.insertRow();
+      const contentCell = layoutRow.insertCell();
+      const websiteCell = layoutRow.insertCell();
+
+      layoutTable.setAttribute('role', 'presentation');
+      layoutTable.setAttribute('cellpadding', '0');
+      layoutTable.setAttribute('cellspacing', '0');
+      layoutTable.setAttribute('border', '0');
+      layoutTable.setAttribute('width', '100%');
+      layoutTable.setAttribute('style', 'width: 100%; border: 0; border-collapse: collapse; table-layout: fixed;');
+      contentCell.setAttribute('width', '68%');
+      contentCell.setAttribute('valign', 'top');
+      contentCell.setAttribute('style', 'width: 68%; vertical-align: top; border: 0; padding: 0 16px 0 0;');
+      websiteCell.setAttribute('width', '32%');
+      websiteCell.setAttribute('valign', 'top');
+      websiteCell.setAttribute('style', 'width: 32%; vertical-align: top; border: 0; padding: 0;');
+
+      const benefitList = eliteContent.querySelector('.static-grid');
+      if (benefitList) {
+        const benefitTable = document.createElement('table');
+        const benefitRow = benefitTable.insertRow();
+        const leftBenefitsCell = benefitRow.insertCell();
+        const rightBenefitsCell = benefitRow.insertCell();
+        const leftBenefits = document.createElement('ul');
+        const rightBenefits = document.createElement('ul');
+
+        benefitTable.setAttribute('role', 'presentation');
+        benefitTable.setAttribute('cellpadding', '0');
+        benefitTable.setAttribute('cellspacing', '0');
+        benefitTable.setAttribute('border', '0');
+        benefitTable.setAttribute('width', '100%');
+        benefitTable.setAttribute('style', 'width: 100%; border: 0; border-collapse: collapse; table-layout: fixed;');
+        [leftBenefitsCell, rightBenefitsCell].forEach((cell) => {
+          cell.setAttribute('width', '50%');
+          cell.setAttribute('valign', 'top');
+          cell.setAttribute('style', 'width: 50%; vertical-align: top; border: 0; padding: 0;');
+        });
+        rightBenefitsCell.setAttribute('style', 'width: 50%; vertical-align: top; border: 0; padding: 0 0 0 12px;');
+        [leftBenefits, rightBenefits].forEach((list) => {
+          list.setAttribute('style', 'margin: 10px 0 0; padding-left: 20px;');
+        });
+        Array.from(benefitList.children).forEach((item, index) => {
+          (index % 2 === 0 ? leftBenefits : rightBenefits).appendChild(item);
+        });
+        leftBenefitsCell.appendChild(leftBenefits);
+        rightBenefitsCell.appendChild(rightBenefits);
+        benefitList.replaceWith(benefitTable);
+      }
+
+      contentCell.appendChild(eliteContent);
+
+      if (websiteText && websiteQr) {
+        const websiteTable = document.createElement('table');
+        const websiteRow = websiteTable.insertRow();
+        const textCell = websiteRow.insertCell();
+        const qrCell = websiteRow.insertCell();
+
+        websiteTable.setAttribute('role', 'presentation');
+        websiteTable.setAttribute('cellpadding', '0');
+        websiteTable.setAttribute('cellspacing', '0');
+        websiteTable.setAttribute('border', '0');
+        websiteTable.setAttribute('width', '100%');
+        websiteTable.setAttribute('style', 'width: 100%; border: 0; border-collapse: collapse;');
+        textCell.setAttribute('valign', 'middle');
+        textCell.setAttribute('align', 'right');
+        textCell.setAttribute('style', 'vertical-align: middle; text-align: right; border: 0; padding: 0 10px 0 0; font-size: 12px; line-height: 1.3; color: #0d2f62;');
+        qrCell.setAttribute('width', '98');
+        qrCell.setAttribute('valign', 'top');
+        qrCell.setAttribute('style', 'width: 98px; vertical-align: top; border: 0; padding: 0;');
+        websiteQr.setAttribute('width', '88');
+        websiteQr.setAttribute('height', '88');
+        websiteQr.setAttribute('style', 'display: block; width: 88px; height: 88px; max-width: 88px; border: 1px solid #c7d8ee; background: #ffffff; padding: 4px;');
+        textCell.appendChild(websiteText);
+        qrCell.appendChild(websiteQr);
+        websiteCell.appendChild(websiteTable);
+      }
+
+      eliteLayout.replaceWith(layoutTable);
+    }
+
     const imageElements = Array.from(clone.querySelectorAll('img'));
     for (const [index, img] of imageElements.entries()) {
       const src = img.getAttribute('src');
@@ -2294,11 +2381,14 @@ function init() {
 
       const isLogo = img.classList.contains('report-logo');
       const isPhone = img.classList.contains('report-phone-img');
+      const isWebsiteQr = img.alt.startsWith('QR code for');
       const imageStyle = isLogo
         ? 'height: 56px; width: auto; display: block;'
         : isPhone
           ? 'height: 34px; width: auto; display: block;'
-          : 'max-width: 100%; height: auto; display: block;';
+          : isWebsiteQr
+            ? 'display: block; width: 88px; height: 88px; max-width: 88px; border: 1px solid #c7d8ee; background: #ffffff; padding: 4px;'
+            : 'max-width: 100%; height: auto; display: block;';
 
       try {
         const response = await fetch(absoluteSrc);
