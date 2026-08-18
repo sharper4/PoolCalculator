@@ -2311,9 +2311,11 @@ function init() {
         });
 
         const cid = `report-inline-${index + 1}`;
+        const contentType = String(dataUrl).match(/^data:([^;,]+)/)?.[1] || 'image/png';
+        const extension = contentType === 'image/svg+xml' ? 'svg' : contentType.split('/')[1] || 'png';
         img.setAttribute('src', `cid:${cid}`);
         img.setAttribute('style', imageStyle);
-        inlineImages.push({ cid, dataUrl, filename: `report-inline-${index + 1}.png` });
+        inlineImages.push({ cid, dataUrl, filename: `report-inline-${index + 1}.${extension}` });
       } catch {
         img.setAttribute('src', absoluteSrc);
         img.setAttribute('style', imageStyle);

@@ -128,6 +128,24 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
       }
+      .report-sheet .report-website {
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
+        color: #0d2f62;
+        font-size: 12px;
+        line-height: 1.3;
+        text-align: right;
+      }
+      .report-sheet .report-website img {
+        width: 88px;
+        height: 88px;
+        border: 1px solid #c7d8ee;
+        background: #ffffff;
+        padding: 4px;
+      }
       @media screen and (max-width: 640px) {
         body { padding: 12px; }
         .report-sheet { padding: 14px; }
@@ -178,9 +196,10 @@ export function buildGmailMessageRaw({ to, subject, htmlBody, imageDataUrl = '',
 
     images.forEach(({ cid, dataUrl, filename }) => {
       const base64Image = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+      const contentType = dataUrl.match(/^data:([^;,]+)/)?.[1] || 'image/png';
       parts.push(
         `--${boundary}`,
-        `Content-Type: image/png; name="${filename}"`,
+        `Content-Type: ${contentType}; name="${filename}"`,
         'Content-Transfer-Encoding: base64',
         `Content-ID: <${cid}>`,
         `Content-Disposition: inline; filename="${filename}"`,
