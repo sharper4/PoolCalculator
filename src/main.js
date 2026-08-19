@@ -214,6 +214,7 @@ const SALT_MONITOR_BUFFER = 0.20;
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
 let customerSectionsVisible = false;
+let manualConditionSummaryOverride = false;
 const manualTargetOverride = {
   tcl: false,
   fc: false,
@@ -1057,9 +1058,11 @@ function updateReport() {
     refs.sSalt.textContent
   ].filter((state) => state === 'Needs attention').length;
 
-  refs.statusClear.checked = outCount === 0;
-  refs.statusMinor.checked = outCount > 0 && outCount < 3;
-  refs.statusImmediate.checked = outCount >= 3;
+  if (!manualConditionSummaryOverride) {
+    refs.statusClear.checked = outCount === 0;
+    refs.statusMinor.checked = outCount > 0 && outCount < 3;
+    refs.statusImmediate.checked = outCount >= 3;
+  }
 
   const fcPlan = cleanResult(refs.fcResult.textContent);
   const tclPlan = cleanResult(refs.tclResult.textContent);
@@ -2596,6 +2599,16 @@ function init() {
 
   refs.cyaTo.addEventListener('input', () => {
     if (!suppressTargetOverrideCapture) manualTargetOverride.cya = true;
+  });
+
+  [refs.statusClear, refs.statusMinor, refs.statusImmediate].forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+      manualConditionSummaryOverride = true;
+      checkbox.checked = true;
+      [refs.statusClear, refs.statusMinor, refs.statusImmediate].forEach((otherCheckbox) => {
+        if (otherCheckbox !== checkbox) otherCheckbox.checked = false;
+      });
+    });
   });
 
   document.querySelectorAll('input,select').forEach((el) => {
