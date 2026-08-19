@@ -209,6 +209,7 @@ const TRICHLOR_3IN_TABLET_OZ = 8;
 const TRICHLOR_FC_OZMUL = 6854.95;
 const TRICHLOR_CYA_OZMUL = 4159.41;
 const ALK_MONITOR_BUFFER = 0.20;
+const SALT_MONITOR_BUFFER = 0.20;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
@@ -1015,7 +1016,7 @@ function updateReport() {
   })() : 'Not tested';
   refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax, ALK_MONITOR_BUFFER) : 'Not tested';
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax, undefined, { max: 500 }) : 'Not tested';
-  refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
+  refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax, SALT_MONITOR_BUFFER) : 'Not tested';
   refs.sBor.textContent = tested.bor ? statusMark(bor, borMin, borMax) : 'Not tested';
 
   [refs.sFc, refs.sCya, refs.sPh, refs.sTa, refs.sCh, refs.sSalt, refs.sBor].forEach(syncAttentionRow);
@@ -1043,7 +1044,7 @@ function updateReport() {
   }
   setRangeState(refs.taCard, ta, taMin, taMax, ALK_MONITOR_BUFFER);
   setRangeState(refs.chCard, ch, chMin, chMax, undefined, { max: 500 });
-  setRangeState(refs.saltCard, salt, saltMin, saltMax);
+  setRangeState(refs.saltCard, salt, saltMin, saltMax, SALT_MONITOR_BUFFER);
   setRangeState(refs.borCard, n(refs.borFrom), borMin, borMax);
 
 
