@@ -932,6 +932,24 @@ function updateBuildBadge() {
   badge.textContent = `Build ${year}.${month}.${day}.${hour}${minute}`;
 }
 
+function setupUsageCounter() {
+  const counter = document.getElementById('usage-count');
+  const fallback = document.getElementById('usage-count-fallback');
+  if (!counter || window.location.hostname !== 'sharper4.github.io') return;
+
+  counter.addEventListener('load', () => {
+    counter.hidden = false;
+    counter.alt = 'Total calculator uses';
+    counter.title = 'Counts live Pool Calculator page loads';
+    if (fallback) fallback.hidden = true;
+  }, { once: true });
+  counter.addEventListener('error', () => {
+    counter.hidden = true;
+    if (fallback) fallback.textContent = 'usage count is temporarily unavailable.';
+  }, { once: true });
+  counter.src = 'https://hits.sh/sharper4.github.io/PoolCalculator.svg?style=flat&label=uses&color=0e4f97';
+}
+
 function updateReport() {
   const today = new Date();
   const dateText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -2099,6 +2117,7 @@ function init() {
   refs.effPop.value = '24';
 
   updateBuildBadge();
+  setupUsageCounter();
 
   refs.openReport.addEventListener('click', () => {
     customerSectionsVisible = !customerSectionsVisible;
