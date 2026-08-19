@@ -208,6 +208,7 @@ const TRICHLOR_3IN_TABLET_OZ = 8;
 // FC/CYA ppm multipliers for trichlor (ppm = oz * mul / gallons), matching calcFC/effects math.
 const TRICHLOR_FC_OZMUL = 6854.95;
 const TRICHLOR_CYA_OZMUL = 4159.41;
+const ALK_MONITOR_BUFFER = 0.20;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
@@ -1012,7 +1013,7 @@ function updateReport() {
     if (ph >= phMin - 0.2 && ph <= phMax + 0.2) return 'Monitor';
     return 'Needs attention';
   })() : 'Not tested';
-  refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax) : 'Not tested';
+  refs.sTa.textContent = tested.ta ? statusMark(ta, taMin, taMax, ALK_MONITOR_BUFFER) : 'Not tested';
   refs.sCh.textContent = tested.ch ? statusMark(ch, chMin, chMax, undefined, { max: 500 }) : 'Not tested';
   refs.sSalt.textContent = tested.salt ? statusMark(salt, saltMin, saltMax) : 'Not tested';
   refs.sBor.textContent = tested.bor ? statusMark(bor, borMin, borMax) : 'Not tested';
@@ -1040,7 +1041,7 @@ function updateReport() {
       refs.phCard.classList.toggle('out-of-range', !isNear);
     }
   }
-  setRangeState(refs.taCard, ta, taMin, taMax);
+  setRangeState(refs.taCard, ta, taMin, taMax, ALK_MONITOR_BUFFER);
   setRangeState(refs.chCard, ch, chMin, chMax, undefined, { max: 500 });
   setRangeState(refs.saltCard, salt, saltMin, saltMax);
   setRangeState(refs.borCard, n(refs.borFrom), borMin, borMax);
