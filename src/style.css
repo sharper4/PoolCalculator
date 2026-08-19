@@ -433,16 +433,14 @@ select:focus {
   background: rgba(255, 255, 255, 0.92);
   color: #153c73;
   padding: 0.5rem 0.75rem;
+  font-family: Verdana, Geneva, sans-serif;
   font-size: 0.82rem;
   box-shadow: 0 8px 18px rgba(7, 27, 67, 0.08);
 }
 
-.usage-fact strong {
-  color: #0e4f97;
-}
-
 .usage-fact img {
   display: block;
+  max-width: 100%;
   width: auto;
   height: 20px;
 }

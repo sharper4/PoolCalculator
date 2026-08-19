@@ -939,7 +939,7 @@ function setupUsageCounter() {
 
   counter.addEventListener('load', () => {
     counter.hidden = false;
-    counter.alt = 'Total calculator uses';
+    counter.alt = "Fun Fact: This calculator's total number of uses";
     counter.title = 'Counts live Pool Calculator page loads';
     if (fallback) fallback.hidden = true;
   }, { once: true });
@@ -947,7 +947,7 @@ function setupUsageCounter() {
     counter.hidden = true;
     if (fallback) fallback.textContent = 'usage count is temporarily unavailable.';
   }, { once: true });
-  counter.src = 'https://hits.sh/sharper4.github.io/PoolCalculator.svg?style=flat&label=uses&color=0e4f97';
+  counter.src = 'https://hits.sh/sharper4.github.io/PoolCalculator.svg?style=flat&label=Fun%20Fact%3A%20This%20calculator%27s%20total%20number%20of%20uses%20is&labelColor=0e4f97&color=0e4f97';
 }
 
 function updateReport() {
