@@ -2276,6 +2276,7 @@ function init() {
     const clone = reportElement.cloneNode(true);
     const inlineImages = [];
 
+    clone.querySelector('.report-two-col.no-print')?.remove();
     clone.querySelectorAll('.report-insights-print').forEach((el) => el.remove());
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
