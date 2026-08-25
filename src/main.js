@@ -958,6 +958,9 @@ function updateReport() {
   refs.rAddress.textContent = refs.customerAddress.value || '__________________________';
   refs.rDate.textContent = dateText;
   refs.rEmailAddress.textContent = refs.emailAddress.value || '';
+  if (refs.rRowCustomer) refs.rRowCustomer.hidden = !customerSectionsVisible || !refs.customerName.value.trim();
+  if (refs.rRowAddress) refs.rRowAddress.hidden = !customerSectionsVisible || !refs.customerAddress.value.trim();
+  if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible || !refs.emailAddress.value.trim();
   refs.rWeather.textContent = refs.weatherConditions.value || 'Unavailable';
   if (refs.rWeatherForecast) {
     refs.rWeatherForecast.textContent = refs.weatherForecast.value || 'Unavailable';
