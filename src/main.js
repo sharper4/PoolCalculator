@@ -2279,6 +2279,7 @@ function init() {
     const clone = reportElement.cloneNode(true);
     const inlineImages = [];
 
+    clone.querySelector('.report-two-col.no-print')?.remove();
     [
       ['#r-row-customer', refs.customerName],
       ['#r-row-address', refs.customerAddress],
@@ -2571,6 +2572,16 @@ function init() {
   }
 
   window.addEventListener('beforeprint', expandReportInsightsForPrint);
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Backspace') return;
+    const target = event.target;
+    const isEditable = target instanceof HTMLInputElement
+      || target instanceof HTMLTextAreaElement
+      || target instanceof HTMLSelectElement
+      || target?.isContentEditable;
+    if (!isEditable) event.preventDefault();
+  });
 
   refs.fcTo.addEventListener('input', () => {
     if (!suppressTargetOverrideCapture) {
