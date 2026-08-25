@@ -2279,7 +2279,13 @@ function init() {
     const clone = reportElement.cloneNode(true);
     const inlineImages = [];
 
-    clone.querySelector('.report-two-col.no-print')?.remove();
+    [
+      ['#r-row-customer', refs.customerName],
+      ['#r-row-address', refs.customerAddress],
+      ['#r-row-email-address', refs.emailAddress]
+    ].forEach(([selector, input]) => {
+      if (!input.value.trim()) clone.querySelector(selector)?.remove();
+    });
     clone.querySelectorAll('.report-insights-print').forEach((el) => el.remove());
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
