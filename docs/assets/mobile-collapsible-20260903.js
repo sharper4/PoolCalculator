@@ -10,7 +10,7 @@
 
   function linkMobileAccordionBehavior() {
     let syncing = false;
-    document.querySelectorAll('.grid.two > details.collapsible').forEach((panel) => {
+    document.querySelectorAll('.grid.mobile-two > details.collapsible').forEach((panel) => {
       if (panel.dataset.mobileAccordionLinked === '1') return;
       panel.dataset.mobileAccordionLinked = '1';
 
