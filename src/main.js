@@ -6,6 +6,7 @@ const refs = {
   sizeUnit: document.getElementById('size-unit'),
   temp: document.getElementById('temp'),
   tempUnit: document.getElementById('temp-unit'),
+  tempEstimateNote: document.getElementById('temp-estimate-note'),
 
   customerName: document.getElementById('customer-name'),
   customerAddress: document.getElementById('customer-address'),
@@ -213,8 +214,10 @@ const SALT_MONITOR_BUFFER = 0.20;
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
+let suppressManualTempCapture = false;
 let customerSectionsVisible = false;
 let manualConditionSummaryOverride = false;
+let manualWaterTempOverride = false;
 const manualTargetOverride = {
   tcl: false,
   fc: false,
@@ -612,6 +615,66 @@ function parseRange(text, fallbackMin, fallbackMax) {
 let weeklyAvgTemp = 80; // default 80°F
 let weeklyAvgUV = 7;    // default UV index
 let weatherModelSource = 'baseline'; // forecast | current | baseline
+
+function parseFirstFahrenheitValue(text) {
+  const match = String(text || '').replace(/\u00b0/g, '').match(/(-?\d+(?:\.\d+)?)\s*F/i);
+  return match ? Number(match[1]) : Number.NaN;
+}
+
+function parseUvValue(text) {
+  const match = String(text || '').match(/UV\s*(-?\d+(?:\.\d+)?)/i);
+  return match ? Number(match[1]) : Number.NaN;
+}
+
+function updateWaterTempNote(message) {
+  if (!refs.tempEstimateNote) return;
+  refs.tempEstimateNote.textContent = message;
+}
+
+function estimateWaterTempF() {
+  const currentAirF = parseFirstFahrenheitValue(refs.weatherConditions?.value);
+  const forecastAirF = parseFirstFahrenheitValue(refs.weatherForecast?.value);
+  const modeledAirF = Number.isFinite(forecastAirF)
+    ? forecastAirF
+    : Number.isFinite(weeklyAvgTemp)
+      ? weeklyAvgTemp
+      : Number.isFinite(currentAirF)
+        ? currentAirF
+        : 80;
+  const currentFallbackF = Number.isFinite(currentAirF) ? currentAirF : modeledAirF;
+  const uvValue = Number.isFinite(parseUvValue(refs.weatherForecast?.value))
+    ? parseUvValue(refs.weatherForecast?.value)
+    : Number.isFinite(parseUvValue(refs.weatherConditions?.value))
+      ? parseUvValue(refs.weatherConditions?.value)
+      : weeklyAvgUV;
+
+  const sunAdjustment = uvValue >= 9 ? 1 : uvValue <= 3 ? -1 : 0;
+  const estimated = clamp(Math.round(modeledAirF * 0.55 + currentFallbackF * 0.45 - 5 + sunAdjustment), 70, 95);
+  return estimated;
+}
+
+function applyEstimatedWaterTemp() {
+  if (!refs.temp || manualWaterTempOverride) return;
+
+  const estimatedF = estimateWaterTempF();
+  const useMetricDisplay = Number(n(refs.units)) === 1;
+  const displayValue = useMetricDisplay
+    ? Math.round((estimatedF - 32) * 5 / 9)
+    : estimatedF;
+
+  suppressManualTempCapture = true;
+  refs.temp.value = String(displayValue);
+  suppressManualTempCapture = false;
+  refs.temp.dataset.estimated = '1';
+  updateWaterTempNote(`Estimated from weather (~${estimatedF}F, +/-3F). Enter a measured value to override.`);
+}
+
+function markManualWaterTemp() {
+  if (suppressManualTempCapture) return;
+  manualWaterTempOverride = true;
+  refs.temp.dataset.estimated = '0';
+  updateWaterTempNote('Using manual water temperature.');
+}
 
 function exactTarget(value, unit = '') {
   return `${value}${unit}`.trim();
@@ -2649,6 +2712,14 @@ function init() {
     syncEffectUnitControl(Number(n(refs.units)), Number(n(refs.units)), false);
   });
 
+  refs.temp.addEventListener('input', () => {
+    markManualWaterTemp();
+  });
+
+  refs.temp.addEventListener('change', () => {
+    markManualWaterTemp();
+  });
+
   refs.taTo.addEventListener('input', () => {
     if (!suppressTargetOverrideCapture) manualTargetOverride.ta = true;
   });
@@ -2687,12 +2758,15 @@ function init() {
   });
 
   calcUnits();
+  applyEstimatedWaterTemp();
   applyCustomerSectionsVisibility();
   calcAll();
   linkRowCollapsibles();
   expandReportInsightsForPrint();
   loadWeather().then(() => {
     resolveWeatherForecastFallback(false);
+    applyEstimatedWaterTemp();
+    calcAll();
     updatePassiveOutlook();
     updateReport();
     expandReportInsightsForPrint();
@@ -2700,6 +2774,8 @@ function init() {
 
   window.setTimeout(() => {
     resolveWeatherForecastFallback(true);
+    applyEstimatedWaterTemp();
+    calcAll();
     updatePassiveOutlook();
     updateReport();
   }, 7000);

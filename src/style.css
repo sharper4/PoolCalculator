@@ -1315,6 +1315,12 @@ body.report-mode {
   .status,
   .foot {
     font-size: 1rem;
+
+  .field-note {
+    color: #385f92;
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
   }
 
   input,
