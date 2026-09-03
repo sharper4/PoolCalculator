@@ -553,6 +553,11 @@ select:focus {
   justify-content: flex-end;
 }
 
+.report-toolbar-bottom {
+  display: flex;
+  margin-top: 0.1rem;
+}
+
 .report-sheet {
   background: #fff;
   border: 1px solid #b7cae6;
@@ -945,6 +950,10 @@ body.report-mode .usage-fact {
   display: none;
 }
 
+body.report-mode .report-toolbar-bottom {
+  display: flex;
+}
+
 body.report-mode {
   background: #edf3fb;
 }
@@ -972,7 +981,8 @@ body.report-mode {
   .grid.mobile-two.reveal.stagger-4,
   .panel.reveal.stagger-5,
   .usage-fact,
-  .report-toolbar {
+  .report-toolbar,
+  .report-toolbar-bottom {
     display: none !important;
   }
 

@@ -69,3 +69,14 @@ body.report-mode .grid.mobile-two.reveal.stagger-3,
 body.report-mode .grid.mobile-two.reveal.stagger-4 {
   display: none !important;
 }
+
+.report-toolbar-bottom {
+  display: flex;
+  margin-top: 0.1rem;
+}
+
+@media print {
+  .report-toolbar-bottom {
+    display: none !important;
+  }
+}
