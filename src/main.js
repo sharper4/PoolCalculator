@@ -2085,6 +2085,13 @@ function calcAll() {
 // Opening/closing one collapsible panel in a two-column row mirrors its row partner.
 function linkRowCollapsibles() {
   const isMobileViewport = () => window.matchMedia('(max-width: 980px)').matches;
+  const isSideBySideRow = (panels) => {
+    if (!panels || panels.length < 2) return false;
+    const firstTop = panels[0].getBoundingClientRect().top;
+    const secondTop = panels[1].getBoundingClientRect().top;
+    return Math.abs(firstTop - secondTop) < 3;
+  };
+
   let syncing = false;
   document.querySelectorAll('.grid.two > details.collapsible, .grid.mobile-two > details.collapsible').forEach((panel) => {
     if (panel.dataset.rowLinked === '1') return;
@@ -2092,17 +2099,17 @@ function linkRowCollapsibles() {
     panel.addEventListener('toggle', () => {
       if (syncing) return;
       syncing = true;
-      const siblings = panel.parentElement.querySelectorAll(':scope > details.collapsible');
-      if (isMobileViewport()) {
+      const siblings = Array.from(panel.parentElement.querySelectorAll(':scope > details.collapsible'));
+      if (isSideBySideRow(siblings)) {
+        siblings.forEach((sibling) => {
+          if (sibling !== panel) sibling.open = panel.open;
+        });
+      } else if (isMobileViewport()) {
         if (panel.open) {
           siblings.forEach((sibling) => {
             if (sibling !== panel) sibling.open = false;
           });
         }
-      } else {
-        siblings.forEach((sibling) => {
-          if (sibling !== panel) sibling.open = panel.open;
-        });
       }
       syncing = false;
     });
