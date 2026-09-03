@@ -9,6 +9,15 @@
   .grid.mobile-two {
     grid-template-columns: 1fr;
   }
+
+  .build-badge {
+    position: static;
+    left: auto;
+    bottom: auto;
+    display: block;
+    width: fit-content;
+    margin: 0.8rem auto 0.4rem;
+  }
 }
 
 @media (min-width: 981px) {

@@ -1232,8 +1232,12 @@ body.report-mode {
   }
 
   .build-badge {
-    left: 0.55rem;
-    bottom: 0.55rem;
+    position: static;
+    left: auto;
+    bottom: auto;
+    display: block;
+    width: fit-content;
+    margin: 0.8rem auto 0.4rem;
   }
 
   .hero-detail-row {
@@ -1267,7 +1271,7 @@ body.report-mode {
   }
 
   .build-badge {
-    bottom: 6.6rem;
+    margin: 0.7rem auto 0.35rem;
   }
 
   .layout {
