@@ -1571,7 +1571,7 @@ function updateTechnicianInsightsFromChecks() {
   if (serviceLine) autoLines.push(serviceLine);
 
   const nextValue = autoLines.length
-    ? `${manualBase ? `${manualBase}\n\n` : ''}${autoLines.join('\n')}`
+    ? `${manualBase ? `${manualBase}\n` : ''}${autoLines.join('\n')}`
     : manualBase;
 
   if (refs.rInsights.value !== nextValue) {

@@ -938,6 +938,8 @@ body.report-mode .panel.reveal.stagger-2,
 body.report-mode .panel.reveal.stagger-3,
 body.report-mode .grid.two.reveal.stagger-3,
 body.report-mode .grid.two.reveal.stagger-4,
+body.report-mode .grid.mobile-two.reveal.stagger-3,
+body.report-mode .grid.mobile-two.reveal.stagger-4,
 body.report-mode .panel.reveal.stagger-5,
 body.report-mode .usage-fact {
   display: none;
@@ -966,6 +968,8 @@ body.report-mode {
   .panel.reveal.stagger-3,
   .grid.two.reveal.stagger-3,
   .grid.two.reveal.stagger-4,
+  .grid.mobile-two.reveal.stagger-3,
+  .grid.mobile-two.reveal.stagger-4,
   .panel.reveal.stagger-5,
   .usage-fact,
   .report-toolbar {
@@ -983,7 +987,7 @@ body.report-mode {
   }
 
   .build-badge {
-    display: none;
+    display: none !important;
   }
 
   .no-print {

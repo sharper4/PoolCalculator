@@ -106,7 +106,7 @@
     if (serviceLine) lines.push(serviceLine);
 
     const nextValue = lines.length
-      ? `${base ? `${base}\n\n` : ''}${lines.join('\n')}`
+      ? `${base ? `${base}\n` : ''}${lines.join('\n')}`
       : base;
 
     if (insights.value !== nextValue) {
