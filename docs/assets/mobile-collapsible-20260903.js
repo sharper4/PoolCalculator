@@ -8,14 +8,21 @@
       panel.dataset.mobileAccordionLinked = '1';
 
       panel.addEventListener('toggle', () => {
-        if (syncing || !isMobileViewport() || !panel.open) return;
+        if (syncing) return;
         syncing = true;
 
-        panel.parentElement
-          ?.querySelectorAll(':scope > details.collapsible')
-          .forEach((sibling) => {
-            if (sibling !== panel) sibling.open = false;
+        const siblings = panel.parentElement?.querySelectorAll(':scope > details.collapsible');
+        if (isMobileViewport()) {
+          if (panel.open) {
+            siblings?.forEach((sibling) => {
+              if (sibling !== panel) sibling.open = false;
+            });
+          }
+        } else {
+          siblings?.forEach((sibling) => {
+            if (sibling !== panel) sibling.open = panel.open;
           });
+        }
 
         syncing = false;
       });

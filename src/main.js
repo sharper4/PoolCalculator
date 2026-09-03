@@ -2086,7 +2086,7 @@ function calcAll() {
 function linkRowCollapsibles() {
   const isMobileViewport = () => window.matchMedia('(max-width: 980px)').matches;
   let syncing = false;
-  document.querySelectorAll('.grid.two > details.collapsible').forEach((panel) => {
+  document.querySelectorAll('.grid.two > details.collapsible, .grid.mobile-two > details.collapsible').forEach((panel) => {
     if (panel.dataset.rowLinked === '1') return;
     panel.dataset.rowLinked = '1';
     panel.addEventListener('toggle', () => {
