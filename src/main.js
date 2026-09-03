@@ -1422,6 +1422,7 @@ function updateReport() {
 
   setChecklist(refs.rTreatmentList, treatmentItems);
   setChecklist(refs.rForecastList, forecastItems);
+  updateTechnicianInsightsFromChecks();
 }
 
 function expandReportInsightsForPrint() {
@@ -1459,6 +1460,125 @@ function updateServiceChecklistState(root = document) {
   });
 
   checklistSection.dataset.hasChecked = hasNonChemicalChecked ? '1' : '0';
+}
+
+function getCheckboxLabelText(checkbox) {
+  const label = checkbox?.closest('label');
+  if (!label) return '';
+
+  const span = label.querySelector('span');
+  if (span) return String(span.textContent || '').trim();
+  return String(label.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function getCheckedChecklistLabels(listEl) {
+  if (!listEl) return [];
+  return Array.from(listEl.querySelectorAll('input[type="checkbox"]:checked'))
+    .map(getCheckboxLabelText)
+    .filter(Boolean);
+}
+
+function stripAutoInsightLines(text) {
+  const autoPatterns = [
+    /^No chemical additions were required during this visit\.$/i,
+    /^Chlorine was added to help keep the pool properly sanitized\.$/i,
+    /^Stabilizer \(CYA\) adjustments were made to support chlorine retention\.$/i,
+    /^pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
+    /^Total alkalinity was adjusted to support overall water stability\.$/i,
+    /^Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
+    /^Salt levels were adjusted to support proper chlorination performance\.$/i,
+    /^Borate levels were adjusted to support pH stability\.$/i,
+    /^The following service checklist items were completed during this visit:/i
+  ];
+
+  return String(text || '')
+    .split(/\r?\n/)
+    .filter((line) => !autoPatterns.some((pattern) => pattern.test(line.trim())))
+    .join('\n')
+    .trim();
+}
+
+function buildChemicalInsightLinesFromChecks() {
+  const checkedTexts = [
+    ...getCheckedChecklistLabels(refs.rTreatmentList),
+    ...getCheckedChecklistLabels(refs.rForecastList)
+  ];
+
+  const flags = {
+    none: false,
+    fc: false,
+    cya: false,
+    ph: false,
+    ta: false,
+    ch: false,
+    salt: false,
+    borate: false
+  };
+
+  checkedTexts.forEach((text) => {
+    const normalized = text.toLowerCase();
+    if (/no immediate chemical balancing action required today/.test(normalized)) flags.none = true;
+    if (/^fc:|chlorine|bleach|trichlor|dichlor|shock|slam/.test(normalized)) flags.fc = true;
+    if (/^cya:|stabilizer/.test(normalized)) flags.cya = true;
+    if (/^ph:|muriatic acid|dry acid|acid/.test(normalized)) flags.ph = true;
+    if (/^alk:|alkalinity|baking soda/.test(normalized)) flags.ta = true;
+    if (/^ch:|calcium/.test(normalized)) flags.ch = true;
+    if (/^salt:|\bsalt\b/.test(normalized)) flags.salt = true;
+    if (/^borate:|\bborate\b/.test(normalized)) flags.borate = true;
+  });
+
+  const hasChemicalAction = flags.fc || flags.cya || flags.ph || flags.ta || flags.ch || flags.salt || flags.borate;
+  const lines = [];
+
+  if (flags.none && !hasChemicalAction) {
+    lines.push('No chemical additions were required during this visit.');
+    return lines;
+  }
+
+  if (flags.fc) lines.push('Chlorine was added to help keep the pool properly sanitized.');
+  if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
+  if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
+  if (flags.ta) lines.push('Total alkalinity was adjusted to support overall water stability.');
+  if (flags.ch) lines.push('Calcium hardness was adjusted to help protect pool surfaces and equipment.');
+  if (flags.salt) lines.push('Salt levels were adjusted to support proper chlorination performance.');
+  if (flags.borate) lines.push('Borate levels were adjusted to support pH stability.');
+
+  return lines;
+}
+
+function buildServiceChecklistCompletedLine() {
+  if (!refs.rServiceChecklist) return '';
+
+  const completed = Array.from(refs.rServiceChecklist.querySelectorAll('.service-check-item'))
+    .filter((item) => item.dataset.chemicalBalanced !== '1')
+    .filter((item) => item.querySelector('input[type="checkbox"]')?.checked)
+    .map((item) => {
+      const box = item.querySelector('input[type="checkbox"]');
+      return getCheckboxLabelText(box);
+    })
+    .filter(Boolean);
+
+  if (!completed.length) return '';
+  return `The following service checklist items were completed during this visit: ${completed.join(', ')}.`;
+}
+
+function updateTechnicianInsightsFromChecks() {
+  if (!refs.rInsights) return;
+
+  const manualBase = stripAutoInsightLines(refs.rInsights.value);
+  const autoLines = [...buildChemicalInsightLinesFromChecks()];
+  const serviceLine = buildServiceChecklistCompletedLine();
+  if (serviceLine) autoLines.push(serviceLine);
+
+  const nextValue = autoLines.length
+    ? `${manualBase ? `${manualBase}\n\n` : ''}${autoLines.join('\n')}`
+    : manualBase;
+
+  if (refs.rInsights.value !== nextValue) {
+    refs.rInsights.value = nextValue;
+  }
+
+  expandReportInsightsForPrint();
 }
 
 function setReportMode(enabled) {
@@ -2245,7 +2365,20 @@ function init() {
   refs.rServiceChecklist?.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
     checkbox.addEventListener('change', () => {
       updateServiceChecklistState();
+      updateTechnicianInsightsFromChecks();
     });
+  });
+
+  refs.rTreatmentList?.addEventListener('change', (event) => {
+    if (event.target instanceof HTMLInputElement && event.target.type === 'checkbox') {
+      updateTechnicianInsightsFromChecks();
+    }
+  });
+
+  refs.rForecastList?.addEventListener('change', (event) => {
+    if (event.target instanceof HTMLInputElement && event.target.type === 'checkbox') {
+      updateTechnicianInsightsFromChecks();
+    }
   });
 
   // Gmail email functionality
@@ -2815,6 +2948,7 @@ function init() {
   applyCustomerSectionsVisibility();
   updateServiceChecklistState();
   calcAll();
+  updateTechnicianInsightsFromChecks();
   linkRowCollapsibles();
   expandReportInsightsForPrint();
   loadWeather().then(() => {
