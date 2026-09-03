@@ -793,7 +793,7 @@ select:focus {
   margin-top: 0.1rem;
 }
 
-.service-check-grid {
+#r-service-checklist.service-check-grid {
   list-style: none;
   padding-left: 0;
   margin: 0.25rem 0 0;
@@ -802,11 +802,12 @@ select:focus {
   gap: 0.2rem 0.6rem;
 }
 
-.service-check-item {
+#r-service-checklist .service-check-item {
   margin: 0;
+  list-style: none;
 }
 
-.service-check-item label {
+#r-service-checklist .service-check-item label {
   display: inline-flex;
   align-items: flex-start;
   gap: 0.3rem;
@@ -814,7 +815,7 @@ select:focus {
   color: #153c73;
 }
 
-.service-check-item input[type='checkbox'] {
+#r-service-checklist .service-check-item input[type='checkbox'] {
   width: 0.9rem;
   height: 0.9rem;
   min-height: 0;
@@ -1120,12 +1121,12 @@ body.report-mode {
     display: none !important;
   }
 
-  .service-check-grid {
+  #r-service-checklist.service-check-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.08rem 0.45rem;
   }
 
-  .service-check-item:not(.is-checked) {
+  #r-service-checklist .service-check-item:not(.is-checked) {
     display: none;
   }
 
@@ -1295,7 +1296,7 @@ body.report-mode {
     padding: 0;
   }
 
-  .service-check-grid {
+  #r-service-checklist.service-check-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1344,7 +1345,7 @@ body.report-mode {
   .static-grid,
   .elite-difference-layout,
   .next-steps-grid,
-  .service-check-grid,
+  #r-service-checklist.service-check-grid,
   .grid.two,
   .grid.three,
   .grid.four {

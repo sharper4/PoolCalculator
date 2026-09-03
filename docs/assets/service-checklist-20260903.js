@@ -10,17 +10,18 @@
   let pendingRestore = [];
 
   function updateChecklistState() {
-    let hasChecked = false;
+    let hasNonChemicalChecked = false;
 
     checklist.querySelectorAll('.service-check-item').forEach((item) => {
       const box = item.querySelector('input[type="checkbox"]');
       const checked = Boolean(box?.checked);
       item.classList.toggle('is-checked', checked);
-      if (checked) hasChecked = true;
+      const isChemicalBalanced = item.dataset.chemicalBalanced === '1';
+      if (checked && !isChemicalBalanced) hasNonChemicalChecked = true;
     });
 
-    checklistSection.dataset.hasChecked = hasChecked ? '1' : '0';
-    return hasChecked;
+    checklistSection.dataset.hasChecked = hasNonChemicalChecked ? '1' : '0';
+    return hasNonChemicalChecked;
   }
 
   function restoreChecklistVisibility() {

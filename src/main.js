@@ -1449,15 +1449,16 @@ function updateServiceChecklistState(root = document) {
   const checklistSection = root.getElementById('report-service-checklist');
   if (!checklist || !checklistSection) return;
 
-  let hasChecked = false;
+  let hasNonChemicalChecked = false;
   checklist.querySelectorAll('.service-check-item').forEach((item) => {
     const box = item.querySelector('input[type="checkbox"]');
     const checked = Boolean(box?.checked);
     item.classList.toggle('is-checked', checked);
-    if (checked) hasChecked = true;
+    const isChemicalBalanced = item.dataset.chemicalBalanced === '1';
+    if (checked && !isChemicalBalanced) hasNonChemicalChecked = true;
   });
 
-  checklistSection.dataset.hasChecked = hasChecked ? '1' : '0';
+  checklistSection.dataset.hasChecked = hasNonChemicalChecked ? '1' : '0';
 }
 
 function setReportMode(enabled) {
@@ -2402,15 +2403,25 @@ function init() {
     const cloneServiceChecklist = clone.querySelector('#r-service-checklist');
     const cloneServiceChecklistSection = clone.querySelector('#report-service-checklist');
     if (cloneServiceChecklist && cloneServiceChecklistSection) {
+      let hasNonChemicalChecked = false;
+      cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
+        const box = item.querySelector('input[type="checkbox"]');
+        const isChemicalBalanced = item.dataset.chemicalBalanced === '1';
+        if (box?.checked && !isChemicalBalanced) hasNonChemicalChecked = true;
+      });
+
+      if (!hasNonChemicalChecked) {
+        cloneServiceChecklistSection.remove();
+      } else {
       cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
         const box = item.querySelector('input[type="checkbox"]');
         if (!box?.checked) item.remove();
       });
-
-      if (!cloneServiceChecklist.querySelector('.service-check-item')) {
-        cloneServiceChecklistSection.remove();
-      } else {
-        cloneServiceChecklistSection.dataset.hasChecked = '1';
+        if (!cloneServiceChecklist.querySelector('.service-check-item')) {
+          cloneServiceChecklistSection.remove();
+        } else {
+          cloneServiceChecklistSection.dataset.hasChecked = '1';
+        }
       }
     }
 
