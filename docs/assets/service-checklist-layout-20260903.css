@@ -1,0 +1,57 @@
+#r-service-checklist {
+  list-style: none !important;
+  margin: 0.25rem 0 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.2rem 0.6rem !important;
+}
+
+#r-service-checklist > li {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#r-service-checklist > li > label {
+  display: inline-flex !important;
+  align-items: flex-start;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #153c73;
+}
+
+#r-service-checklist > li > label > input[type='checkbox'] {
+  width: 0.9rem;
+  height: 0.9rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 980px) {
+  #r-service-checklist {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  #r-service-checklist {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media print {
+  #report-service-checklist[data-has-checked='0'] {
+    display: none !important;
+  }
+
+  #r-service-checklist {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.08rem 0.45rem !important;
+  }
+
+  #r-service-checklist .service-check-item:not(.is-checked) {
+    display: none !important;
+  }
+}
