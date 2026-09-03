@@ -11,9 +11,42 @@
   line-height: 1.25;
 }
 
+.service-check-grid {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.25rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.2rem 0.6rem;
+}
+
+.service-check-item {
+  margin: 0;
+}
+
+.service-check-item label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #153c73;
+}
+
+.service-check-item input[type='checkbox'] {
+  width: 0.9rem;
+  height: 0.9rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
 @media (max-width: 980px) {
   .grid.mobile-two {
     grid-template-columns: 1fr;
+  }
+
+  .service-check-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .build-badge {
@@ -26,5 +59,26 @@
     display: block;
     width: fit-content;
     margin: 0.8rem auto 0.4rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .service-check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  #report-service-checklist[data-has-checked='0'] {
+    display: none !important;
+  }
+
+  .service-check-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.08rem 0.45rem;
+  }
+
+  .service-check-item:not(.is-checked) {
+    display: none;
   }
 }

@@ -158,6 +158,8 @@ const refs = {
   rInsightsPrint: document.getElementById('r-insights-print'),
   reportTechInsights: document.getElementById('report-tech-insights'),
   reportEliteDifference: document.getElementById('report-elite-difference'),
+  reportServiceChecklist: document.getElementById('report-service-checklist'),
+  rServiceChecklist: document.getElementById('r-service-checklist'),
   statusClear: document.getElementById('status-clear'),
   statusMinor: document.getElementById('status-minor'),
   statusImmediate: document.getElementById('status-immediate')
@@ -1437,6 +1439,24 @@ function expandReportInsightsForPrint() {
   if (refs.rInsightsPrint) {
     refs.rInsightsPrint.textContent = refs.rInsights.value;
   }
+
+  updateServiceChecklistState();
+}
+
+function updateServiceChecklistState(root = document) {
+  const checklist = root.getElementById('r-service-checklist');
+  const checklistSection = root.getElementById('report-service-checklist');
+  if (!checklist || !checklistSection) return;
+
+  let hasChecked = false;
+  checklist.querySelectorAll('.service-check-item').forEach((item) => {
+    const box = item.querySelector('input[type="checkbox"]');
+    const checked = Boolean(box?.checked);
+    item.classList.toggle('is-checked', checked);
+    if (checked) hasChecked = true;
+  });
+
+  checklistSection.dataset.hasChecked = hasChecked ? '1' : '0';
 }
 
 function setReportMode(enabled) {
@@ -2220,6 +2240,12 @@ function init() {
     window.print();
   });
 
+  refs.rServiceChecklist?.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+      updateServiceChecklistState();
+    });
+  });
+
   // Gmail email functionality
   const POOL_CALC_CLIENT_ID = '401370888475-3mo4smpbf7r0l39gmk776d2g1vird0eu.apps.googleusercontent.com';
   const POOL_CALC_SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
@@ -2371,6 +2397,21 @@ function init() {
       if (!input.value.trim()) clone.querySelector(selector)?.remove();
     });
     clone.querySelectorAll('.report-insights-print').forEach((el) => el.remove());
+
+    const cloneServiceChecklist = clone.querySelector('#r-service-checklist');
+    const cloneServiceChecklistSection = clone.querySelector('#report-service-checklist');
+    if (cloneServiceChecklist && cloneServiceChecklistSection) {
+      cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
+        const box = item.querySelector('input[type="checkbox"]');
+        if (!box?.checked) item.remove();
+      });
+
+      if (!cloneServiceChecklist.querySelector('.service-check-item')) {
+        cloneServiceChecklistSection.remove();
+      } else {
+        cloneServiceChecklistSection.dataset.hasChecked = '1';
+      }
+    }
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
@@ -2760,6 +2801,7 @@ function init() {
   calcUnits();
   applyEstimatedWaterTemp();
   applyCustomerSectionsVisibility();
+  updateServiceChecklistState();
   calcAll();
   linkRowCollapsibles();
   expandReportInsightsForPrint();

@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./assets/mobile-collapsible-20260903-2.css">
     <script defer src="./assets/mobile-collapsible-20260903-2.js"></script>
     <script defer src="./assets/water-temp-estimate-20260903.js"></script>
+    <script defer src="./assets/service-checklist-20260903.js"></script>
   </head>
   <body>
     <div class="orb orb-one" aria-hidden="true"></div>
@@ -379,6 +380,21 @@
             <h3>TECHNICIAN INSIGHTS</h3>
             <textarea id="r-insights" rows="3" style="min-height: 72px; line-height: 1.4;">Water chemistry adjusted based on maintaining target levels for one week. Continue circulation and be sure to add water as necessary.</textarea>
             <p id="r-insights-print" class="report-insights-print"></p>
+          </section>
+
+          <section id="report-service-checklist" class="report-block" data-has-checked="0">
+            <h3>SERVICE CHECKLIST</h3>
+            <ul id="r-service-checklist" class="check-list service-check-grid">
+              <li class="service-check-item"><label><input type="checkbox" /> Chemicals Balanced</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Water Level Checked</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Surface Skimmed</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Walls Brushed</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Skimmer Baskets Emptied</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Pump Basket Emptied</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Filter Pressure Checked</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Equipment Operation Checked</label></li>
+              <li class="service-check-item"><label><input type="checkbox" /> Area Left Clean and Secure</label></li>
+            </ul>
           </section>
 
           <section id="report-elite-difference" class="report-block" hidden>
