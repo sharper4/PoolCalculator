@@ -2108,10 +2108,6 @@ function linkRowCollapsibles() {
     });
   });
 
-  const chemistryTargetsPanel = document.getElementById('chemistry-targets-panel');
-  if (chemistryTargetsPanel && !isMobileViewport()) {
-    chemistryTargetsPanel.open = true;
-  }
 }
 
 function init() {
