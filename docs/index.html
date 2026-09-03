@@ -6,7 +6,8 @@
     <title>North Texas Elite Pool Care - Pool Calculator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script type="module" crossorigin src="./assets/index-BLBkZT1x.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-BIWwenDW.css">
@@ -91,10 +92,8 @@
         <input id="phosphates-now" type="number" step="1" value="0" />
       </div>
 
-      <section class="panel reveal stagger-2">
-        <div class="section-head">
-          <h2>Chemistry Targets</h2>
-        </div>
+      <details id="chemistry-targets-panel" class="panel collapsible mobile-only-collapsible reveal stagger-2" open>
+        <summary class="section-head"><h2>Chemistry Targets</h2></summary>
         <div class="chem-grid">
           <article class="chem-card tcl">
             <div class="chem-head">
@@ -234,7 +233,7 @@
             <p class="note">Less than -0.6 suggests corrosive conditions. Greater than 0.6 suggests scaling risk.</p>
           </article>
         </div>
-      </section>
+      </details>
 
       <section class="grid two reveal stagger-3">
         <details class="panel collapsible">
@@ -421,6 +420,7 @@
         </div>
       </div>
     </div>
-
+
+
   </body>
 </html>
