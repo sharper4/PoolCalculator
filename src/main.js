@@ -650,8 +650,9 @@ function estimateWaterTempF() {
       ? parseUvValue(refs.weatherConditions?.value)
       : weeklyAvgUV;
 
-  const sunAdjustment = uvValue >= 9 ? 1 : uvValue <= 3 ? -1 : 0;
-  const estimated = clamp(Math.round(modeledAirF * 0.55 + currentFallbackF * 0.45 - 5 + sunAdjustment), 70, 95);
+  const sunAdjustment = uvValue >= 10 ? 1 : uvValue <= 3 ? -1 : 0;
+  const weightedAirF = modeledAirF * 0.6 + currentFallbackF * 0.4;
+  const estimated = clamp(Math.round(weightedAirF - 9 + sunAdjustment), 68, 93);
   return estimated;
 }
 

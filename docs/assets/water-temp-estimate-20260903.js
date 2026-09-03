@@ -43,8 +43,9 @@
         ? uvCurrent
         : 7;
 
-    const sunAdjustment = uvValue >= 9 ? 1 : uvValue <= 3 ? -1 : 0;
-    return Math.min(95, Math.max(70, Math.round(modeledAirF * 0.55 + currentFallbackF * 0.45 - 5 + sunAdjustment)));
+    const sunAdjustment = uvValue >= 10 ? 1 : uvValue <= 3 ? -1 : 0;
+    const weightedAirF = modeledAirF * 0.6 + currentFallbackF * 0.4;
+    return Math.min(93, Math.max(68, Math.round(weightedAirF - 9 + sunAdjustment)));
   }
 
   function applyEstimatedWaterTemp() {
