@@ -784,6 +784,12 @@ function cyaPpmPerTrichlorPuck(gallons) {
   return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_CYA_OZMUL) / gallons;
 }
 
+function practicalWeeklyTrichlorPuckCap(gallons) {
+  if (gallons <= 0) return 0;
+  // Field sanity cap: about one 3" puck per ~8k gallons per week, up to 8 total.
+  return clamp(Math.round(gallons / 8000), 1, 8);
+}
+
 function shockLevelForCya(cyaPpm) {
   return Math.max(10, Math.floor(cyaPpm / 6 + 8.5));
 }
@@ -1217,7 +1223,8 @@ function updateReport() {
       const maxPucksByCya = tested.cya && cyaPerPuck > 0
         ? Math.max(0, Math.floor((cyaMax - cya) / cyaPerPuck))
         : 0;
-      const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya));
+      const practicalPuckCap = practicalWeeklyTrichlorPuckCap(gallons);
+      const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya, practicalPuckCap));
       const puckPpm = puckCount * ppmPerPuck;
       const puckCyaPpm = puckCount * cyaPerPuck;
       const remainingAfterPucks = Math.max(0, doseNeeded - puckPpm);
@@ -1252,6 +1259,10 @@ function updateReport() {
         } else {
           fcLine += '.';
         }
+      }
+
+      if (maxPucksByDose > puckCount && puckCount === practicalPuckCap) {
+        fcLine += ` Trichlor is capped at ${practicalPuckCap} puck${practicalPuckCap > 1 ? 's' : ''} per week for practical dosing; remaining demand is covered with liquid chlorine.`;
       }
 
       if (remainingAfterPucks > maxBleachPpmToday + 0.1) {
