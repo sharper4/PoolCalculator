@@ -1210,25 +1210,24 @@ function updateReport() {
   if (tested.fc) {
     const dailyLoss  = fcDailyLossRate(tempF, cya, weeklyAvgUV);
     const weeklyLoss = Math.round(dailyLoss * 7 * 10) / 10;
-    // Required starting FC so end-of-week lands at fcMin (bottom of target)
-    const requiredNow = Math.round((fcMin + weeklyLoss) * 10) / 10;
-    const doseNeeded  = Math.max(0, Math.round((requiredNow - fc) * 10) / 10);
+    // Strategy: raise FC now with liquid chlorine (up to FC max), then use trichlor
+    // for remaining 7-day maintenance demand while respecting CYA limits.
+    const maxBleachPpmToday = Math.max(0, fcMax - fc);
+    const bleachPpm = maxBleachPpmToday;
+    const bleachOz = bleachOzForDose(bleachPpm, gallons, blPct);
+    const immediateFc = fc + bleachPpm;
+    const requiredPuckPpm = Math.max(0, Math.round((fcMin - (immediateFc - weeklyLoss)) * 10) / 10);
     const uvLabel     = weeklyAvgUV >= 8 ? 'high' : weeklyAvgUV >= 5 ? 'moderate' : 'low';
-    if (doseNeeded > 0 && gallons > 0) {
+    if ((bleachPpm > 0 || requiredPuckPpm > 0) && gallons > 0) {
       const ppmPerPuck = ppmPerTrichlorPuck(gallons);
       const cyaPerPuck = cyaPpmPerTrichlorPuck(gallons);
-      const maxPucksByDose = Math.floor(doseNeeded / ppmPerPuck);
+      const targetPucksByDose = ppmPerPuck > 0 ? Math.ceil(requiredPuckPpm / ppmPerPuck) : 0;
       const maxPucksByCya = tested.cya && cyaPerPuck > 0
         ? Math.max(0, Math.floor((cyaMax - cya) / cyaPerPuck))
         : 0;
-      const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya));
+      const puckCount = Math.max(0, Math.min(targetPucksByDose, maxPucksByCya));
       const puckPpm = puckCount * ppmPerPuck;
       const puckCyaPpm = puckCount * cyaPerPuck;
-      const remainingAfterPucks = Math.max(0, doseNeeded - puckPpm);
-      const maxBleachPpmToday = Math.max(0, fcMax - fc);
-      const bleachPpm = Math.min(remainingAfterPucks, maxBleachPpmToday);
-      const bleachOz = bleachOzForDose(bleachPpm, gallons, blPct);
-      const immediateFc = fc + bleachPpm;
       const projectedNextVisit = Math.max(0, Math.round((fc + bleachPpm + puckPpm - weeklyLoss) * 10) / 10);
       const projectedCyaWithPucks = cya + puckCyaPpm;
 
@@ -1258,8 +1257,8 @@ function updateReport() {
         }
       }
 
-      if (remainingAfterPucks > maxBleachPpmToday + 0.1) {
-        fcLine += ` Full weekly target would require exceeding the max target today, so liquid chlorine is capped at ~${fcMax} ppm immediate FC; consider a mid-week top-up.`;
+      if (puckCount < targetPucksByDose && tested.cya) {
+        fcLine += ` Full weekly target is limited by CYA max (${cyaMax} ppm), so plan a mid-week liquid chlorine top-up if needed.`;
       }
 
       fcLine += ` Projected ~${projectedNextVisit.toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
