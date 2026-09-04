@@ -1487,9 +1487,13 @@ function stripAutoInsightLines(text) {
     /^No chemical additions were required during this visit\.$/i,
     /^Chlorine was added to help keep the pool properly sanitized\.$/i,
     /^Stabilizer \(CYA\) adjustments were made to support chlorine retention\.$/i,
+    /^Stabilizer adjustments were not made\. CYA is expected to remain in range between now and our next visit\.$/i,
+    /^Some water was replaced to help reduce CYA in the pool\.$/i,
     /^pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
     /^Total alkalinity was adjusted to support overall water stability\.$/i,
     /^Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
+    /^Calcium hardness adjustments were not needed today\. Levels are expected to remain near target until our next visit\.$/i,
+    /^Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment\.$/i,
     /^Salt levels were adjusted to support proper chlorination performance\.$/i,
     /^Borate levels were adjusted to support pH stability\.$/i,
     /^The following service checklist items were completed during this visit:/i
@@ -1512,9 +1516,13 @@ function buildChemicalInsightLinesFromChecks() {
     none: false,
     fc: false,
     cya: false,
+    cyaNoAction: false,
+    cyaWaterReplace: false,
     ph: false,
     ta: false,
     ch: false,
+    chNoAction: false,
+    chWaterReplace: false,
     salt: false,
     borate: false
   };
@@ -1523,10 +1531,26 @@ function buildChemicalInsightLinesFromChecks() {
     const normalized = text.toLowerCase();
     if (/no immediate chemical balancing action required today/.test(normalized)) flags.none = true;
     if (/^fc:|chlorine|bleach|trichlor|dichlor|shock|slam/.test(normalized)) flags.fc = true;
-    if (/^cya:|stabilizer/.test(normalized)) flags.cya = true;
+    if (/^cya:|stabilizer/.test(normalized)) {
+      if (/replace .*water|with new water|to lower cya/.test(normalized)) {
+        flags.cyaWaterReplace = true;
+      } else if (/no addition today|no cya adjustment required|no cya action required/.test(normalized)) {
+        flags.cyaNoAction = true;
+      } else {
+        flags.cya = true;
+      }
+    }
     if (/^ph:|muriatic acid|dry acid|acid/.test(normalized)) flags.ph = true;
     if (/^alk:|alkalinity|baking soda/.test(normalized)) flags.ta = true;
-    if (/^ch:|calcium/.test(normalized)) flags.ch = true;
+    if (/^ch:|calcium/.test(normalized)) {
+      if (/replace .*water|to lower ch/.test(normalized)) {
+        flags.chWaterReplace = true;
+      } else if (/no calcium dose needed today|no ch adjustment required|stable/.test(normalized)) {
+        flags.chNoAction = true;
+      } else {
+        flags.ch = true;
+      }
+    }
     if (/^salt:|\bsalt\b/.test(normalized)) flags.salt = true;
     if (/^borate:|\bborate\b/.test(normalized)) flags.borate = true;
   });
@@ -1540,10 +1564,14 @@ function buildChemicalInsightLinesFromChecks() {
   }
 
   if (flags.fc) lines.push('Chlorine was added to help keep the pool properly sanitized.');
-  if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
+  if (flags.cyaWaterReplace) lines.push('Some water was replaced to help reduce CYA in the pool.');
+  else if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
+  else if (flags.cyaNoAction) lines.push('Stabilizer adjustments were not made. CYA is expected to remain in range between now and our next visit.');
   if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
   if (flags.ta) lines.push('Total alkalinity was adjusted to support overall water stability.');
-  if (flags.ch) lines.push('Calcium hardness was adjusted to help protect pool surfaces and equipment.');
+  if (flags.chWaterReplace) lines.push('Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment.');
+  else if (flags.ch) lines.push('Calcium hardness was adjusted to help protect pool surfaces and equipment.');
+  else if (flags.chNoAction) lines.push('Calcium hardness adjustments were not needed today. Levels are expected to remain near target until our next visit.');
   if (flags.salt) lines.push('Salt levels were adjusted to support proper chlorination performance.');
   if (flags.borate) lines.push('Borate levels were adjusted to support pH stability.');
 
