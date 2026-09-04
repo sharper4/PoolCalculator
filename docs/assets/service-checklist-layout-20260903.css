@@ -42,6 +42,21 @@
 }
 
 @media print {
+  .condition-three-col {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .condition-three-col label {
+    display: inline-flex !important;
+    align-items: flex-start;
+    gap: 0.2rem;
+    white-space: nowrap;
+  }
+
   .build-badge {
     display: none !important;
   }

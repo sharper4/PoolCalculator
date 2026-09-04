@@ -118,7 +118,27 @@ export function buildHtmlEmailDocument({ subject, reportHtml }) {
       .report-sheet .check-list {
         margin: 10px 0 0;
       }
-      .report-sheet .check-row label,
+          .report-sheet .check-row label {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin: 0;
+            white-space: nowrap;
+          }
+          .report-sheet .condition-three-col {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+          }
+          .report-sheet .condition-three-col label {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin: 0;
+            white-space: nowrap;
+          }
       .report-sheet .check-list li {
         display: block;
         margin: 4px 0;

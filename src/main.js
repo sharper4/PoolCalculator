@@ -2597,6 +2597,17 @@ function init() {
     });
     clone.querySelectorAll('.report-insights-print').forEach((el) => el.remove());
 
+    const cloneConditionRow = clone.querySelector('.condition-three-col');
+    if (cloneConditionRow) {
+      cloneConditionRow.setAttribute(
+        'style',
+        'display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 0.6rem;'
+      );
+      cloneConditionRow.querySelectorAll('label').forEach((label) => {
+        label.setAttribute('style', 'display: inline-flex; align-items: flex-start; gap: 0.2rem; white-space: nowrap; margin: 0;');
+      });
+    }
+
     clone.querySelector('#report-service-checklist')?.remove();
 
     clone.querySelectorAll('textarea').forEach((textarea) => {

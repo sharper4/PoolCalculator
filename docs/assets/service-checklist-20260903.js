@@ -9,6 +9,52 @@
   let restoreTimer = null;
   let pendingRestore = [];
   let priorDisplayForPrint = null;
+  let priorConditionRowStyle = null;
+  const priorConditionLabelStyles = new Map();
+
+  function applyConditionSummaryOutputLayout() {
+    const row = document.querySelector('.condition-three-col');
+    if (!row) return;
+
+    if (priorConditionRowStyle === null) {
+      priorConditionRowStyle = row.getAttribute('style');
+    }
+    row.style.display = 'flex';
+    row.style.flexWrap = 'nowrap';
+    row.style.alignItems = 'flex-start';
+    row.style.justifyContent = 'space-between';
+    row.style.gap = '0.6rem';
+
+    row.querySelectorAll('label').forEach((label) => {
+      if (!priorConditionLabelStyles.has(label)) {
+        priorConditionLabelStyles.set(label, label.getAttribute('style'));
+      }
+      label.style.display = 'inline-flex';
+      label.style.alignItems = 'flex-start';
+      label.style.gap = '0.2rem';
+      label.style.whiteSpace = 'nowrap';
+      label.style.margin = '0';
+    });
+  }
+
+  function restoreConditionSummaryLayout() {
+    const row = document.querySelector('.condition-three-col');
+    if (!row) return;
+
+    if (priorConditionRowStyle === null) {
+      row.removeAttribute('style');
+    } else {
+      row.setAttribute('style', priorConditionRowStyle);
+    }
+    priorConditionRowStyle = null;
+
+    priorConditionLabelStyles.forEach((styleValue, label) => {
+      if (!label.isConnected) return;
+      if (styleValue === null) label.removeAttribute('style');
+      else label.setAttribute('style', styleValue);
+    });
+    priorConditionLabelStyles.clear();
+  }
 
   function updateChecklistState() {
     let hasNonChemicalChecked = false;
@@ -63,6 +109,7 @@
 
   window.addEventListener('beforeprint', updateChecklistState);
   window.addEventListener('beforeprint', () => {
+    applyConditionSummaryOutputLayout();
     priorDisplayForPrint = checklistSection.style.display || '__none__';
     checklistSection.style.display = 'none';
   });
@@ -73,10 +120,12 @@
       checklistSection.style.display = priorDisplayForPrint;
     }
     priorDisplayForPrint = null;
+    restoreConditionSummaryLayout();
   });
 
   if (sendBtn) {
     sendBtn.addEventListener('click', () => {
+      applyConditionSummaryOutputLayout();
       hideUncheckedForEmailCapture();
 
       if (restoreTimer) clearTimeout(restoreTimer);
@@ -96,6 +145,7 @@
           checklistSection.style.display = priorDisplayForPrint;
         }
         priorDisplayForPrint = null;
+        restoreConditionSummaryLayout();
         if (restoreTimer) {
           clearTimeout(restoreTimer);
           restoreTimer = null;
