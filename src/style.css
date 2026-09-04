@@ -982,7 +982,8 @@ body.report-mode {
   .panel.reveal.stagger-5,
   .usage-fact,
   .report-toolbar,
-  .report-toolbar-bottom {
+  .report-toolbar-bottom,
+  #report-service-checklist {
     display: none !important;
   }
 

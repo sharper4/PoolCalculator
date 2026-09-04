@@ -46,6 +46,10 @@
     display: none !important;
   }
 
+  #report-service-checklist {
+    display: none !important;
+  }
+
   .grid.mobile-two.reveal.stagger-3,
   .grid.mobile-two.reveal.stagger-4 {
     display: none !important;

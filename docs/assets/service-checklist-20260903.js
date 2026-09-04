@@ -49,21 +49,11 @@
   }
 
   function hideUncheckedForEmailCapture() {
-    const hasChecked = updateChecklistState();
+    updateChecklistState();
     restoreChecklistVisibility();
 
     checklistSection.dataset.priorDisplay = checklistSection.style.display || '__none__';
-    if (!hasChecked) {
-      checklistSection.style.display = 'none';
-      return;
-    }
-
-    checklist.querySelectorAll('.service-check-item').forEach((item) => {
-      if (item.classList.contains('is-checked')) return;
-      item.dataset.priorDisplay = item.style.display || '__none__';
-      item.style.display = 'none';
-      pendingRestore.push(item);
-    });
+    checklistSection.style.display = 'none';
   }
 
   checklist.querySelectorAll('input[type="checkbox"]').forEach((box) => {

@@ -2578,30 +2578,7 @@ function init() {
     });
     clone.querySelectorAll('.report-insights-print').forEach((el) => el.remove());
 
-    const cloneServiceChecklist = clone.querySelector('#r-service-checklist');
-    const cloneServiceChecklistSection = clone.querySelector('#report-service-checklist');
-    if (cloneServiceChecklist && cloneServiceChecklistSection) {
-      let hasNonChemicalChecked = false;
-      cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
-        const box = item.querySelector('input[type="checkbox"]');
-        const isChemicalBalanced = item.dataset.chemicalBalanced === '1';
-        if (box?.checked && !isChemicalBalanced) hasNonChemicalChecked = true;
-      });
-
-      if (!hasNonChemicalChecked) {
-        cloneServiceChecklistSection.remove();
-      } else {
-      cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
-        const box = item.querySelector('input[type="checkbox"]');
-        if (!box?.checked) item.remove();
-      });
-        if (!cloneServiceChecklist.querySelector('.service-check-item')) {
-          cloneServiceChecklistSection.remove();
-        } else {
-          cloneServiceChecklistSection.dataset.hasChecked = '1';
-        }
-      }
-    }
+    clone.querySelector('#report-service-checklist')?.remove();
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
