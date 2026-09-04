@@ -1432,15 +1432,19 @@ function updateReport() {
 function expandReportInsightsForPrint() {
   if (!refs.rInsights) return;
 
-  const baseHeight = 72;
-  refs.rInsights.rows = 3;
-  refs.rInsights.style.height = `${baseHeight}px`;
-  refs.rInsights.style.minHeight = `${baseHeight}px`;
-  refs.rInsights.style.lineHeight = '1.4';
+  const style = window.getComputedStyle(refs.rInsights);
+  const lineHeight = Number.parseFloat(style.lineHeight) || 20;
+  const paddingY = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0);
+  const minHeight = Math.round(lineHeight * 3 + paddingY + 2);
+  const maxHeight = Math.round(lineHeight * 6 + paddingY + 2);
 
-  if (refs.rInsights.scrollHeight > refs.rInsights.clientHeight) {
-    refs.rInsights.style.height = `${refs.rInsights.scrollHeight + 2}px`;
-  }
+  refs.rInsights.rows = 3;
+  refs.rInsights.style.minHeight = `${minHeight}px`;
+  refs.rInsights.style.maxHeight = `${maxHeight}px`;
+  refs.rInsights.style.height = 'auto';
+  const desired = Math.min(Math.max(refs.rInsights.scrollHeight, minHeight), maxHeight);
+  refs.rInsights.style.height = `${desired}px`;
+  refs.rInsights.style.overflowY = refs.rInsights.scrollHeight > maxHeight ? 'auto' : 'hidden';
 
   if (refs.rInsightsPrint) {
     refs.rInsightsPrint.textContent = refs.rInsights.value;
@@ -2415,6 +2419,10 @@ function init() {
     if (event.target instanceof HTMLInputElement && event.target.type === 'checkbox') {
       updateTechnicianInsightsFromChecks();
     }
+  });
+
+  refs.rInsights?.addEventListener('input', () => {
+    expandReportInsightsForPrint();
   });
 
   // Gmail email functionality

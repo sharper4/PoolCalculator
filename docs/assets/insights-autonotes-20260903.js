@@ -131,6 +131,22 @@
     return `The following service checklist items were completed during this visit: ${completed.join(', ')}.`;
   }
 
+  function autoSizeInsights() {
+    const style = window.getComputedStyle(insights);
+    const lineHeight = Number.parseFloat(style.lineHeight) || 20;
+    const paddingY = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0);
+    const minHeight = Math.round(lineHeight * 3 + paddingY + 2);
+    const maxHeight = Math.round(lineHeight * 6 + paddingY + 2);
+
+    insights.rows = 3;
+    insights.style.minHeight = `${minHeight}px`;
+    insights.style.maxHeight = `${maxHeight}px`;
+    insights.style.height = 'auto';
+    const desired = Math.min(Math.max(insights.scrollHeight, minHeight), maxHeight);
+    insights.style.height = `${desired}px`;
+    insights.style.overflowY = insights.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  }
+
   function syncInsights() {
     const base = stripAutoLines(insights.value);
     const lines = [...buildChemicalLines()];
@@ -148,6 +164,8 @@
     if (insightsPrint) {
       insightsPrint.textContent = insights.value;
     }
+
+    autoSizeInsights();
   }
 
   document.addEventListener('change', (event) => {
@@ -157,6 +175,10 @@
     if (target.closest('#r-treatment-list') || target.closest('#r-forecast-list') || target.closest('#r-service-checklist')) {
       syncInsights();
     }
+  });
+
+  insights.addEventListener('input', () => {
+    autoSizeInsights();
   });
 
   const observer = new MutationObserver(() => {
