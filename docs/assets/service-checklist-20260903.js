@@ -8,6 +8,7 @@
 
   let restoreTimer = null;
   let pendingRestore = [];
+  let priorDisplayForPrint = null;
 
   function updateChecklistState() {
     let hasNonChemicalChecked = false;
@@ -61,6 +62,18 @@
   });
 
   window.addEventListener('beforeprint', updateChecklistState);
+  window.addEventListener('beforeprint', () => {
+    priorDisplayForPrint = checklistSection.style.display || '__none__';
+    checklistSection.style.display = 'none';
+  });
+  window.addEventListener('afterprint', () => {
+    if (priorDisplayForPrint === '__none__') {
+      checklistSection.style.removeProperty('display');
+    } else if (priorDisplayForPrint !== null) {
+      checklistSection.style.display = priorDisplayForPrint;
+    }
+    priorDisplayForPrint = null;
+  });
 
   if (sendBtn) {
     sendBtn.addEventListener('click', () => {
@@ -77,6 +90,12 @@
     const observer = new MutationObserver(() => {
       if (emailModalOverlay.hidden) {
         restoreChecklistVisibility();
+        if (priorDisplayForPrint === '__none__') {
+          checklistSection.style.removeProperty('display');
+        } else if (priorDisplayForPrint !== null) {
+          checklistSection.style.display = priorDisplayForPrint;
+        }
+        priorDisplayForPrint = null;
         if (restoreTimer) {
           clearTimeout(restoreTimer);
           restoreTimer = null;

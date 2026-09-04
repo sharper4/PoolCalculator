@@ -1470,6 +1470,24 @@ function updateServiceChecklistState(root = document) {
   checklistSection.dataset.hasChecked = hasNonChemicalChecked ? '1' : '0';
 }
 
+let priorServiceChecklistDisplay = null;
+
+function hideServiceChecklistForOutput() {
+  if (!refs.reportServiceChecklist) return;
+  priorServiceChecklistDisplay = refs.reportServiceChecklist.style.display;
+  refs.reportServiceChecklist.style.display = 'none';
+}
+
+function restoreServiceChecklistAfterOutput() {
+  if (!refs.reportServiceChecklist) return;
+  if (priorServiceChecklistDisplay === null) {
+    refs.reportServiceChecklist.style.removeProperty('display');
+  } else {
+    refs.reportServiceChecklist.style.display = priorServiceChecklistDisplay;
+  }
+  priorServiceChecklistDisplay = null;
+}
+
 function getCheckboxLabelText(checkbox) {
   const label = checkbox?.closest('label');
   if (!label) return '';
@@ -2400,6 +2418,7 @@ function init() {
 
   refs.printReport.addEventListener('click', () => {
     expandReportInsightsForPrint();
+    hideServiceChecklistForOutput();
     window.print();
   });
 
@@ -2862,7 +2881,11 @@ function init() {
     refs.rInsights.addEventListener('input', expandReportInsightsForPrint);
   }
 
-  window.addEventListener('beforeprint', expandReportInsightsForPrint);
+  window.addEventListener('beforeprint', () => {
+    expandReportInsightsForPrint();
+    hideServiceChecklistForOutput();
+  });
+  window.addEventListener('afterprint', restoreServiceChecklistAfterOutput);
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Backspace') return;
