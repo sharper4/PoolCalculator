@@ -65,11 +65,6 @@
     return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_CYA_OZMUL) / gallons;
   }
 
-  function practicalWeeklyTrichlorPuckCap(gallons) {
-    if (gallons <= 0) return 0;
-    return clamp(Math.round(gallons / 8000), 1, 8);
-  }
-
   function shockLevelForCya(cyaPpm) {
     return Math.max(10, Math.floor(cyaPpm / 6 + 8.5));
   }
@@ -115,11 +110,12 @@
     const fc = num('fc-from', Number.NaN);
     const cya = num('cya-from', Number.NaN);
     const fcMin = parseRangeMin(document.getElementById('range-fc')?.textContent, 2);
+    const fcMax = parseRangeMax(document.getElementById('range-fc')?.textContent, 3);
     const cyaMax = parseRangeMax(document.getElementById('range-cya')?.textContent, 80);
     const gallons = getGallons();
     const blPct = Math.max(0.1, num('fc-percent', 8.25));
 
-    if (!Number.isFinite(fc) || !Number.isFinite(cya) || !Number.isFinite(fcMin) || !Number.isFinite(cyaMax) || !(gallons > 0)) return;
+    if (!Number.isFinite(fc) || !Number.isFinite(cya) || !Number.isFinite(fcMin) || !Number.isFinite(fcMax) || !Number.isFinite(cyaMax) || !(gallons > 0)) return;
 
     const forecastText = document.getElementById('weather-forecast')?.value || '';
     const currentText = document.getElementById('weather-conditions')?.value || '';
@@ -136,14 +132,13 @@
     const cyaPerPuck = cyaPpmPerTrichlorPuck(gallons);
     const maxPucksByDose = Math.floor(doseNeeded / ppmPerPuck);
     const maxPucksByCya = cyaPerPuck > 0 ? Math.max(0, Math.floor((cyaMax - cya) / cyaPerPuck)) : 0;
-    const practicalCap = practicalWeeklyTrichlorPuckCap(gallons);
-    const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya, practicalCap));
+    const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya));
 
     const puckPpm = puckCount * ppmPerPuck;
     const puckCyaPpm = puckCount * cyaPerPuck;
     const remainingAfterPucks = Math.max(0, doseNeeded - puckPpm);
     const shockLevel = shockLevelForCya(cya);
-    const maxBleachPpmToday = Math.max(0, shockLevel - fc);
+    const maxBleachPpmToday = Math.max(0, fcMax - fc);
     const bleachPpm = Math.min(remainingAfterPucks, maxBleachPpmToday);
     const bleachOz = bleachOzForDose(bleachPpm, gallons, blPct);
     const immediateFc = fc + bleachPpm;
@@ -157,22 +152,18 @@
 
     let line = parts.length
       ? `FC: Add ${parts.join(' + ')} today.`
-      : `FC: No practical FC dose can be added today without exceeding shock (${shockLevel} ppm).`;
+      : `FC: No practical FC dose can be added today without exceeding the max target (${fcMax} ppm).`;
 
     if (bleachPpm > 0.1) {
-      line += ` Immediate effect: liquid chlorine raises FC from ~${fc.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm today (shock cap: ${shockLevel} ppm).`;
+      line += ` Immediate effect: liquid chlorine raises FC from ~${fc.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm today (max target: ${fcMax} ppm).`;
     }
 
     if (puckCount > 0) {
       line += ` Trichlor adds ~${puckPpm.toFixed(1)} ppm FC and ~${puckCyaPpm.toFixed(1)} ppm CYA over the week, keeping CYA near ~${projectedCyaWithPucks.toFixed(1)} ppm (high limit: ${cyaMax} ppm).`;
     }
 
-    if (maxPucksByDose > puckCount && puckCount === practicalCap) {
-      line += ` Trichlor is capped at ${practicalCap} puck${practicalCap > 1 ? 's' : ''} per week for practical dosing; remaining demand is covered with liquid chlorine.`;
-    }
-
     if (remainingAfterPucks > maxBleachPpmToday + 0.1) {
-      line += ` Full weekly target would require exceeding shock today, so bleach is capped at ~${shockLevel} ppm immediate FC.`;
+      line += ` Full weekly target would require exceeding the max target today, so liquid chlorine is capped at ~${fcMax} ppm immediate FC; consider a mid-week top-up.`;
     }
 
     line += ` Projected ~${projectedNextVisit.toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}F, UV avg ${weeklyUv} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;

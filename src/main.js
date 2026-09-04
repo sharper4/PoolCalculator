@@ -784,12 +784,6 @@ function cyaPpmPerTrichlorPuck(gallons) {
   return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_CYA_OZMUL) / gallons;
 }
 
-function practicalWeeklyTrichlorPuckCap(gallons) {
-  if (gallons <= 0) return 0;
-  // Field sanity cap: about one 3" puck per ~8k gallons per week, up to 8 total.
-  return clamp(Math.round(gallons / 8000), 1, 8);
-}
-
 function shockLevelForCya(cyaPpm) {
   return Math.max(10, Math.floor(cyaPpm / 6 + 8.5));
 }
@@ -1223,12 +1217,11 @@ function updateReport() {
       const maxPucksByCya = tested.cya && cyaPerPuck > 0
         ? Math.max(0, Math.floor((cyaMax - cya) / cyaPerPuck))
         : 0;
-      const practicalPuckCap = practicalWeeklyTrichlorPuckCap(gallons);
-      const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya, practicalPuckCap));
+      const puckCount = Math.max(0, Math.min(maxPucksByDose, maxPucksByCya));
       const puckPpm = puckCount * ppmPerPuck;
       const puckCyaPpm = puckCount * cyaPerPuck;
       const remainingAfterPucks = Math.max(0, doseNeeded - puckPpm);
-      const maxBleachPpmToday = Math.max(0, shockLevel - fc);
+      const maxBleachPpmToday = Math.max(0, fcMax - fc);
       const bleachPpm = Math.min(remainingAfterPucks, maxBleachPpmToday);
       const bleachOz = bleachOzForDose(bleachPpm, gallons, blPct);
       const immediateFc = fc + bleachPpm;
@@ -1245,11 +1238,11 @@ function updateReport() {
 
       let fcLine = parts.length
         ? `FC: Add ${parts.join(' + ')} today.`
-        : `FC: No practical FC dose can be added today without exceeding shock (${shockLevel} ppm).`;
+        : `FC: No practical FC dose can be added today without exceeding the max target (${fcMax} ppm).`;
 
       if (bleachPpm > 0.1) {
         fcLine += ` Immediate effect: liquid chlorine raises FC from ~${fc.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm today`;
-        fcLine += ` (shock cap: ${shockLevel} ppm).`;
+        fcLine += ` (max target: ${fcMax} ppm).`;
       }
 
       if (puckCount > 0) {
@@ -1261,12 +1254,8 @@ function updateReport() {
         }
       }
 
-      if (maxPucksByDose > puckCount && puckCount === practicalPuckCap) {
-        fcLine += ` Trichlor is capped at ${practicalPuckCap} puck${practicalPuckCap > 1 ? 's' : ''} per week for practical dosing; remaining demand is covered with liquid chlorine.`;
-      }
-
       if (remainingAfterPucks > maxBleachPpmToday + 0.1) {
-        fcLine += ` Full weekly target would require exceeding shock today, so bleach is capped at ~${shockLevel} ppm immediate FC.`;
+        fcLine += ` Full weekly target would require exceeding the max target today, so liquid chlorine is capped at ~${fcMax} ppm immediate FC; consider a mid-week top-up.`;
       }
 
       fcLine += ` Projected ~${projectedNextVisit.toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
@@ -1560,6 +1549,9 @@ function buildChemicalInsightLinesFromChecks() {
 function buildServiceChecklistCompletedLine() {
   if (!refs.rServiceChecklist) return '';
 
+  const chemicalBalancedItem = refs.rServiceChecklist.querySelector('.service-check-item[data-chemical-balanced="1"]');
+  const chemicalBalancedChecked = Boolean(chemicalBalancedItem?.querySelector('input[type="checkbox"]')?.checked);
+
   const completed = Array.from(refs.rServiceChecklist.querySelectorAll('.service-check-item'))
     .filter((item) => item.dataset.chemicalBalanced !== '1')
     .filter((item) => item.querySelector('input[type="checkbox"]')?.checked)
@@ -1570,6 +1562,7 @@ function buildServiceChecklistCompletedLine() {
     .filter(Boolean);
 
   if (!completed.length) return '';
+  if (chemicalBalancedChecked) completed.unshift('Chemicals Balanced');
   return `The following service checklist items were completed during this visit: ${completed.join(', ')}.`;
 }
 

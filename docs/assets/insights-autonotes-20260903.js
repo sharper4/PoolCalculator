@@ -89,6 +89,9 @@
   function buildServiceLine() {
     if (!serviceChecklist) return '';
 
+    const chemicalBalancedItem = serviceChecklist.querySelector('.service-check-item[data-chemical-balanced="1"]');
+    const chemicalBalancedChecked = Boolean(chemicalBalancedItem?.querySelector('input[type="checkbox"]')?.checked);
+
     const completed = [...serviceChecklist.querySelectorAll('.service-check-item')]
       .filter((item) => item.dataset.chemicalBalanced !== '1')
       .filter((item) => item.querySelector('input[type="checkbox"]')?.checked)
@@ -96,6 +99,7 @@
       .filter(Boolean);
 
     if (!completed.length) return '';
+    if (chemicalBalancedChecked) completed.unshift('Chemicals Balanced');
     return `The following service checklist items were completed during this visit: ${completed.join(', ')}.`;
   }
 
