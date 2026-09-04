@@ -1488,19 +1488,20 @@ function getCheckedChecklistLabels(listEl) {
 
 function stripAutoInsightLines(text) {
   const autoPatterns = [
-    /^No chemical additions were required during this visit\.$/i,
-    /^Chlorine was added to help keep the pool properly sanitized\.$/i,
-    /^Stabilizer \(CYA\) adjustments were made to support chlorine retention\.$/i,
-    /^Stabilizer adjustments were not made\. CYA is expected to remain in range between now and our next visit\.$/i,
-    /^Some water was replaced to help reduce CYA in the pool\.$/i,
-    /^pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
-    /^Total alkalinity was adjusted to support overall water stability\.$/i,
-    /^Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
-    /^Calcium hardness adjustments were not needed today\. Levels are expected to remain near target until our next visit\.$/i,
-    /^Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment\.$/i,
-    /^Salt levels were adjusted to support proper chlorination performance\.$/i,
-    /^Borate levels were adjusted to support pH stability\.$/i,
-    /^The following service checklist items were completed during this visit:/i
+    /^-\s*No chemical additions were required during this visit\.$/i,
+    /^-\s*Chlorine was added to help keep the pool properly sanitized\.$/i,
+    /^-\s*Stabilizer \(CYA\) adjustments were made to support chlorine retention\.$/i,
+    /^-\s*Stabilizer adjustments were not made\. CYA is expected to remain in range between now and our next visit\.$/i,
+    /^-\s*Some water was replaced to help reduce CYA in the pool\.$/i,
+    /^-\s*pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
+    /^-\s*Total alkalinity was adjusted to support overall water stability\.$/i,
+    /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
+    /^-\s*Calcium hardness adjustments were not needed today\. Levels are expected to remain near target until our next visit\.$/i,
+    /^-\s*Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment\.$/i,
+    /^-\s*Salt levels were adjusted to support proper chlorination performance\.$/i,
+    /^-\s*Borate levels were adjusted to support pH stability\.$/i,
+    /^The following service checklist items were completed during this visit:/i,
+    /^-\s*The following service checklist items were completed during this visit:/i
   ];
 
   return String(text || '')
@@ -1606,7 +1607,7 @@ function updateTechnicianInsightsFromChecks() {
   if (!refs.rInsights) return;
 
   const manualBase = stripAutoInsightLines(refs.rInsights.value);
-  const autoLines = [...buildChemicalInsightLinesFromChecks()];
+  const autoLines = buildChemicalInsightLinesFromChecks().map((line) => `- ${line}`);
   const serviceLine = buildServiceChecklistCompletedLine();
   if (serviceLine) autoLines.push(serviceLine);
 
