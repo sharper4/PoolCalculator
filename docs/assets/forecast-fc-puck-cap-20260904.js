@@ -10,16 +10,19 @@
     return Number.isFinite(v) ? v : fallback;
   }
 
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
   function getGallons() {
     const units = num('units', 0);
     const size = num('size', 0);
     if (units === 1) return size / 3.78541;
     if (units === 2) return size * 1.20095;
     return size;
+  }
+
+  function getPoolTempF() {
+    const units = num('units', 0);
+    const temp = num('temp', Number.NaN);
+    if (!Number.isFinite(temp)) return 80;
+    return units === 1 ? temp * 9 / 5 + 32 : temp;
   }
 
   function parseRangeMax(text, fallback) {
@@ -46,14 +49,15 @@
 
   function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
     let base;
-    if (tempF >= 90) base = 3.2;
-    else if (tempF >= 80) base = 2.5;
-    else if (tempF >= 70) base = 1.8;
-    else if (tempF >= 60) base = 1.0;
-    else base = 0.5;
+    if (tempF >= 95) base = 2.6;
+    else if (tempF >= 88) base = 2.2;
+    else if (tempF >= 80) base = 1.8;
+    else if (tempF >= 70) base = 1.3;
+    else if (tempF >= 60) base = 0.8;
+    else base = 0.4;
 
-    const uvFactor = uvIndex >= 11 ? 1.45 : uvIndex >= 8 ? 1.25 : uvIndex >= 6 ? 1.0 : uvIndex >= 3 ? 0.75 : 0.5;
-    const cyaFactor = cyaPpm <= 0 ? 1.5 : cyaPpm <= 30 ? 1.0 : cyaPpm <= 60 ? 0.82 : 0.65;
+    const uvFactor = uvIndex >= 11 ? 1.3 : uvIndex >= 8 ? 1.15 : uvIndex >= 6 ? 0.9 : uvIndex >= 3 ? 0.8 : 0.65;
+    const cyaFactor = cyaPpm <= 0 ? 1.45 : cyaPpm <= 30 ? 1.0 : cyaPpm <= 50 ? 0.85 : cyaPpm <= 70 ? 0.72 : cyaPpm <= 90 ? 0.62 : 0.55;
     return Math.round(base * uvFactor * cyaFactor * 10) / 10;
   }
 
@@ -63,10 +67,6 @@
 
   function cyaPpmPerTrichlorPuck(gallons) {
     return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_CYA_OZMUL) / gallons;
-  }
-
-  function shockLevelForCya(cyaPpm) {
-    return Math.max(10, Math.floor(cyaPpm / 6 + 8.5));
   }
 
   function bleachOzForDose(doseNeeded, gallons, percent) {
@@ -100,11 +100,14 @@
     span.textContent = ` ${nextText}`;
   }
 
-  function patchForecastFcLine() {
+  function findForecastLine(prefix) {
     const list = document.getElementById('r-forecast-list');
-    if (!list) return;
+    if (!list) return null;
+    return Array.from(list.querySelectorAll('li')).find((li) => String(li.textContent || '').trim().startsWith(prefix)) || null;
+  }
 
-    const fcLineItem = Array.from(list.querySelectorAll('li')).find((li) => String(li.textContent || '').trim().startsWith('FC:'));
+  function patchForecastFcLine() {
+    const fcLineItem = findForecastLine('FC:');
     if (!fcLineItem) return;
 
     const fc = num('fc-from', Number.NaN);
@@ -119,7 +122,7 @@
 
     const forecastText = document.getElementById('weather-forecast')?.value || '';
     const currentText = document.getElementById('weather-conditions')?.value || '';
-    const tempF = parseTempF(forecastText) || parseTempF(currentText) || 80;
+    const tempF = getPoolTempF();
     const weeklyUv = parseUv(forecastText) || parseUv(currentText) || 7;
 
     const dailyLoss = fcDailyLossRate(tempF, cya, weeklyUv);
@@ -137,7 +140,6 @@
     const puckPpm = puckCount * ppmPerPuck;
     const puckCyaPpm = puckCount * cyaPerPuck;
     const remainingAfterPucks = Math.max(0, doseNeeded - puckPpm);
-    const shockLevel = shockLevelForCya(cya);
     const maxBleachPpmToday = Math.max(0, fcMax - fc);
     const bleachPpm = Math.min(remainingAfterPucks, maxBleachPpmToday);
     const bleachOz = bleachOzForDose(bleachPpm, gallons, blPct);
@@ -171,16 +173,70 @@
     setChecklistLineText(fcLineItem, line);
   }
 
+  function patchForecastCyaLine() {
+    const cyaLineItem = findForecastLine('CYA:');
+    if (!cyaLineItem) return;
+
+    const cya = num('cya-from', Number.NaN);
+    if (!Number.isFinite(cya)) return;
+
+    const rangeText = document.getElementById('range-cya')?.textContent || '';
+    const cyaMin = parseRangeMin(rangeText, 30);
+    const tempF = getPoolTempF();
+    const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
+    const cyaProjected = Math.round(cya - cyaWeeklyLoss);
+
+    const next = cyaProjected >= cyaMin
+      ? `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}°F).`
+      : `CYA: Add stabilizer today to at least ${cyaMin} ppm (currently ${Math.round(cya)} ppm; will lose ~${cyaWeeklyLoss} ppm this week). Low CYA accelerates FC burn-off.`;
+
+    setChecklistLineText(cyaLineItem, next);
+  }
+
+  function patchForecastAlkLine() {
+    const alkLineItem = findForecastLine('Alk:');
+    if (!alkLineItem) return;
+
+    const ta = num('ta-from', Number.NaN);
+    if (!Number.isFinite(ta)) return;
+
+    const taRange = document.getElementById('range-ta')?.textContent || '';
+    const taMin = parseRangeMin(taRange, 80);
+    const taMax = parseRangeMax(taRange, 120);
+    const phLineText = String(findForecastLine('pH:')?.textContent || '');
+    const forecastUsesAcid = /Add\s+.*muriatic acid/i.test(phLineText);
+    const taWeeklyDrop = forecastUsesAcid ? 8 : 3;
+    const taProjected = Math.round(ta - taWeeklyDrop);
+
+    let next;
+    if (ta > taMax) {
+      next = `Alk: High at ${Math.round(ta)} ppm — no bicarbonate dose today. pH-control acid will reduce it ~${taWeeklyDrop} ppm/week toward target (${taMin}–${taMax} ppm).`;
+    } else if (taProjected >= taMin) {
+      next = `Alk: Stable — no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}–${taMax} ppm).`;
+    } else {
+      const gallons = getGallons();
+      const taBoostNeeded = taMin - taProjected;
+      const bakingSodaOz = taBoostNeeded * gallons / 4461.56;
+      const taImmediate = Math.round(ta + taBoostNeeded);
+      const taNextVisit = Math.round(taImmediate - taWeeklyDrop);
+      next = `Alk: Projected ~${taProjected} ppm — below minimum (${taMin} ppm). Add ~${Math.round(bakingSodaOz)} oz of baking soda today. Immediate effect today: Alk ~${Math.round(ta)} → ~${taImmediate} ppm. 1-week projection after normal drift (~${taWeeklyDrop} ppm): ~${taNextVisit} ppm (target: ${taMin}–${taMax} ppm).`;
+    }
+
+    setChecklistLineText(alkLineItem, next);
+  }
+
   function runPatchSoon() {
     window.requestAnimationFrame(() => {
       patchForecastFcLine();
+      patchForecastCyaLine();
+      patchForecastAlkLine();
     });
   }
 
   document.addEventListener('input', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    if (target.matches('#fc-from, #cya-from, #fc-percent, #size, #units, #weather-forecast, #weather-conditions')) {
+    if (target.matches('#fc-from, #cya-from, #ta-from, #ph-from, #fc-percent, #size, #temp, #units, #weather-forecast, #weather-conditions')) {
       runPatchSoon();
     }
   });
@@ -188,7 +244,7 @@
   document.addEventListener('change', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    if (target.matches('#fc-from, #cya-from, #fc-percent, #size, #units, #weather-forecast, #weather-conditions')) {
+    if (target.matches('#fc-from, #cya-from, #ta-from, #ph-from, #fc-percent, #size, #temp, #units, #weather-forecast, #weather-conditions')) {
       runPatchSoon();
     }
   });

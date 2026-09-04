@@ -720,30 +720,39 @@ function parseWeatherTemp() {
   return m ? parseInt(m[1], 10) : 80; // default 80°F if weather not loaded
 }
 
+function getPoolTempF() {
+  const rawTemp = n(refs.temp, Number.NaN);
+  if (!Number.isFinite(rawTemp)) return estimateWaterTempF();
+  return Number(n(refs.units)) === 1 ? rawTemp * 9 / 5 + 32 : rawTemp;
+}
+
 // FC daily loss rate (ppm/day) using temperature + UV index + CYA level.
 // Sources: TFP (CYA/UV relationship), Litra Pool Care (temperature demand)
 function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
-  // Temperature sets base biological/chemical demand (Litra Pool Care)
+  // Temperature sets base biological/chemical demand (water temperature driven).
   let base;
-  if (tempF >= 90) base = 3.2;
-  else if (tempF >= 80) base = 2.5;
-  else if (tempF >= 70) base = 1.8;
-  else if (tempF >= 60) base = 1.0;
-  else base = 0.5;
+  if (tempF >= 95) base = 2.6;
+  else if (tempF >= 88) base = 2.2;
+  else if (tempF >= 80) base = 1.8;
+  else if (tempF >= 70) base = 1.3;
+  else if (tempF >= 60) base = 0.8;
+  else base = 0.4;
   // UV index drives photolysis — primary outdoor chlorine loss mechanism (TFP)
   // Scale: 0-2 Low, 3-5 Moderate, 6-7 High (baseline), 8-10 Very High, 11+ Extreme
   const uvFactor =
-    uvIndex >= 11 ? 1.45 :
-    uvIndex >=  8 ? 1.25 :
-    uvIndex >=  6 ? 1.0  :
-    uvIndex >=  3 ? 0.75 :
-                    0.5;
+    uvIndex >= 11 ? 1.3  :
+    uvIndex >=  8 ? 1.15 :
+    uvIndex >=  6 ? 0.9  :
+    uvIndex >=  3 ? 0.8  :
+                    0.65;
   // CYA protects FC from UV by binding it as reserve chlorine (TFP)
   const cyaFactor =
-    cyaPpm <= 0  ? 1.5  : // no stabilizer — very rapid UV burn-off
-    cyaPpm <= 30 ? 1.0  : // baseline outdoor pool
-    cyaPpm <= 60 ? 0.82 : // liquid chlorine pool, good UV protection
-                   0.65;  // SWG pool (CYA 60–90), best UV protection
+    cyaPpm <= 0  ? 1.45 : // no stabilizer — very rapid UV burn-off
+    cyaPpm <= 30 ? 1.0  :
+    cyaPpm <= 50 ? 0.85 :
+    cyaPpm <= 70 ? 0.72 :
+    cyaPpm <= 90 ? 0.62 :
+                   0.55;
   return Math.round(base * uvFactor * cyaFactor * 10) / 10;
 }
 
@@ -782,10 +791,6 @@ function ppmPerTrichlorPuck(gallons) {
 
 function cyaPpmPerTrichlorPuck(gallons) {
   return (TRICHLOR_3IN_TABLET_OZ * TRICHLOR_CYA_OZMUL) / gallons;
-}
-
-function shockLevelForCya(cyaPpm) {
-  return Math.max(10, Math.floor(cyaPpm / 6 + 8.5));
 }
 
 function roundToNearestFive(value) {
@@ -904,7 +909,7 @@ function updatePassiveOutlook() {
   };
 
   const lines = [];
-  const tempF = weeklyAvgTemp || parseWeatherTemp();
+  const tempF = getPoolTempF();
   const gallons = getGallons();
 
   if (weatherModelSource === 'current') {
@@ -1175,7 +1180,7 @@ function updateReport() {
   const treatmentItems = [fcAction, tclAction, cyaAction, phAction, taAction, chAction, saltAction, borAction].filter(Boolean);
   if (Number(n(refs.chlorinePop)) === 2) {
     const swgRuntime = n(refs.swgRuntime, 8);
-    const swgAction = buildSwgRecommendation(gallons, cya, weeklyAvgTemp, weeklyAvgUV, swgRuntime);
+    const swgAction = buildSwgRecommendation(gallons, cya, getPoolTempF(), weeklyAvgUV, swgRuntime);
     if (swgAction) treatmentItems.push(swgAction);
   }
   if (!treatmentItems.length) {
@@ -1187,12 +1192,13 @@ function updateReport() {
   // No mid-week adjustments assumed. One dose, one week.
   // Sources:
   //   FC/CYA:  TroubleFreePool (CYA/UV relationship, daily demand)
-  //   Temp+UV: Litra Pool Care + Open-Meteo daily uv_index_max
+  //   Temp+UV: pool water temperature input + Open-Meteo daily uv_index_max
   //   pH rise: Orenda Tech (CO2 off-gassing / Henry's Law)
   const forecastItems = [];
-  const tempF    = weeklyAvgTemp; // 7-day average for FC demand projection
+  const tempF    = getPoolTempF();
   const blPct    = Math.max(0.1, n(refs.fcPercent, 6));
   const aeration = refs.phAeration ? refs.phAeration.value : 'medium';
+  let forecastUsesAcid = false;
 
   if (weatherModelSource === 'current') {
     forecastItems.push('Weather model note: 5-day forecast inputs were unavailable, so this forecast plan is temporarily using current weather conditions.');
@@ -1208,8 +1214,6 @@ function updateReport() {
     const requiredNow = Math.round((fcMin + weeklyLoss) * 10) / 10;
     const doseNeeded  = Math.max(0, Math.round((requiredNow - fc) * 10) / 10);
     const uvLabel     = weeklyAvgUV >= 8 ? 'high' : weeklyAvgUV >= 5 ? 'moderate' : 'low';
-    const shockLevel  = shockLevelForCya(cya);
-
     if (doseNeeded > 0 && gallons > 0) {
       const ppmPerPuck = ppmPerTrichlorPuck(gallons);
       const cyaPerPuck = cyaPpmPerTrichlorPuck(gallons);
@@ -1326,6 +1330,7 @@ function updateReport() {
       );
     } else {
       // Compute acid doses using the exact same pH-acid model as treatment plan.
+      forecastUsesAcid = true;
       const maStrength = Number(n(refs.maPop));
       const forecastOz = muriaticAcidOzForPhDrop(ph, phTargetStart, taForPhModel, bor, gallons, maStrength);
       // Compare rounded recommendation amounts to match what user sees in the UI text.
@@ -1350,7 +1355,7 @@ function updateReport() {
   // ── Alk ─────────────────────────────────────────────────────────────────
   // Alk (Total Alkalinity) is influenced by acid additions for pH and can be corrected with baking soda when low.
   if (tested.ta) {
-    const taWeeklyDrop = phAction ? 8 : 3;
+    const taWeeklyDrop = forecastUsesAcid ? 8 : 3;
     const taProjected  = Math.round(ta - taWeeklyDrop);
 
     if (ta > taMax) {
