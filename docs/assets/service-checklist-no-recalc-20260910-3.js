@@ -54,7 +54,9 @@
   function applyReportSectionsVisibility() {
     const techInsights = document.getElementById('report-tech-insights');
     const serviceChecklist = document.getElementById('report-service-checklist');
-    const hideSections = !reportSectionsEnabled;
+    const serviceDetails = document.getElementById('service-details-section');
+    const reportOpenedByUi = serviceDetails ? serviceDetails.hidden === false : false;
+    const hideSections = !(reportSectionsEnabled || reportOpenedByUi);
 
     if (techInsights) techInsights.hidden = hideSections;
     if (serviceChecklist) serviceChecklist.hidden = hideSections;
