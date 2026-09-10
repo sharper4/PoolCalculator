@@ -97,12 +97,10 @@
     checklist.querySelectorAll('.service-check-item input[type="checkbox"]').forEach((box) => {
       box.addEventListener('change', () => {
         refreshServiceChecklistState();
-        normalizeVisibleText(document.body);
       });
     });
 
     refreshServiceChecklistState();
-    normalizeVisibleText(document.body);
   }
 
   stripRecalcListenersFromServiceChecklist();
@@ -129,16 +127,5 @@
 
   setCustomerVisibility(customerFieldsVisible);
   injectCustomerReportToolbarButtons();
-
-  const observer = new MutationObserver(() => {
-    applyReportSectionsVisibility();
-    applyCustomerRowsVisibility();
-    normalizeVisibleText(document.body);
-    injectCustomerReportToolbarButtons();
-  });
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true
-  });
+  normalizeVisibleText(document.body);
 })();
