@@ -529,14 +529,31 @@ function setChecklist(listEl, items) {
   });
 
   listEl.innerHTML = '';
-  items.forEach((item) => {
+  items.forEach((rawItem) => {
+    const item = typeof rawItem === 'string'
+      ? { text: rawItem, checkable: true }
+      : {
+          text: String(rawItem?.text || ''),
+          checkable: rawItem?.checkable !== false
+        };
+    if (!item.text) return;
+
     const li = document.createElement('li');
+
+    if (!item.checkable) {
+      const text = document.createElement('span');
+      text.textContent = item.text;
+      li.appendChild(text);
+      listEl.appendChild(li);
+      return;
+    }
+
     const label = document.createElement('label');
     const box = document.createElement('input');
     const text = document.createElement('span');
     box.type = 'checkbox';
-    box.checked = checkedMap.get(item) === true;
-    text.textContent = item;
+    box.checked = checkedMap.get(item.text) === true;
+    text.textContent = item.text;
     label.append(box, text);
     li.appendChild(label);
     listEl.appendChild(li);

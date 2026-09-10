@@ -149,6 +149,67 @@
     label.append(box, span);
     li.appendChild(label);
     listEl.appendChild(li);
+    return li;
+  }
+
+  function setChecklistHeaderLine(listEl, prefix, text) {
+    let li = findForecastLine(prefix);
+    if (!li) {
+      li = document.createElement('li');
+      li.appendChild(document.createElement('span'));
+      listEl.appendChild(li);
+    }
+
+    const checked = Boolean(li.querySelector('input[type="checkbox"]')?.checked);
+    li.innerHTML = '';
+    const span = document.createElement('span');
+    span.textContent = text;
+    li.appendChild(span);
+    if (checked) {
+      li.dataset.wasChecked = '1';
+    } else {
+      delete li.dataset.wasChecked;
+    }
+    return li;
+  }
+
+  function rebuildOptionBlock(listEl, headerLi, optionPrefix, optionTexts) {
+    const previousChecked = new Map();
+    Array.from(listEl.querySelectorAll('li')).forEach((li) => {
+      const text = rowText(li);
+      if (text.startsWith(optionPrefix)) {
+        const match = text.match(/^([A-Z]+\s*-\s*Option\s*\d+:)/i);
+        if (!match) return;
+        const key = match[1].replace(/\s+/g, ' ').trim().toUpperCase();
+        const checked = Boolean(li.querySelector('input[type="checkbox"]')?.checked);
+        if (checked) previousChecked.set(key, true);
+      }
+    });
+
+    Array.from(listEl.querySelectorAll('li')).forEach((li) => {
+      if (rowText(li).startsWith(optionPrefix)) {
+        li.remove();
+      }
+    });
+
+    let insertAfter = headerLi;
+    optionTexts.forEach((text) => {
+      const optionLi = appendChecklistOption(listEl, text);
+      const match = text.match(/^([A-Z]+\s*-\s*Option\s*\d+:)/i);
+      if (match) {
+        const key = match[1].replace(/\s+/g, ' ').trim().toUpperCase();
+        if (previousChecked.get(key)) {
+          const box = optionLi.querySelector('input[type="checkbox"]');
+          if (box) box.checked = true;
+        }
+      }
+      if (insertAfter.nextSibling) {
+        listEl.insertBefore(optionLi, insertAfter.nextSibling);
+      } else {
+        listEl.appendChild(optionLi);
+      }
+      insertAfter = optionLi;
+    });
   }
 
   function ensureForecastOptionRows() {
@@ -163,34 +224,40 @@
     const chMax = parseRangeMax(document.getElementById('range-ch')?.textContent, 400);
 
     if (Number.isFinite(cyaNow) && Number.isFinite(cyaMax) && cyaNow > cyaMax) {
-      const cyaHeader = findForecastLine('CYA:');
-      if (cyaHeader) {
-        setChecklistLineText(cyaHeader, `CYA: High at ${Math.round(cyaNow)} ppm (target: ${Math.round(cyaMin)}-${Math.round(cyaMax)} ppm). Choose one option below.`);
-      }
+      const cyaHeader = setChecklistHeaderLine(
+        forecast,
+        'CYA:',
+        `CYA: High at ${Math.round(cyaNow)} ppm (target: ${Math.round(cyaMin)}-${Math.round(cyaMax)} ppm). Choose one option below.`
+      );
 
       const cyaTreatment = getTreatmentLine('CYA:');
       const cyaOption1 = cyaTreatment
         ? `CYA - Option 1: ${cyaTreatment.replace(/^CYA:\s*/, '')}`
         : 'CYA - Option 1: Some water was replaced to help reduce CYA in the pool.';
 
-      if (!hasRowWithPrefix(forecast, 'CYA - Option 1:')) appendChecklistOption(forecast, cyaOption1);
-      if (!hasRowWithPrefix(forecast, 'CYA - Option 2:')) appendChecklistOption(forecast, 'CYA - Option 2: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.');
-      if (!hasRowWithPrefix(forecast, 'CYA - Option 3:')) appendChecklistOption(forecast, 'CYA - Option 3: Defer water replacement until the swimming season is over.');
+      rebuildOptionBlock(forecast, cyaHeader, 'CYA - Option', [
+        cyaOption1,
+        'CYA - Option 2: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.',
+        'CYA - Option 3: Defer water replacement until the swimming season is over.'
+      ]);
     }
 
     if (Number.isFinite(chNow) && Number.isFinite(chMax) && chNow > chMax) {
-      const chHeader = findForecastLine('CH:');
-      if (chHeader) {
-        setChecklistLineText(chHeader, `CH: High at ${Math.round(chNow)} ppm (target: ${Math.round(chMin)}-${Math.round(chMax)} ppm). Choose one option below.`);
-      }
+      const chHeader = setChecklistHeaderLine(
+        forecast,
+        'CH:',
+        `CH: High at ${Math.round(chNow)} ppm (target: ${Math.round(chMin)}-${Math.round(chMax)} ppm). Choose one option below.`
+      );
 
       const chTreatment = getTreatmentLine('CH:');
       const chOption1 = chTreatment
         ? `CH - Option 1: ${chTreatment.replace(/^CH:\s*/, '')}`
         : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
 
-      if (!hasRowWithPrefix(forecast, 'CH - Option 1:')) appendChecklistOption(forecast, chOption1);
-      if (!hasRowWithPrefix(forecast, 'CH - Option 2:')) appendChecklistOption(forecast, 'CH - Option 2: Defer water replacement until the swimming season is over.');
+      rebuildOptionBlock(forecast, chHeader, 'CH - Option', [
+        chOption1,
+        'CH - Option 2: Defer water replacement until the swimming season is over.'
+      ]);
     }
   }
 
