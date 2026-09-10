@@ -298,9 +298,15 @@
 
     const rangeText = document.getElementById('range-cya')?.textContent || '';
     const cyaMin = parseRangeMin(rangeText, 30);
+    const cyaMax = parseRangeMax(rangeText, 80);
     const tempF = getPoolTempF();
     const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
     const cyaProjected = Math.round(cya - cyaWeeklyLoss);
+
+    if (Number.isFinite(cyaMax) && cya > cyaMax) {
+      setChecklistLineText(cyaLineItem, `CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`);
+      return;
+    }
 
     const next = cyaProjected >= cyaMin
       ? `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}°F).`
@@ -343,6 +349,7 @@
 
   function runPatchSoon() {
     setTimeout(() => {
+      ensureForecastOptionRows();
       patchForecastFcLine();
       patchForecastCyaLine();
       patchForecastAlkLine();
