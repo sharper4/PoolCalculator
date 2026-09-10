@@ -1277,7 +1277,16 @@ function updateReport() {
     const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
     const cyaProjected  = Math.round(cya - cyaWeeklyLoss);
 
-    if (cyaProjected >= cyaMin) {
+    if (cya > cyaMax) {
+      const cyaOption2 = cyaAction
+        ? `CYA - Option 2: ${cyaAction.replace(/^CYA:\s*/, '')}`
+        : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
+      forecastItems.push(
+        `CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). ` +
+        'CYA - Option 1: Reduce CYA via CYA filtration. Do not remove the sponge located in your skimmer. It costs $200 to replace and should remain in place for 2-3 weeks while reducing CYA in the pool. ' +
+        `${cyaOption2}`
+      );
+    } else if (cyaProjected >= cyaMin) {
       forecastItems.push(
         `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}\u00b0F).`
       );
@@ -1382,7 +1391,16 @@ function updateReport() {
   // ── CH ──────────────────────────────────────────────────────────────────
   // CH is stable over 7 days — no dose needed for the forecast window.
   if (tested.ch) {
-    if (ch >= chMin && ch <= chMax) {
+    if (ch > chMax) {
+      const chOption1 = chAction
+        ? `CH - Option 1: ${chAction.replace(/^CH:\s*/, '')}`
+        : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
+      forecastItems.push(
+        `CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). ` +
+        `${chOption1} ` +
+        'CH - Option 2: You can delay remediation when appropriate because water replacement is often better served during the off season.'
+      );
+    } else if (ch >= chMin && ch <= chMax) {
       forecastItems.push(
         `CH: Stable \u2014 no calcium dose needed today. Projected to hold near ${Math.round(ch)} ppm at next visit (target: ${chMin}\u2013${chMax} ppm).`
       );
