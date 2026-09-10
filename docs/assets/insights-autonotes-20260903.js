@@ -14,7 +14,7 @@
     /^-\s*Stabilizer adjustments were not made\. CYA is expected to remain in range between now and our next visit\.$/i,
     /^-\s*Some water was replaced to help reduce CYA in the pool\.$/i,
     /^-\s*CYA remover filtration is in progress\. Do not remove the sponge from the skimmer basket; a \$200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA\.$/i,
-    /^-\s*CYA treatment was deferred until after the swimming season to address water replacement\.$/i,
+    /^-\s*(?:CYA treatment was deferred|Deferring CYA treatment) until after the swimming season to address water replacement\.$/i,
     /^-\s*pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
     /^-\s*Total alkalinity was adjusted to support overall water stability\.$/i,
     /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
@@ -137,7 +137,7 @@
     if (flags.fc) lines.push('Chlorine was added to help keep the pool properly sanitized.');
     if (flags.cyaWaterReplace) lines.push('Some water was replaced to help reduce CYA in the pool.');
     else if (flags.cyaFiltration) lines.push('CYA remover filtration is in progress. Do not remove the sponge from the skimmer basket; a $200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA.');
-    else if (flags.cyaDeferred) lines.push('CYA treatment was deferred until after the swimming season to address water replacement.');
+    else if (flags.cyaDeferred) lines.push('Deferring CYA treatment until after the swimming season to address water replacement.');
     else if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
     else if (flags.cyaNoAction) lines.push('Stabilizer adjustments were not made. CYA is expected to remain in range between now and our next visit.');
     if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
@@ -185,9 +185,16 @@
     insights.style.overflowY = insights.scrollHeight > maxHeight ? 'auto' : 'hidden';
   }
 
-  function syncInsights() {
+  let lastChemicalLines = [];
+
+  function syncInsights(trigger = 'other') {
     const base = stripAutoLines(insights.value);
-    const lines = buildChemicalLines().map((line) => `- ${line}`);
+    let lines = buildChemicalLines().map((line) => `- ${line}`);
+    if (lines.length) {
+      lastChemicalLines = [...lines];
+    } else if (trigger === 'service' && lastChemicalLines.length) {
+      lines = [...lastChemicalLines];
+    }
     const serviceLine = buildServiceLine();
     if (serviceLine) lines.push(serviceLine);
 
@@ -214,9 +221,9 @@
       enforceExclusiveForecastOption(target);
     }
 
-    if (target.closest('#r-treatment-list') || target.closest('#r-forecast-list') || target.closest('#r-service-checklist')) {
-      syncInsights();
-    }
+    if (target.closest('#r-treatment-list')) syncInsights('treatment');
+    else if (target.closest('#r-forecast-list')) syncInsights('forecast');
+    else if (target.closest('#r-service-checklist')) syncInsights('service');
   });
 
   insights.addEventListener('input', () => {
