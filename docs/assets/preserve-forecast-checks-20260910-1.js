@@ -1,4 +1,11 @@
 (() => {
+  function keyFromText(text) {
+    const normalized = String(text || '').trim();
+    const optionMatch = normalized.match(/^([A-Z]+\s*-\s*Option\s*\d+:)/i);
+    if (optionMatch) return optionMatch[1].replace(/\s+/g, ' ').toUpperCase();
+    return normalized;
+  }
+
   function labelTextFromRow(li) {
     const label = li?.querySelector('label');
     if (!label) return '';
@@ -14,7 +21,7 @@
       .map((li) => {
         const box = li.querySelector('input[type="checkbox"]');
         if (!box || !box.checked) return '';
-        return labelTextFromRow(li);
+        return keyFromText(labelTextFromRow(li));
       })
       .filter(Boolean);
   }
@@ -28,7 +35,7 @@
     Array.from(list.querySelectorAll('li')).forEach((li) => {
       const box = li.querySelector('input[type="checkbox"]');
       if (!box) return;
-      const text = labelTextFromRow(li);
+      const text = keyFromText(labelTextFromRow(li));
       if (!wanted.has(text)) return;
       box.checked = true;
     });
@@ -40,9 +47,22 @@
     if (!target.closest('#r-service-checklist')) return;
 
     const snapshot = checkedForecastLabels();
-    // Allow the main app recalculation to run, then re-apply the prior forecast checks.
-    setTimeout(() => {
+    const list = document.getElementById('r-forecast-list');
+    const restore = () => {
       restoreForecastChecks(snapshot);
-    }, 0);
+    };
+
+    [0, 60, 140, 260, 420, 700, 1100, 1600].forEach((delayMs) => {
+      setTimeout(restore, delayMs);
+    });
+
+    if (!list) return;
+    const observer = new MutationObserver(() => {
+      restore();
+    });
+    observer.observe(list, { childList: true, subtree: true });
+    setTimeout(() => {
+      observer.disconnect();
+    }, 1800);
   }, true);
 })();

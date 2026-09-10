@@ -4,6 +4,10 @@
   const TRICHLOR_CYA_OZMUL = 4159.41;
   const CYA_REMOVER_URL = 'https://www.amazon.com/Cyanuric-Reducer-Removes-Through-Filtration/dp/B0CN2DNJZR/ref=sr_1_3?crid=267RNJ4T1HNMO&dib=eyJ2IjoiMSJ9.0d4mAa_9aA2BwCx2lifaLLWbUEPyotpAREtsqVX7K8vBcWdFeGwIT87WiWKF1XUIKHJ3z91LLArlGX4QfoGlcOlhwtXesjczhIiXFDSh3u6k28vHEdvqr-ar4_ZXrafQ_QJAK6STfJ8KGG04wG5TDzsWYAArwylHqOOJLoufslwTOAlSA9z5naLSAF0GHQHzzFol_Kz_pV5i8jLZgVWZeEljLc3CsV1QxrTIYqE2XL4OtEzG-rutazgDT6h3Evwg9b1H-1Oj1BmQrkb_siRFTkumK-111v9Cftws19gWnAA.OjR4fKZ-FVIC1CaKuB4FJLUUI_gYQC1v0JuoYsSDhP4&dib_tag=se&keywords=cya+removal&qid=1789046028&sprefix=cya+remover%2Caps%2C433&sr=8-3';
   const LINK_TEXT = 'Cyanuric Acid Remover';
+  const stickyForecastChecks = {
+    labels: new Set(),
+    initDone: false
+  };
 
   function num(id, fallback = Number.NaN) {
     const el = document.getElementById(id);
@@ -110,6 +114,60 @@
 
   function rowText(li) {
     return String(li.querySelector('span')?.textContent || li.textContent || '').trim();
+  }
+
+  function snapshotForecastChecks() {
+    const list = document.getElementById('r-forecast-list');
+    if (!list) return;
+
+    const next = new Set();
+    Array.from(list.querySelectorAll('li')).forEach((li) => {
+      const box = li.querySelector('input[type="checkbox"]');
+      if (!box || !box.checked) return;
+      const text = rowText(li);
+      if (text) next.add(text);
+    });
+    stickyForecastChecks.labels = next;
+  }
+
+  function restoreForecastChecks() {
+    const list = document.getElementById('r-forecast-list');
+    if (!list || !stickyForecastChecks.labels.size) return;
+
+    Array.from(list.querySelectorAll('li')).forEach((li) => {
+      const box = li.querySelector('input[type="checkbox"]');
+      if (!box) return;
+      if (stickyForecastChecks.labels.has(rowText(li))) {
+        box.checked = true;
+      }
+    });
+  }
+
+  function initStickyForecastCheckPersistence() {
+    if (stickyForecastChecks.initDone) return;
+    stickyForecastChecks.initDone = true;
+
+    const serviceList = document.getElementById('r-service-checklist');
+    const forecastList = document.getElementById('r-forecast-list');
+    if (!serviceList || !forecastList) return;
+
+    forecastList.addEventListener('change', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+      snapshotForecastChecks();
+    }, true);
+
+    serviceList.addEventListener('change', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+
+      snapshotForecastChecks();
+      [0, 80, 220, 500, 900].forEach((delayMs) => {
+        setTimeout(() => {
+          restoreForecastChecks();
+        }, delayMs);
+      });
+    }, true);
   }
 
   function hasRowWithPrefix(listEl, prefix) {
@@ -341,10 +399,12 @@
 
   function runPatchSoon() {
     setTimeout(() => {
+      initStickyForecastCheckPersistence();
       ensureForecastOptionRows();
       patchForecastFcLine();
       patchForecastCyaLine();
       patchForecastAlkLine();
+      restoreForecastChecks();
     }, 0);
   }
 
