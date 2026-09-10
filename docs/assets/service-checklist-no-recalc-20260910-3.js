@@ -1,4 +1,6 @@
 (() => {
+  let reportSectionsEnabled = false;
+
   const asciiReplacements = [
     [/â€”/g, '-'],
     [/â€“/g, '-'],
@@ -49,6 +51,15 @@
     section.dataset.hasChecked = hasNonChemicalChecked ? '1' : '0';
   }
 
+  function applyReportSectionsVisibility() {
+    const techInsights = document.getElementById('report-tech-insights');
+    const serviceChecklist = document.getElementById('report-service-checklist');
+    const hideSections = !reportSectionsEnabled;
+
+    if (techInsights) techInsights.hidden = hideSections;
+    if (serviceChecklist) serviceChecklist.hidden = hideSections;
+  }
+
   function stripRecalcListenersFromServiceChecklist() {
     const checklist = document.getElementById('r-service-checklist');
     if (!checklist) return;
@@ -73,7 +84,18 @@
 
   stripRecalcListenersFromServiceChecklist();
 
+  const openReportButton = document.getElementById('open-report');
+  if (openReportButton) {
+    openReportButton.addEventListener('click', () => {
+      reportSectionsEnabled = true;
+      applyReportSectionsVisibility();
+    });
+  }
+
+  applyReportSectionsVisibility();
+
   const observer = new MutationObserver(() => {
+    applyReportSectionsVisibility();
     normalizeVisibleText(document.body);
   });
   observer.observe(document.documentElement, {
