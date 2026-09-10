@@ -1,4 +1,7 @@
 (() => {
+  // If the primary forecast options patch is active, this fallback stays idle.
+  if (window.__forecastOptionsPatch) return;
+
   const CYA_REMOVER_URL = 'https://www.amazon.com/Cyanuric-Reducer-Removes-Through-Filtration/dp/B0CN2DNJZR/ref=sr_1_3?crid=267RNJ4T1HNMO&dib=eyJ2IjoiMSJ9.0d4mAa_9aA2BwCx2lifaLLWbUEPyotpAREtsqVX7K8vBcWdFeGwIT87WiWKF1XUIKHJ3z91LLArlGX4QfoGlcOlhwtXesjczhIiXFDSh3u6k28vHEdvqr-ar4_ZXrafQ_QJAK6STfJ8KGG04wG5TDzsWYAArwylHqOOJLoufslwTOAlSA9z5naLSAF0GHQHzzFol_Kz_pV5i8jLZgVWZeEljLc3CsV1QxrTIYqE2XL4OtEzG-rutazgDT6h3Evwg9b1H-1Oj1BmQrkb_siRFTkumK-111v9Cftws19gWnAA.OjR4fKZ-FVIC1CaKuB4FJLUUI_gYQC1v0JuoYsSDhP4&dib_tag=se&keywords=cya+removal&qid=1789046028&sprefix=cya+remover%2Caps%2C433&sr=8-3';
   const LINK_TEXT = 'Cyanuric Acid Remover';
   const state = (window.__forecastStickyFallback = window.__forecastStickyFallback || {
@@ -132,6 +135,5 @@
 
   const mo = new MutationObserver(() => ensureRows());
   mo.observe(document.body, { childList: true, subtree: true });
-  setInterval(ensureRows, 500);
   ensureRows();
 })();
