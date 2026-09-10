@@ -91,6 +91,14 @@
     openReportButton.addEventListener('click', () => {
       reportSectionsEnabled = true;
       applyReportSectionsVisibility();
+      [0, 40, 120, 300].forEach((delay) => {
+        setTimeout(() => {
+          const techInsights = document.getElementById('report-tech-insights');
+          const serviceChecklist = document.getElementById('report-service-checklist');
+          if (techInsights) techInsights.hidden = false;
+          if (serviceChecklist) serviceChecklist.hidden = false;
+        }, delay);
+      });
     });
   }
 
