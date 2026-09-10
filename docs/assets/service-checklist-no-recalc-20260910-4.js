@@ -79,6 +79,42 @@
     applyReportSectionsVisibility();
   }
 
+  function protectInsightsTyping() {
+    const insights = document.getElementById('r-insights');
+    if (!insights || insights.dataset.typingGuard === '1') return;
+
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+    if (!descriptor?.get || !descriptor?.set) return;
+
+    let lastManualInputAt = 0;
+    const markTyping = () => {
+      lastManualInputAt = Date.now();
+    };
+
+    insights.addEventListener('beforeinput', markTyping);
+    insights.addEventListener('input', markTyping);
+
+    try {
+      Object.defineProperty(insights, 'value', {
+        configurable: true,
+        get() {
+          return descriptor.get.call(this);
+        },
+        set(nextValue) {
+          const currentValue = descriptor.get.call(this);
+          const typingNow = document.activeElement === insights && Date.now() - lastManualInputAt < 1200;
+          if (typingNow && nextValue !== currentValue) {
+            return;
+          }
+          descriptor.set.call(this, nextValue);
+        }
+      });
+      insights.dataset.typingGuard = '1';
+    } catch {
+      // Ignore if browser blocks re-defining instance accessors.
+    }
+  }
+
   function injectCustomerReportToolbarButtons() {
     return;
   }
@@ -127,5 +163,6 @@
 
   setCustomerVisibility(customerFieldsVisible);
   injectCustomerReportToolbarButtons();
+  protectInsightsTyping();
   normalizeVisibleText(document.body);
 })();
