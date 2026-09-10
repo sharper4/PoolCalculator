@@ -218,6 +218,8 @@ let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
 let suppressManualTempCapture = false;
 let customerSectionsVisible = false;
+let lastAutoInsightsBlock = '';
+let suppressInsightsManualCapture = false;
 let manualConditionSummaryOverride = false;
 let manualWaterTempOverride = false;
 const manualTargetOverride = {
@@ -821,7 +823,7 @@ function buildSwgRecommendation(gallons, cyaPpm, tempF, uvIndex, runtimeHours) {
   }
   if (high < low) high = low;
 
-  return `SWG: Estimated ${low}–${high}% output (based on ${rt} hr/day runtime, ~1.25 lb/day cell). Demand modeled at ~${demandPpmPerDay.toFixed(1)} ppm/day from ${Math.round(tempF)}°F, UV ${uvIndex}, CYA ${Math.round(cyaPpm)}.`;
+  return `SWG: Estimated ${low}-${high}% output (based on ${rt} hr/day runtime, ~1.25 lb/day cell). Demand modeled at ~${demandPpmPerDay.toFixed(1)} ppm/day from ${Math.round(tempF)}F, UV ${uvIndex}, CYA ${Math.round(cyaPpm)}.`;
 }
 
 // Format oz as a friendly string (oz or gallons + oz for large amounts)
@@ -876,7 +878,7 @@ function buildFcTreatmentAction(fcNow, fcTarget, gallons, bleachPercent) {
 
   const totalBleachOz = bleachOzForDose(doseNeeded, gallons, bleachPercent);
   const immediateFc = fcNow + doseNeeded;
-  let line = `FC: Add ${fmtOz(totalBleachOz)} of ${bleachPercent}% liquid bleach today → FC ~${fcNow.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm.`;
+  let line = `FC: Add ${fmtOz(totalBleachOz)} of ${bleachPercent}% liquid bleach today -> FC ~${fcNow.toFixed(1)} to ~${immediateFc.toFixed(1)} ppm.`;
 
   const ppmPerPuck = ppmPerTrichlorPuck(gallons);
   const maxPucks = doseNeeded >= ppmPerPuck * 2 ? 2 : doseNeeded >= ppmPerPuck ? 1 : 0;
@@ -925,7 +927,7 @@ function updatePassiveOutlook() {
     const weeklyLoss = Math.round(dailyLoss * 7 * 10) / 10;
     const fcProjected = Math.max(0, Math.round((fc - weeklyLoss) * 10) / 10);
     lines.push(
-      `FC: If untreated, expect ~${dailyLoss.toFixed(1)} ppm/day reduction (~${weeklyLoss.toFixed(1)} ppm this week) → ~${fcProjected.toFixed(1)} ppm in 7 days.`
+      `FC: If untreated, expect ~${dailyLoss.toFixed(1)} ppm/day reduction (~${weeklyLoss.toFixed(1)} ppm this week) -> ~${fcProjected.toFixed(1)} ppm in 7 days.`
     );
   }
 
@@ -939,7 +941,7 @@ function updatePassiveOutlook() {
     const cyaDailyLoss = Math.round((cyaWeeklyLoss / 7) * 10) / 10;
     const cyaProjected = Math.max(0, Math.round(cya - cyaWeeklyLoss));
     lines.push(
-      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) → ~${cyaProjected} ppm in 7 days.`
+      `CYA: If untreated, expect ~${cyaDailyLoss.toFixed(1)} ppm/day loss (~${cyaWeeklyLoss} ppm this week) -> ~${cyaProjected} ppm in 7 days.`
     );
   }
 
@@ -951,7 +953,7 @@ function updatePassiveOutlook() {
     const phRiseDay = Math.round((phRiseWeek / 7) * 100) / 100;
     const phProjected = Math.round((ph + phRiseWeek) * 100) / 100;
     lines.push(
-      `pH: If untreated, expect ~${phRiseDay.toFixed(2)}/day rise (~${phRiseWeek.toFixed(2)}/week) → ~${phProjected.toFixed(2)} in 7 days.`
+      `pH: If untreated, expect ~${phRiseDay.toFixed(2)}/day rise (~${phRiseWeek.toFixed(2)}/week) -> ~${phProjected.toFixed(2)} in 7 days.`
     );
   }
 
@@ -961,7 +963,7 @@ function updatePassiveOutlook() {
     const taDailyLoss = Math.round((taWeeklyLoss / 7) * 10) / 10;
     const taProjected = Math.max(0, Math.round(ta - taWeeklyLoss));
     lines.push(
-      `Alk: If untreated, model ~${taDailyLoss.toFixed(1)} ppm/day reduction (~${taWeeklyLoss} ppm this week) → ~${taProjected} ppm in 7 days.`
+      `Alk: If untreated, model ~${taDailyLoss.toFixed(1)} ppm/day reduction (~${taWeeklyLoss} ppm this week) -> ~${taProjected} ppm in 7 days.`
     );
   }
 
@@ -1088,7 +1090,7 @@ function updateReport() {
   const fmtRange = (lo, hi, rounder, unit) => {
     if (!Number.isFinite(lo) || !Number.isFinite(hi)) return '--';
     if (lo === hi) return `${rounder(lo)}${unit}`;
-    return `${rounder(lo)}–${rounder(hi)}${unit}`;
+    return `${rounder(lo)}-${rounder(hi)}${unit}`;
   };
   refs.rangeFc.textContent = fmtRange(fcMin, fcMax, round2, ' ppm');
   refs.rangeCya.textContent = fmtRange(cyaMin, cyaMax, Math.round, ' ppm');
@@ -1261,12 +1263,12 @@ function updateReport() {
         fcLine += ` Full weekly target is limited by CYA max (${cyaMax} ppm), so plan a mid-week liquid chlorine top-up if needed.`;
       }
 
-      fcLine += ` Projected ~${projectedNextVisit.toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
+      fcLine += ` Projected ~${projectedNextVisit.toFixed(1)} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`;
       forecastItems.push(fcLine);
     } else {
       const fcEnd = Math.max(Math.round((fc - weeklyLoss) * 10) / 10, 0).toFixed(1);
       forecastItems.push(
-        `FC: No dose needed today. Projected ~${fcEnd} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}°F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
+        `FC: No dose needed today. Projected ~${fcEnd} ppm at next visit (min: ${fcMin} ppm). Demand: ~${dailyLoss} ppm/day at ${Math.round(tempF)}F, UV avg ${weeklyAvgUV} (${uvLabel}), CYA ${Math.round(cya)} ppm.`
       );
     }
   }
@@ -1287,7 +1289,7 @@ function updateReport() {
       forecastItems.push('CYA - Option 3: Defer water replacement until the swimming season is over.');
     } else if (cyaProjected >= cyaMin) {
       forecastItems.push(
-        `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}\u00b0F).`
+        `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}F).`
       );
     } else {
       forecastItems.push(
@@ -1321,19 +1323,19 @@ function updateReport() {
       const boraxOz   = phr_delta / 110.05 + phr_extra / 110.05;
       const phAfterRaise = Math.min(phMin + phRise, phMax);
       forecastItems.push(
-        `pH: Below minimum (${ph.toFixed(1)} < ${phMin}) — raise pH today. ` +
-        `Add ${putWeight(sodaAshOz)} by weight or ${putVolume(sodaAshOz * 0.8715)} by volume of washing soda/soda ash → pH ~${ph.toFixed(1)} to ~${phMin.toFixed(1)}. ` +
-        `Or add ${putWeight(boraxOz)} by weight or ${putVolume(boraxOz * 0.9586)} by volume of borax → pH ~${ph.toFixed(1)} to ~${phMin.toFixed(1)}. ` +
+        `pH: Below minimum (${ph.toFixed(1)} < ${phMin}) - raise pH today. ` +
+        `Add ${putWeight(sodaAshOz)} by weight or ${putVolume(sodaAshOz * 0.8715)} by volume of washing soda/soda ash -> pH ~${ph.toFixed(1)} to ~${phMin.toFixed(1)}. ` +
+        `Or add ${putWeight(boraxOz)} by weight or ${putVolume(boraxOz * 0.9586)} by volume of borax -> pH ~${ph.toFixed(1)} to ~${phMin.toFixed(1)}. ` +
         `(Borax preferred: smaller Alk impact.) ` +
-        `Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, Alk ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${phAfterRaise.toFixed(1)} by next visit (target: ${phMin}–${phMax}).`
+        `Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, Alk ${Math.round(ta)} ppm, ${aerLabel} aeration) -> ~${phAfterRaise.toFixed(1)} by next visit (target: ${phMin}-${phMax}).`
       );
     } else if (ph <= phTargetStart) {
       forecastItems.push(
-        `pH: No adjustment needed today. Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, Alk ${Math.round(ta)} ppm, ${aerLabel} aeration) → ~${Math.min(ph + phRise, phMax).toFixed(1)} by next visit.`
+        `pH: No adjustment needed today. Natural CO2 off-gassing (+${phRise.toFixed(2)}/week, Alk ${Math.round(ta)} ppm, ${aerLabel} aeration) -> ~${Math.min(ph + phRise, phMax).toFixed(1)} by next visit.`
       );
     } else if (phEndProjected <= phMax) {
       forecastItems.push(
-        `pH: No acid dose needed today — projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). Natural rise +${phRise.toFixed(2)}/week at Alk ${Math.round(ta)} ppm (${aerLabel} aeration) stays in range.`
+        `pH: No acid dose needed today - projected ~${phEndProjected.toFixed(1)} by next visit (max: ${phMax}). Natural rise +${phRise.toFixed(2)}/week at Alk ${Math.round(ta)} ppm (${aerLabel} aeration) stays in range.`
       );
     } else {
       // Compute acid doses using the exact same pH-acid model as treatment plan.
@@ -1354,7 +1356,7 @@ function updateReport() {
         doseNote = ` This is MORE than today's treatment plan because the forecast starts at the range bottom and models weekly upward drift.`;
       }
       forecastItems.push(
-        `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today → pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (Alk ${Math.round(taForPhModel)} ppm, ${aerLabel} aeration) → ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}–${phMax}).`
+        `pH: Add ${formatPhVolume(forecastOz)} muriatic acid today -> pH ${phTargetStart.toFixed(2)}.${doseNote} Natural +${phRise.toFixed(2)}/week rise (Alk ${Math.round(taForPhModel)} ppm, ${aerLabel} aeration) -> ~${Math.min(phTargetStart + phRise, phMax).toFixed(2)} by next visit (target: ${phMin}-${phMax}).`
       );
     }
   }
@@ -1367,11 +1369,11 @@ function updateReport() {
 
     if (ta > taMax) {
       forecastItems.push(
-        `Alk: High at ${Math.round(ta)} ppm \u2014 no bicarbonate dose today. pH-control acid will reduce it ~${taWeeklyDrop} ppm/week toward target (${taMin}\u2013${taMax} ppm).`
+        `Alk: High at ${Math.round(ta)} ppm - no bicarbonate dose today. pH-control acid will reduce it ~${taWeeklyDrop} ppm/week toward target (${taMin}-${taMax} ppm).`
       );
     } else if (taProjected >= taMin) {
       forecastItems.push(
-        `Alk: Stable \u2014 no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}\u2013${taMax} ppm).`
+        `Alk: Stable - no dose needed today. Projected ~${taProjected} ppm at next visit (target: ${taMin}-${taMax} ppm).`
       );
     } else {
       const taBoostNeeded = taMin - taProjected;
@@ -1379,10 +1381,10 @@ function updateReport() {
       const taImmediate = Math.round(ta + taBoostNeeded);
       const taNextVisit = Math.round(taImmediate - taWeeklyDrop);
       forecastItems.push(
-        `Alk: Projected ~${taProjected} ppm \u2014 below minimum (${taMin} ppm). ` +
+        `Alk: Projected ~${taProjected} ppm - below minimum (${taMin} ppm). ` +
         `Add ~${putWeightLbsOz(bakingSodaOz)} (${Math.round(bakingSodaOz)} oz) of baking soda today. ` +
-        `Immediate effect today: Alk ~${Math.round(ta)} \u2192 ~${taImmediate} ppm. ` +
-        `1-week projection after normal drift (~${taWeeklyDrop} ppm): ~${taNextVisit} ppm (target: ${taMin}\u2013${taMax} ppm).`
+        `Immediate effect today: Alk ~${Math.round(ta)} -> ~${taImmediate} ppm. ` +
+        `1-week projection after normal drift (~${taWeeklyDrop} ppm): ~${taNextVisit} ppm (target: ${taMin}-${taMax} ppm).`
       );
     }
   }
@@ -1399,13 +1401,13 @@ function updateReport() {
       forecastItems.push('CH - Option 2: Defer water replacement until the swimming season is over.');
     } else if (ch >= chMin && ch <= chMax) {
       forecastItems.push(
-        `CH: Stable \u2014 no calcium dose needed today. Projected to hold near ${Math.round(ch)} ppm at next visit (target: ${chMin}\u2013${chMax} ppm).`
+        `CH: Stable - no calcium dose needed today. Projected to hold near ${Math.round(ch)} ppm at next visit (target: ${chMin}-${chMax} ppm).`
       );
     } else {
       forecastItems.push(
         chAction
-          ? `CH: ${chAction.replace(/^CH:\s*/, '')} \u2014 no further change expected after today's dose.`
-          : `CH: At ${Math.round(ch)} ppm against target ${chMin}\u2013${chMax} ppm \u2014 review at next visit.`
+            ? `CH: ${chAction.replace(/^CH:\s*/, '')} - no further change expected after today's dose.`
+            : `CH: At ${Math.round(ch)} ppm against target ${chMin}-${chMax} ppm - review at next visit.`
       );
     }
   }
@@ -1415,13 +1417,13 @@ function updateReport() {
   if (tested.salt) {
     if (salt >= saltMin && salt <= saltMax) {
       forecastItems.push(
-        `Salt: Stable \u2014 no addition today. Projected to hold near ${Math.round(salt)} ppm at next visit (target: ${saltMin}\u2013${saltMax} ppm).`
+        `Salt: Stable - no addition today. Projected to hold near ${Math.round(salt)} ppm at next visit (target: ${saltMin}-${saltMax} ppm).`
       );
     } else {
       forecastItems.push(
         saltAction
-          ? `Salt: ${saltAction.replace(/^Salt:\s*/, '')} \u2014 retest at next visit after today's correction.`
-          : `Salt: At ${Math.round(salt)} ppm against target ${saltMin}\u2013${saltMax} ppm \u2014 adjust today and retest at next visit.`
+            ? `Salt: ${saltAction.replace(/^Salt:\s*/, '')} - retest at next visit after today's correction.`
+            : `Salt: At ${Math.round(salt)} ppm against target ${saltMin}-${saltMax} ppm - adjust today and retest at next visit.`
       );
     }
   }
@@ -1430,8 +1432,8 @@ function updateReport() {
   if (tested.bor) {
     forecastItems.push(
       borAction
-        ? `Borate: ${borAction.replace(/^Borate:\s*/, '')} \u2014 retest at next visit.`
-        : `Borate: Stable \u2014 projected near target (${Math.round(n(refs.borTo))} ppm). Borate will help buffer pH drift through the week.`
+        ? `Borate: ${borAction.replace(/^Borate:\s*/, '')} - retest at next visit.`
+        : `Borate: Stable - projected near target (${Math.round(n(refs.borTo))} ppm). Borate will help buffer pH drift through the week.`
     );
   }
 
@@ -1734,11 +1736,41 @@ async function loadWeather() {
             timeout: 6000,
             maximumAge: 300000
           });
+
+          function extractManualInsightsBase(value) {
+            const text = String(value || '').trimEnd();
+            if (!text) return '';
+
+            if (lastAutoInsightsBlock && text.endsWith(lastAutoInsightsBlock)) {
+              return text.slice(0, text.length - lastAutoInsightsBlock.length).replace(/\n+$/, '').trimEnd();
+            }
+
+            return stripAutoInsightLines(text);
+          }
         });
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
+
+            const manualBase = extractManualInsightsBase(refs.rInsights.value);
+            const autoLines = buildChemicalInsightLinesFromChecks().map((line) => `- ${line}`);
+            const serviceLine = buildServiceChecklistCompletedLine();
+            if (serviceLine) autoLines.push(serviceLine);
+
+            const autoBlock = autoLines.join('\n').trim();
+            const nextValue = autoBlock
+              ? `${manualBase ? `${manualBase}\n` : ''}${autoBlock}`
+              : manualBase;
+
+            lastAutoInsightsBlock = autoBlock;
       } catch {
-        refs.weatherConditions.value = '';
+            if (refs.rInsights.value !== nextValue) {
+              suppressInsightsManualCapture = true;
+              refs.rInsights.value = nextValue;
+              suppressInsightsManualCapture = false;
+            }
+
+            refs.rInsights.dataset.manualBase = manualBase;
+            expandReportInsightsForPrint();
         weatherModelSource = 'baseline';
         if (refs.weatherForecast) {
           refs.weatherForecast.value = 'Forecast unavailable (location blocked).';
@@ -1911,14 +1943,14 @@ function calcPH() {
   const lines = [];
   if (from < to) {
     let up = delta / 218.68 + extra / 218.68;
-    lines.push(`Add ${putWeight(up)} by weight or ${putVolume(up * 0.8715)} by volume of washing soda/soda ash today → pH ~${round2(from)} to ~${round2(to)}.`);
+    lines.push(`Add ${putWeight(up)} by weight or ${putVolume(up * 0.8715)} by volume of washing soda/soda ash today -> pH ~${round2(from)} to ~${round2(to)}.`);
     up = delta / 110.05 + extra / 110.05;
-    lines.push(`Or add ${putWeight(up)} by weight or ${putVolume(up * 0.9586)} by volume of borax today → pH ~${round2(from)} to ~${round2(to)}.`);
+    lines.push(`Or add ${putWeight(up)} by weight or ${putVolume(up * 0.9586)} by volume of borax today -> pH ~${round2(from)} to ~${round2(to)}.`);
   }
 
   if (from > to) {
     const down = delta / -240.15 * mamul[ma] + extra / -240.15 * mamul[ma];
-    lines.push(`Add ${formatPhVolume(down)} of ${data.maPop[ma]} muriatic acid today → pH ~${round2(from)} to ~${round2(to)}.`);
+    lines.push(`Add ${formatPhVolume(down)} of ${data.maPop[ma]} muriatic acid today -> pH ~${round2(from)} to ~${round2(to)}.`);
   }
 
   refs.phResult.innerHTML = lines.length ? lines.join('<br>') : 'No pH adjustment required.';
@@ -1934,7 +1966,7 @@ function calcTA() {
 
   const taRise = to - from;
   const amountOz = taRise * getGallons() / BAKING_SODA_TA_OZMUL;
-  refs.taResult.innerHTML = `Add ${putWeightLbsOz(amountOz)} (${Math.round(amountOz)} oz) of baking soda today → Alk ~${from} to ~${to} ppm.`;
+  refs.taResult.innerHTML = `Add ${putWeightLbsOz(amountOz)} (${Math.round(amountOz)} oz) of baking soda today -> Alk ~${from} to ~${to} ppm.`;
 }
 
 function calcCH() {
@@ -1944,9 +1976,9 @@ function calcCH() {
 
   if (from < to) {
     let amount = (to - from) * getGallons() / 6754.11;
-    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 0.7988)} by volume of calcium chloride today → CH ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
+    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 0.7988)} by volume of calcium chloride today -> CH ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     amount = (to - from) * getGallons() / 5098.82;
-    const line2 = `Or add ${putWeight(amount)} by weight or ${putVolume(amount * 1.148)} by volume of calcium chloride dihydrate today → CH ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
+    const line2 = `Or add ${putWeight(amount)} by weight or ${putVolume(amount * 1.148)} by volume of calcium chloride dihydrate today -> CH ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     refs.chResult.innerHTML = `${line1}<br>${line2}`;
     return;
   }
@@ -1985,7 +2017,7 @@ function calcTCL() {
   const combined = round2(from - fcNow);
   if (combined > 0.5) {
     refs.tclResult.innerHTML = [
-      `Combined Chlorine (Total − Free) is elevated at ${combined.toFixed(1)} ppm.`,
+      `Combined Chlorine (Total - Free) is elevated at ${combined.toFixed(1)} ppm.`,
       'Shock the pool with liquid chlorine to break down chloramines (see FC card for dosing), then retest Total and Free Chlorine.'
     ].join('<br>');
     return;
@@ -2000,9 +2032,9 @@ function calcCYA() {
 
   if (from < to) {
     let amount = (to - from) * getGallons() / 7489.51;
-    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 1.042)} by volume of stabilizer today → CYA ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
+    const line1 = `Add ${putWeight(amount)} by weight or ${putVolume(amount * 1.042)} by volume of stabilizer today -> CYA ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     amount = (to - from) * getGallons() / 2890;
-    const line2 = `Or add ${putVolume(amount)} of liquid stabilizer today → CYA ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
+    const line2 = `Or add ${putVolume(amount)} of liquid stabilizer today -> CYA ~${Math.round(from)} to ~${Math.round(to)} ppm.`;
     refs.cyaResult.innerHTML = `${line1}<br>${line2}`;
     return;
   }
@@ -2029,7 +2061,7 @@ function calcSalt() {
     const optionalNote = from >= saltMin && from <= saltMax
       ? ` Optional: current salt (${Math.round(from)} ppm) is already in target range (${saltMin}-${saltMax}); this dose only moves to exact target ${Math.round(to)} ppm.`
       : '';
-    refs.saltResult.innerHTML = `Add ${putLbs(amount)} of salt (${statusBags(lbs)}) today → salt ~${Math.round(from)} to ~${Math.round(to)} ppm.${optionalNote}`;
+    refs.saltResult.innerHTML = `Add ${putLbs(amount)} of salt (${statusBags(lbs)}) today -> salt ~${Math.round(from)} to ~${Math.round(to)} ppm.${optionalNote}`;
     return;
   }
 
@@ -2066,7 +2098,7 @@ function calcBorate() {
       acid = putVolume(amount * 0.4765);
     }
     refs.borResult.innerHTML = [
-      `Add ${putWeight(amount)} by weight or ${byVol} by volume of ${data.borPop[type]} today → Borate ~${Math.round(from)} to ~${Math.round(to)} ppm.`,
+      `Add ${putWeight(amount)} by weight or ${byVol} by volume of ${data.borPop[type]} today -> Borate ~${Math.round(from)} to ~${Math.round(to)} ppm.`,
       `Add ${acid} of 31.45% muriatic acid to compensate for pH rise.`
     ].join('<br>');
     return;
@@ -2500,6 +2532,9 @@ function init() {
   });
 
   refs.rInsights?.addEventListener('input', () => {
+    if (!suppressInsightsManualCapture && refs.rInsights) {
+      refs.rInsights.dataset.manualBase = extractManualInsightsBase(refs.rInsights.value);
+    }
     expandReportInsightsForPrint();
   });
 
@@ -3018,7 +3053,7 @@ function init() {
       }
 
       const result = await response.json();
-      alert(`✅ Report sent successfully to ${emailAddress}!`);
+      alert(`Report sent successfully to ${emailAddress}!`);
       console.log('Report sent. ID:', result.id);
     } catch (error) {
       console.warn('Gmail send failed, falling back to mail client:', error);
