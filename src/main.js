@@ -521,45 +521,6 @@ function setPlanLine(rowEl, valueEl, text) {
 
 function setChecklist(listEl, items) {
   if (!listEl) return;
-  const cyaRemoverUrl = 'https://www.amazon.com/Cyanuric-Reducer-Removes-Through-Filtration/dp/B0CN2DNJZR/ref=sr_1_3?crid=267RNJ4T1HNMO&dib=eyJ2IjoiMSJ9.0d4mAa_9aA2BwCx2lifaLLWbUEPyotpAREtsqVX7K8vBcWdFeGwIT87WiWKF1XUIKHJ3z91LLArlGX4QfoGlcOlhwtXesjczhIiXFDSh3u6k28vHEdvqr-ar4_ZXrafQ_QJAK6STfJ8KGG04wG5TDzsWYAArwylHqOOJLoufslwTOAlSA9z5naLSAF0GHQHzzFol_Kz_pV5i8jLZgVWZeEljLc3CsV1QxrTIYqE2XL4OtEzG-rutazgDT6h3Evwg9b1H-1Oj1BmQrkb_siRFTkumK-111v9Cftws19gWnAA.OjR4fKZ-FVIC1CaKuB4FJLUUI_gYQC1v0JuoYsSDhP4&dib_tag=se&keywords=cya+removal&qid=1789046028&sprefix=cya+remover%2Caps%2C433&sr=8-3';
-  const linkPhrase = 'Cyanuric Acid Remover';
-  const normalizedItems = items
-    .map((item) => {
-      if (item && typeof item === 'object') {
-        return {
-          text: String(item.text || '').trim(),
-          checkable: item.checkable !== false
-        };
-      }
-      return {
-        text: String(item || '').trim(),
-        checkable: true
-      };
-    })
-    .filter((item) => item.text);
-
-  const renderChecklistText = (textEl, itemText) => {
-    const idx = itemText.indexOf(linkPhrase);
-    if (idx < 0) {
-      textEl.textContent = itemText;
-      return;
-    }
-
-    const before = itemText.slice(0, idx);
-    const after = itemText.slice(idx + linkPhrase.length);
-    textEl.textContent = '';
-    if (before) textEl.appendChild(document.createTextNode(before));
-
-    const anchor = document.createElement('a');
-    anchor.href = cyaRemoverUrl;
-    anchor.target = '_blank';
-    anchor.rel = 'noopener noreferrer';
-    anchor.textContent = linkPhrase;
-    textEl.appendChild(anchor);
-
-    if (after) textEl.appendChild(document.createTextNode(after));
-  };
-
   const checkedMap = new Map();
   listEl.querySelectorAll('li').forEach((li) => {
     const labelText = li.querySelector('span')?.textContent?.trim();
@@ -568,22 +529,16 @@ function setChecklist(listEl, items) {
   });
 
   listEl.innerHTML = '';
-  normalizedItems.forEach((item) => {
+  items.forEach((item) => {
     const li = document.createElement('li');
+    const label = document.createElement('label');
+    const box = document.createElement('input');
     const text = document.createElement('span');
-
-    renderChecklistText(text, item.text);
-    if (item.checkable) {
-      const label = document.createElement('label');
-      const box = document.createElement('input');
-      box.type = 'checkbox';
-      box.checked = checkedMap.get(item.text) === true;
-      label.append(box, text);
-      li.appendChild(label);
-    } else {
-      li.classList.add('checklist-note');
-      li.appendChild(text);
-    }
+    box.type = 'checkbox';
+    box.checked = checkedMap.get(item) === true;
+    text.textContent = item;
+    label.append(box, text);
+    li.appendChild(label);
     listEl.appendChild(li);
   });
 }
@@ -1326,7 +1281,7 @@ function updateReport() {
       const cyaOption2 = cyaAction
         ? `CYA - Option 2: ${cyaAction.replace(/^CYA:\s*/, '')}`
         : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
-      forecastItems.push({ text: `CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`, checkable: false });
+      forecastItems.push(`CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`);
       forecastItems.push('CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.');
       forecastItems.push(cyaOption2);
     } else if (cyaProjected >= cyaMin) {
@@ -1438,7 +1393,7 @@ function updateReport() {
       const chOption1 = chAction
         ? `CH - Option 1: ${chAction.replace(/^CH:\s*/, '')}`
         : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
-      forecastItems.push({ text: `CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). Choose one option below.`, checkable: false });
+      forecastItems.push(`CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). Choose one option below.`);
       forecastItems.push(chOption1);
       forecastItems.push('CH - Option 2: Delay remediation for now when appropriate, since water replacement is often better served during the off season.');
     } else if (ch >= chMin && ch <= chMax) {
