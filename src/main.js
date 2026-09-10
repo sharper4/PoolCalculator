@@ -1683,7 +1683,8 @@ function applyCustomerSectionsVisibility() {
   if (refs.rRowCustomer) refs.rRowCustomer.hidden = !customerSectionsVisible;
   if (refs.rRowAddress) refs.rRowAddress.hidden = !customerSectionsVisible;
   if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible;
-  if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
+  if (refs.reportTechInsights) refs.reportTechInsights.hidden = !customerSectionsVisible;
+  if (refs.reportServiceChecklist) refs.reportServiceChecklist.hidden = !customerSectionsVisible;
   if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
 }
 
@@ -2439,7 +2440,7 @@ function init() {
   setupUsageCounter();
 
   refs.openReport.addEventListener('click', () => {
-    customerSectionsVisible = !customerSectionsVisible;
+    customerSectionsVisible = true;
     applyCustomerSectionsVisibility();
     updateReport();
   });
@@ -2598,7 +2599,6 @@ function init() {
     const reportElement = document.querySelector('.report-sheet');
     if (!reportElement) return { html: '', images: [] };
 
-    customerSectionsVisible = true;
     applyCustomerSectionsVisibility();
     refs.reportView.hidden = false;
     refs.reportView.style.display = 'block';
@@ -2611,7 +2611,6 @@ function init() {
       expandReportInsightsForPrint();
     }
 
-    if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
     if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
 
     updateReport();
@@ -2672,19 +2671,24 @@ function init() {
       });
     }
 
-    const cloneServiceChecklist = clone.querySelector('#report-service-checklist');
-    if (cloneServiceChecklist) {
-      const checkedServiceItems = Array.from(cloneServiceChecklist.querySelectorAll('.service-check-item'))
-        .filter((item) => Boolean(item.querySelector('input[type="checkbox"]')?.checked));
+    if (!customerSectionsVisible) {
+      clone.querySelector('#report-tech-insights')?.remove();
+      clone.querySelector('#report-service-checklist')?.remove();
+    } else {
+      const cloneServiceChecklist = clone.querySelector('#report-service-checklist');
+      if (cloneServiceChecklist) {
+        const checkedServiceItems = Array.from(cloneServiceChecklist.querySelectorAll('.service-check-item'))
+          .filter((item) => Boolean(item.querySelector('input[type="checkbox"]')?.checked));
 
-      if (!checkedServiceItems.length) {
-        cloneServiceChecklist.remove();
-      } else {
-        cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
-          if (!item.querySelector('input[type="checkbox"]')?.checked) {
-            item.remove();
-          }
-        });
+        if (!checkedServiceItems.length) {
+          cloneServiceChecklist.remove();
+        } else {
+          cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
+            if (!item.querySelector('input[type="checkbox"]')?.checked) {
+              item.remove();
+            }
+          });
+        }
       }
     }
 
