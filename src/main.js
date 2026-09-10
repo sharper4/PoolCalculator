@@ -2640,14 +2640,26 @@ function init() {
       });
     }
 
-    clone.querySelector('#report-service-checklist')?.remove();
+    const cloneServiceChecklist = clone.querySelector('#report-service-checklist');
+    if (cloneServiceChecklist) {
+      const checkedServiceItems = Array.from(cloneServiceChecklist.querySelectorAll('.service-check-item'))
+        .filter((item) => Boolean(item.querySelector('input[type="checkbox"]')?.checked));
+
+      if (!checkedServiceItems.length) {
+        cloneServiceChecklist.remove();
+      } else {
+        cloneServiceChecklist.querySelectorAll('.service-check-item').forEach((item) => {
+          if (!item.querySelector('input[type="checkbox"]')?.checked) {
+            item.remove();
+          }
+        });
+      }
+    }
 
     clone.querySelectorAll('textarea').forEach((textarea) => {
       const value = textarea.value || '';
       const block = document.createElement('div');
       block.className = 'report-notes';
-      block.textContent = value;
-      block.style.whiteSpace = 'pre-wrap';
       block.style.minHeight = '72px';
       block.style.lineHeight = '1.5';
       block.style.color = '#071b43';
@@ -2655,6 +2667,51 @@ function init() {
       block.style.border = '1px solid #c7d8ee';
       block.style.borderRadius = '6px';
       block.style.background = '#f9fbff';
+
+      if (textarea.id === 'r-insights') {
+        const lines = value
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        const introLines = [];
+        const bulletLines = [];
+
+        lines.forEach((line) => {
+          if (/^-\s+/.test(line)) {
+            bulletLines.push(line.replace(/^-\s+/, ''));
+          } else {
+            introLines.push(line);
+          }
+        });
+
+        introLines.forEach((line) => {
+          const p = document.createElement('p');
+          p.style.margin = '0 0 8px 0';
+          p.textContent = line;
+          block.appendChild(p);
+        });
+
+        if (bulletLines.length) {
+          const ul = document.createElement('ul');
+          ul.style.margin = '0';
+          ul.style.paddingLeft = '18px';
+          bulletLines.forEach((line) => {
+            const li = document.createElement('li');
+            li.textContent = line;
+            ul.appendChild(li);
+          });
+          block.appendChild(ul);
+        }
+
+        if (!introLines.length && !bulletLines.length) {
+          block.textContent = value;
+          block.style.whiteSpace = 'pre-wrap';
+        }
+      } else {
+        block.textContent = value;
+        block.style.whiteSpace = 'pre-wrap';
+      }
+
       textarea.replaceWith(block);
     });
 
