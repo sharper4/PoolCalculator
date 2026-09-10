@@ -42,6 +42,25 @@
       .filter(Boolean);
   }
 
+  function getOptionGroup(labelText) {
+    if (/^CYA\s*-\s*Option\s*\d+:/i.test(labelText)) return 'CYA';
+    if (/^CH\s*-\s*Option\s*\d+:/i.test(labelText)) return 'CH';
+    return '';
+  }
+
+  function enforceExclusiveForecastOption(targetBox) {
+    if (!forecastList || !targetBox.checked) return;
+    const selectedText = getCheckboxLabelText(targetBox);
+    const group = getOptionGroup(selectedText);
+    if (!group) return;
+
+    forecastList.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+      if (box === targetBox) return;
+      const otherGroup = getOptionGroup(getCheckboxLabelText(box));
+      if (otherGroup === group) box.checked = false;
+    });
+  }
+
   function stripAutoLines(text) {
     return String(text || '')
       .split(/\r?\n/)
@@ -190,6 +209,10 @@
   document.addEventListener('change', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+
+    if (target.closest('#r-forecast-list')) {
+      enforceExclusiveForecastOption(target);
+    }
 
     if (target.closest('#r-treatment-list') || target.closest('#r-forecast-list') || target.closest('#r-service-checklist')) {
       syncInsights();
