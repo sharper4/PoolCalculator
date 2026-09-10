@@ -2616,6 +2616,34 @@ function init() {
 
     updateReport();
 
+    const normalizeEmailTextToAscii = (value) => {
+      if (!value) return value;
+      return String(value)
+        .replace(/\u2212/g, '-')
+        .replace(/[\u2013\u2014]/g, '-')
+        .replace(/\u2192/g, '->')
+        .replace(/\u00b0/g, ' deg ')
+        .replace(/\u00d7/g, 'x')
+        .replace(/\u2713/g, '[ok]')
+        .replace(/\u2714/g, '[ok]')
+        .replace(/\u2705/g, '[ok]')
+        .replace(/\u2611/g, '[x]')
+        .replace(/\u2610/g, '[ ]')
+        .replace(/\u00a0/g, ' ')
+        .replace(/[\t ]{2,}/g, ' ')
+        .trimEnd();
+    };
+
+    const sanitizeEmailCloneToAscii = (root) => {
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let currentNode = walker.nextNode();
+      while (currentNode) {
+        currentNode.nodeValue = normalizeEmailTextToAscii(currentNode.nodeValue);
+        currentNode = walker.nextNode();
+      }
+    };
+
     const clone = reportElement.cloneNode(true);
     const inlineImages = [];
 
@@ -2717,7 +2745,7 @@ function init() {
 
     clone.querySelectorAll('input[type="checkbox"]').forEach((input) => {
       const mark = document.createElement('span');
-      mark.textContent = input.checked ? '☑' : '☐';
+      mark.textContent = input.checked ? '[x]' : '[ ]';
       mark.style.display = 'inline-block';
       mark.style.minWidth = '16px';
       mark.style.fontSize = '14px';
@@ -2893,6 +2921,8 @@ function init() {
     clone.style.border = '1px solid #bdd2ee';
     clone.style.borderRadius = '14px';
     clone.style.padding = '22px';
+
+    sanitizeEmailCloneToAscii(clone);
 
     return {
       html: buildHtmlEmailDocument({
