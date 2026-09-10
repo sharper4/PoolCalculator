@@ -529,31 +529,14 @@ function setChecklist(listEl, items) {
   });
 
   listEl.innerHTML = '';
-  items.forEach((rawItem) => {
-    const item = typeof rawItem === 'string'
-      ? { text: rawItem, checkable: true }
-      : {
-          text: String(rawItem?.text || ''),
-          checkable: rawItem?.checkable !== false
-        };
-    if (!item.text) return;
-
+  items.forEach((item) => {
     const li = document.createElement('li');
-
-    if (!item.checkable) {
-      const text = document.createElement('span');
-      text.textContent = item.text;
-      li.appendChild(text);
-      listEl.appendChild(li);
-      return;
-    }
-
     const label = document.createElement('label');
     const box = document.createElement('input');
     const text = document.createElement('span');
     box.type = 'checkbox';
-    box.checked = checkedMap.get(item.text) === true;
-    text.textContent = item.text;
+    box.checked = checkedMap.get(item) === true;
+    text.textContent = item;
     label.append(box, text);
     li.appendChild(label);
     listEl.appendChild(li);
@@ -1298,7 +1281,7 @@ function updateReport() {
       const cyaOption1 = cyaAction
         ? `CYA - Option 1: ${cyaAction.replace(/^CYA:\s*/, '')}`
         : 'CYA - Option 1: Some water was replaced to help reduce CYA in the pool.';
-      forecastItems.push({ text: `CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`, checkable: false });
+      forecastItems.push(`CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`);
       forecastItems.push(cyaOption1);
       forecastItems.push('CYA - Option 2: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.');
       forecastItems.push('CYA - Option 3: Defer water replacement until the swimming season is over.');
@@ -1411,7 +1394,7 @@ function updateReport() {
       const chOption1 = chAction
         ? `CH - Option 1: ${chAction.replace(/^CH:\s*/, '')}`
         : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
-      forecastItems.push({ text: `CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). Choose one option below.`, checkable: false });
+      forecastItems.push(`CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). Choose one option below.`);
       forecastItems.push(chOption1);
       forecastItems.push('CH - Option 2: Defer water replacement until the swimming season is over.');
     } else if (ch >= chMin && ch <= chMax) {
@@ -1545,12 +1528,14 @@ function stripAutoInsightLines(text) {
     /^-\s*Some water was replaced to help reduce CYA in the pool\.$/i,
     /^-\s*CYA remover filtration is in progress\. Do not remove the sponge from the skimmer basket; a \$200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA\.$/i,
     /^-\s*CYA treatment was deferred until after the swimming season to address water replacement\.$/i,
+    /^-\s*CYA treatment is best to be deferred until after the swimming season to address water replacement\.$/i,
     /^-\s*pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
     /^-\s*Total alkalinity was adjusted to support overall water stability\.$/i,
     /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
     /^-\s*Calcium hardness adjustments were not needed today\. Levels are expected to remain near target until our next visit\.$/i,
     /^-\s*Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment\.$/i,
     /^-\s*Calcium hardness remediation was deferred for now because water replacement is often more effective during the off season\.$/i,
+    /^-\s*Calcium hardness remediation is best to be deferred until after the swimming season because water replacement is often more effective during the off season\.$/i,
     /^-\s*Salt levels were adjusted to support proper chlorination performance\.$/i,
     /^-\s*Borate levels were adjusted to support pH stability\.$/i,
     /^The following service checklist items were completed during this visit:/i,
@@ -1633,13 +1618,13 @@ function buildChemicalInsightLinesFromChecks() {
   if (flags.fc) lines.push('Chlorine was added to help keep the pool properly sanitized.');
   if (flags.cyaWaterReplace) lines.push('Some water was replaced to help reduce CYA in the pool.');
   else if (flags.cyaFiltration) lines.push('CYA remover filtration is in progress. Do not remove the sponge from the skimmer basket; a $200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA.');
-  else if (flags.cyaDeferred) lines.push('CYA treatment was deferred until after the swimming season to address water replacement.');
+  else if (flags.cyaDeferred) lines.push('CYA treatment is best to be deferred until after the swimming season to address water replacement.');
   else if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
   else if (flags.cyaNoAction) lines.push('Stabilizer adjustments were not made. CYA is expected to remain in range between now and our next visit.');
   if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
   if (flags.ta) lines.push('Total alkalinity was adjusted to support overall water stability.');
   if (flags.chWaterReplace) lines.push('Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment.');
-  else if (flags.chDeferred) lines.push('Calcium hardness remediation was deferred for now because water replacement is often more effective during the off season.');
+  else if (flags.chDeferred) lines.push('Calcium hardness remediation is best to be deferred until after the swimming season because water replacement is often more effective during the off season.');
   else if (flags.ch) lines.push('Calcium hardness was adjusted to help protect pool surfaces and equipment.');
   else if (flags.chNoAction) lines.push('Calcium hardness adjustments were not needed today. Levels are expected to remain near target until our next visit.');
   if (flags.salt) lines.push('Salt levels were adjusted to support proper chlorination performance.');
