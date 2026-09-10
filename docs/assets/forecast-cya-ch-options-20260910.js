@@ -10,13 +10,9 @@
   let lastSignature = '';
   let listObserver = null;
   let observedForecastList = null;
-  let treatmentObserver = null;
-  let observedTreatmentList = null;
   let retryTimer = null;
   let keepCyaOptions = window.__forecastOptionsPatch.keepCyaOptions;
   let keepChOptions = window.__forecastOptionsPatch.keepChOptions;
-  const selectedOptionState = window.__forecastOptionsPatch.selectedOptionState || { CYA: '', CH: '' };
-  window.__forecastOptionsPatch.selectedOptionState = selectedOptionState;
 
   function byId(id) {
     return document.getElementById(id);
@@ -49,10 +45,8 @@
       const span = li.querySelector('span');
       const box = li.querySelector('input[type="checkbox"]');
       const text = String(span?.textContent || li.textContent || '').trim();
-      const optionKey = getOptionKey(text);
       return {
         text,
-        optionKey,
         checked: Boolean(box?.checked),
         checkable: Boolean(box)
       };
@@ -86,7 +80,7 @@
     if (after) target.appendChild(document.createTextNode(after));
   }
 
-  function setItems(forecastList, items, checkedByText, checkedByOption) {
+  function setItems(forecastList, items, checkedState) {
     forecastList.innerHTML = '';
     items.forEach((item) => {
       const li = document.createElement('li');
@@ -97,13 +91,7 @@
         const label = document.createElement('label');
         const box = document.createElement('input');
         box.type = 'checkbox';
-        const optionKey = getOptionKey(item.text);
-        if (optionKey) {
-          box.dataset.optionKey = optionKey;
-          box.checked = checkedByOption.get(optionKey) === true;
-        } else {
-          box.checked = checkedByText.get(item.text) === true;
-        }
+        box.checked = checkedState.get(item.text) === true;
         label.append(box, textSpan);
         li.appendChild(label);
       } else {
@@ -121,19 +109,12 @@
     return '';
   }
 
-  function getOptionKey(text) {
-    const match = String(text || '').match(/^(CYA|CH)\s*-\s*Option\s*(\d+)\s*:/i);
-    if (!match) return '';
-    return `${match[1].toUpperCase()}-${match[2]}`;
-  }
-
   function enforceExclusiveOptionSelection(changedBox) {
     const changedLi = changedBox.closest('li');
     if (!changedLi) return;
     const changedText = String(changedLi.querySelector('span')?.textContent || changedLi.textContent || '').trim();
     const group = getOptionGroup(changedText);
     if (!group || !changedBox.checked) return;
-    const selectedKey = getOptionKey(changedText);
 
     const forecastList = byId('r-forecast-list');
     if (!forecastList) return;
@@ -145,11 +126,6 @@
       const text = String(li.querySelector('span')?.textContent || li.textContent || '').trim();
       if (getOptionGroup(text) === group) box.checked = false;
     });
-
-    if (selectedKey) {
-      selectedOptionState[group] = selectedKey;
-      window.__forecastOptionsPatch.selectedOptionState = selectedOptionState;
-    }
   }
 
   function normalize() {
@@ -174,14 +150,7 @@
       window.__forecastOptionsPatch.keepChOptions = true;
     }
 
-    const checkedByText = new Map(current.map((item) => [item.text, item.checked]));
-    const checkedByOption = new Map(
-      current
-        .filter((item) => item.optionKey && item.checked)
-        .map((item) => [item.optionKey, true])
-    );
-    if (selectedOptionState.CYA) checkedByOption.set(selectedOptionState.CYA, true);
-    if (selectedOptionState.CH) checkedByOption.set(selectedOptionState.CH, true);
+    const checkedState = new Map(current.map((item) => [item.text, item.checked]));
     const [cyaMin, cyaMax] = parseRange(cyaRange.textContent);
     const [chMin, chMax] = parseRange(chRange.textContent);
     const cyaValue = parseFirstNumber(byId('cya-from')?.value);
@@ -230,23 +199,13 @@
         );
       }
 
-      const deduped = [];
-      const seen = new Set();
-      items.forEach((item) => {
-        const key = String(item.text || '').trim();
-        if (!key || seen.has(key)) return;
-        seen.add(key);
-        deduped.push(item);
-      });
-      items = deduped;
-
       const signature = JSON.stringify(items.map((item) => [item.text, item.checkable]));
       const currentSignature = JSON.stringify(current.map((item) => [item.text, item.checkable]));
       if (signature === lastSignature && currentSignature === signature) return;
 
       applying = true;
       try {
-        setItems(forecastList, items, checkedByText, checkedByOption);
+        setItems(forecastList, items, checkedState);
         window.__forecastOptionsPatch.lastAppliedCount = items.length;
         lastSignature = signature;
       } finally {
@@ -268,10 +227,10 @@
   function scheduleNormalize() {
     if (scheduled) return;
     scheduled = true;
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       scheduled = false;
       normalize();
-    }, 0);
+    });
   }
 
   function ensureObservers() {
@@ -281,9 +240,6 @@
     if (!listObserver) {
       listObserver = new MutationObserver(() => scheduleNormalize());
     }
-    if (!treatmentObserver) {
-      treatmentObserver = new MutationObserver(() => scheduleNormalize());
-    }
 
     if (observedForecastList !== els.forecastList) {
       if (observedForecastList) {
@@ -292,14 +248,6 @@
       observedForecastList = els.forecastList;
       listObserver.observe(observedForecastList, { childList: true });
     }
-
-    if (observedTreatmentList !== els.treatmentList) {
-      if (observedTreatmentList) {
-        treatmentObserver.disconnect();
-      }
-      observedTreatmentList = els.treatmentList;
-      treatmentObserver.observe(observedTreatmentList, { childList: true });
-    }
   }
 
   document.addEventListener('change', (event) => {
@@ -307,15 +255,6 @@
     if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
     if (!target.closest('#r-forecast-list')) return;
     enforceExclusiveOptionSelection(target);
-
-    const rowText = String(target.closest('li')?.querySelector('span')?.textContent || target.closest('li')?.textContent || '').trim();
-    const group = getOptionGroup(rowText);
-    const optionKey = target.dataset.optionKey || getOptionKey(rowText);
-    if (group && optionKey) {
-      if (target.checked) selectedOptionState[group] = optionKey;
-      else if (selectedOptionState[group] === optionKey) selectedOptionState[group] = '';
-      window.__forecastOptionsPatch.selectedOptionState = selectedOptionState;
-    }
   }, true);
 
   document.addEventListener('change', (event) => {

@@ -342,11 +342,12 @@
   }
 
   function runPatchSoon() {
-    setTimeout(() => {
+    window.requestAnimationFrame(() => {
       patchForecastFcLine();
       patchForecastCyaLine();
       patchForecastAlkLine();
-    }, 0);
+      ensureForecastOptionRows();
+    });
   }
 
   document.addEventListener('input', (event) => {
@@ -370,6 +371,18 @@
     const observer = new MutationObserver(() => runPatchSoon());
     observer.observe(forecastList, { childList: true, subtree: true });
   }
+
+  document.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('#report-view') || target.closest('#r-forecast-list') || target.closest('#r-treatment-list')) {
+      runPatchSoon();
+      setTimeout(runPatchSoon, 250);
+      setTimeout(runPatchSoon, 800);
+    }
+  });
+
+  setInterval(runPatchSoon, 600);
 
   runPatchSoon();
 })();
