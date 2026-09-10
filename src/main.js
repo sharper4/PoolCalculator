@@ -2619,6 +2619,10 @@ function init() {
     const normalizeEmailTextToAscii = (value) => {
       if (!value) return value;
       return String(value)
+        .replace(/â€”/g, '-')
+        .replace(/â€“/g, '-')
+        .replace(/â†’/g, '->')
+        .replace(/Â°/g, ' deg ')
         .replace(/\u2212/g, '-')
         .replace(/[\u2013\u2014]/g, '-')
         .replace(/\u2192/g, '->')
