@@ -1572,7 +1572,7 @@ function stripAutoInsightLines(text) {
     /^-\s*Stabilizer adjustments were not made\. CYA is expected to remain in range between now and our next visit\.$/i,
     /^-\s*Some water was replaced to help reduce CYA in the pool\.$/i,
     /^-\s*CYA remover filtration is in progress\. Do not remove the sponge from the skimmer basket; a \$200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA\.$/i,
-    /^-\s*(?:CYA treatment was deferred|Deferring CYA treatment) until after the swimming season to address water replacement\.$/i,
+    /^-\s*CYA treatment was deferred until after the swimming season to address water replacement\.$/i,
     /^-\s*pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
     /^-\s*Total alkalinity was adjusted to support overall water stability\.$/i,
     /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
@@ -1664,7 +1664,7 @@ function buildChemicalInsightLinesFromChecks() {
   if (flags.fc) lines.push('Chlorine was added to help keep the pool properly sanitized.');
   if (flags.cyaWaterReplace) lines.push('Some water was replaced to help reduce CYA in the pool.');
   else if (flags.cyaFiltration) lines.push('CYA remover filtration is in progress. Do not remove the sponge from the skimmer basket; a $200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA.');
-  else if (flags.cyaDeferred) lines.push('Deferring CYA treatment until after the swimming season to address water replacement.');
+  else if (flags.cyaDeferred) lines.push('CYA treatment was deferred until after the swimming season to address water replacement.');
   else if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
   else if (flags.cyaNoAction) lines.push('Stabilizer adjustments were not made. CYA is expected to remain in range between now and our next visit.');
   if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
@@ -1699,18 +1699,11 @@ function buildServiceChecklistCompletedLine() {
   return `The following service checklist items were completed during this visit: ${completed.join(', ')}.`;
 }
 
-let lastChemicalInsightLines = [];
-
-function updateTechnicianInsightsFromChecks(source = 'other') {
+function updateTechnicianInsightsFromChecks() {
   if (!refs.rInsights) return;
 
   const manualBase = stripAutoInsightLines(refs.rInsights.value);
-  let autoLines = buildChemicalInsightLinesFromChecks().map((line) => `- ${line}`);
-  if (autoLines.length) {
-    lastChemicalInsightLines = [...autoLines];
-  } else if (source === 'service' && lastChemicalInsightLines.length) {
-    autoLines = [...lastChemicalInsightLines];
-  }
+  const autoLines = buildChemicalInsightLinesFromChecks().map((line) => `- ${line}`);
   const serviceLine = buildServiceChecklistCompletedLine();
   if (serviceLine) autoLines.push(serviceLine);
 
@@ -2510,19 +2503,19 @@ function init() {
   refs.rServiceChecklist?.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
     checkbox.addEventListener('change', () => {
       updateServiceChecklistState();
-      updateTechnicianInsightsFromChecks('service');
+      updateTechnicianInsightsFromChecks();
     });
   });
 
   refs.rTreatmentList?.addEventListener('change', (event) => {
     if (event.target instanceof HTMLInputElement && event.target.type === 'checkbox') {
-      updateTechnicianInsightsFromChecks('treatment');
+      updateTechnicianInsightsFromChecks();
     }
   });
 
   refs.rForecastList?.addEventListener('change', (event) => {
     if (event.target instanceof HTMLInputElement && event.target.type === 'checkbox') {
-      updateTechnicianInsightsFromChecks('forecast');
+      updateTechnicianInsightsFromChecks();
     }
   });
 
@@ -3070,20 +3063,13 @@ function init() {
   });
 
   document.querySelectorAll('input,select').forEach((el) => {
-    const isReportChecklistInput = () => Boolean(
-      el.closest
-      && el.closest('#r-service-checklist, #r-treatment-list, #r-forecast-list')
-    );
-
     el.addEventListener('input', () => {
-      if (isReportChecklistInput()) return;
       if (el === refs.units) {
         calcUnits();
       }
       calcAll();
     });
     el.addEventListener('change', () => {
-      if (isReportChecklistInput()) return;
       if (el === refs.units) {
         calcUnits();
       }
