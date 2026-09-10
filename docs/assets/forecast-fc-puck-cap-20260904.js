@@ -2,14 +2,6 @@
   const TRICHLOR_3IN_TABLET_OZ = 8;
   const TRICHLOR_FC_OZMUL = 6854.95;
   const TRICHLOR_CYA_OZMUL = 4159.41;
-  const CYA_REMOVER_URL = 'https://www.amazon.com/Cyanuric-Reducer-Removes-Through-Filtration/dp/B0CN2DNJZR/ref=sr_1_3?crid=267RNJ4T1HNMO&dib=eyJ2IjoiMSJ9.0d4mAa_9aA2BwCx2lifaLLWbUEPyotpAREtsqVX7K8vBcWdFeGwIT87WiWKF1XUIKHJ3z91LLArlGX4QfoGlcOlhwtXesjczhIiXFDSh3u6k28vHEdvqr-ar4_ZXrafQ_QJAK6STfJ8KGG04wG5TDzsWYAArwylHqOOJLoufslwTOAlSA9z5naLSAF0GHQHzzFol_Kz_pV5i8jLZgVWZeEljLc3CsV1QxrTIYqE2XL4OtEzG-rutazgDT6h3Evwg9b1H-1Oj1BmQrkb_siRFTkumK-111v9Cftws19gWnAA.OjR4fKZ-FVIC1CaKuB4FJLUUI_gYQC1v0JuoYsSDhP4&dib_tag=se&keywords=cya+removal&qid=1789046028&sprefix=cya+remover%2Caps%2C433&sr=8-3';
-  const LINK_TEXT = 'Cyanuric Acid Remover';
-
-  const stickyState = (window.__forecastStickyFallback = window.__forecastStickyFallback || {
-    keepCya: false,
-    keepCh: false,
-    running: false
-  });
 
   function num(id, fallback = Number.NaN) {
     const el = document.getElementById(id);
@@ -112,116 +104,6 @@
     const list = document.getElementById('r-forecast-list');
     if (!list) return null;
     return Array.from(list.querySelectorAll('li')).find((li) => String(li.textContent || '').trim().startsWith(prefix)) || null;
-  }
-
-  function rowText(li) {
-    return String(li.querySelector('span')?.textContent || li.textContent || '').trim();
-  }
-
-  function hasRowWithPrefix(listEl, prefix) {
-    return Array.from(listEl.querySelectorAll('li')).some((li) => rowText(li).startsWith(prefix));
-  }
-
-  function getTreatmentLine(prefix) {
-    const listEl = document.getElementById('r-treatment-list');
-    if (!listEl) return '';
-    const hit = Array.from(listEl.querySelectorAll('li')).find((li) => rowText(li).startsWith(prefix));
-    return hit ? rowText(hit) : '';
-  }
-
-  function appendChecklistOption(listEl, text) {
-    const li = document.createElement('li');
-    const label = document.createElement('label');
-    const box = document.createElement('input');
-    box.type = 'checkbox';
-    const span = document.createElement('span');
-
-    const idx = text.indexOf(LINK_TEXT);
-    if (idx < 0) {
-      span.textContent = text;
-    } else {
-      const before = text.slice(0, idx);
-      const after = text.slice(idx + LINK_TEXT.length);
-      if (before) span.appendChild(document.createTextNode(before));
-      const anchor = document.createElement('a');
-      anchor.href = CYA_REMOVER_URL;
-      anchor.target = '_blank';
-      anchor.rel = 'noopener noreferrer';
-      anchor.textContent = LINK_TEXT;
-      span.appendChild(anchor);
-      if (after) span.appendChild(document.createTextNode(after));
-    }
-
-    label.append(box, span);
-    li.appendChild(label);
-    listEl.appendChild(li);
-  }
-
-  function appendChecklistNote(listEl, text, prefix) {
-    if (hasRowWithPrefix(listEl, prefix)) return;
-    const li = document.createElement('li');
-    li.classList.add('checklist-note');
-    const span = document.createElement('span');
-    span.textContent = text;
-    li.appendChild(span);
-    listEl.appendChild(li);
-  }
-
-  function ensureForecastOptionRows() {
-    if (stickyState.running) return;
-    stickyState.running = true;
-    try {
-      const forecast = document.getElementById('r-forecast-list');
-      if (!forecast) return;
-
-      const cyaNow = num('cya-from', Number.NaN);
-      const chNow = num('ch-from', Number.NaN);
-      const cyaTreatment = getTreatmentLine('CYA:');
-      const chTreatment = getTreatmentLine('CH:');
-      const cyaHighByValue = Number.isFinite(cyaNow) && cyaNow > 80;
-      const chHighByValue = Number.isFinite(chNow) && chNow > 400;
-      const cyaHighByTreatment = /lower\s+cya|replace\s+\d+%\s+of\s+the\s+water|water\s+was\s+replaced/i.test(cyaTreatment);
-      const chHighByTreatment = /reduce\s+water|water\s+replacement|drain/i.test(chTreatment);
-
-      if (hasRowWithPrefix(forecast, 'CYA - Option 1:')) stickyState.keepCya = true;
-      if (hasRowWithPrefix(forecast, 'CH - Option 1:')) stickyState.keepCh = true;
-
-      const showCya = cyaHighByValue || cyaHighByTreatment || stickyState.keepCya;
-      const showCh = chHighByValue || chHighByTreatment || stickyState.keepCh;
-
-      if (showCya) {
-        stickyState.keepCya = true;
-        appendChecklistNote(forecast, `CYA: High at ${Math.round(cyaNow)} ppm (target: 30-80 ppm). Choose one option below.`, 'CYA: High at ');
-        if (!hasRowWithPrefix(forecast, 'CYA - Option 1:')) {
-          appendChecklistOption(forecast, 'CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.');
-        }
-        if (!hasRowWithPrefix(forecast, 'CYA - Option 2:')) {
-          const option2 = cyaTreatment
-            ? `CYA - Option 2: ${cyaTreatment.replace(/^CYA:\s*/, '')}`
-            : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
-          appendChecklistOption(forecast, option2);
-        }
-        if (!hasRowWithPrefix(forecast, 'CYA - Option 3:')) {
-          appendChecklistOption(forecast, 'CYA - Option 3: Defer treatment until after the swimming season to address water replacement.');
-        }
-      }
-
-      if (showCh) {
-        stickyState.keepCh = true;
-        appendChecklistNote(forecast, `CH: High at ${Math.round(chNow)} ppm (target: 200-400 ppm). Choose one option below.`, 'CH: High at ');
-        if (!hasRowWithPrefix(forecast, 'CH - Option 1:')) {
-          const option1 = chTreatment
-            ? `CH - Option 1: ${chTreatment.replace(/^CH:\s*/, '')}`
-            : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
-          appendChecklistOption(forecast, option1);
-        }
-        if (!hasRowWithPrefix(forecast, 'CH - Option 2:')) {
-          appendChecklistOption(forecast, 'CH - Option 2: Delay remediation for now when appropriate, since water replacement is often better served during the off season.');
-        }
-      }
-    } finally {
-      stickyState.running = false;
-    }
   }
 
   function patchForecastFcLine() {
@@ -346,7 +228,6 @@
       patchForecastFcLine();
       patchForecastCyaLine();
       patchForecastAlkLine();
-      ensureForecastOptionRows();
     });
   }
 
@@ -371,18 +252,6 @@
     const observer = new MutationObserver(() => runPatchSoon());
     observer.observe(forecastList, { childList: true, subtree: true });
   }
-
-  document.addEventListener('change', (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    if (target.closest('#report-view') || target.closest('#r-forecast-list') || target.closest('#r-treatment-list')) {
-      runPatchSoon();
-      setTimeout(runPatchSoon, 250);
-      setTimeout(runPatchSoon, 800);
-    }
-  });
-
-  setInterval(runPatchSoon, 600);
 
   runPatchSoon();
 })();
