@@ -1686,20 +1686,6 @@ function buildServiceChecklistCompletedLine() {
 
 function updateTechnicianInsightsFromChecks() {
   if (!refs.rInsights) return;
-
-  const manualBase = stripAutoInsightLines(refs.rInsights.value);
-  const autoLines = buildChemicalInsightLinesFromChecks().map((line) => `- ${line}`);
-  const serviceLine = buildServiceChecklistCompletedLine();
-  if (serviceLine) autoLines.push(serviceLine);
-
-  const nextValue = autoLines.length
-    ? `${manualBase ? `${manualBase}\n` : ''}${autoLines.join('\n')}`
-    : manualBase;
-
-  if (refs.rInsights.value !== nextValue) {
-    refs.rInsights.value = nextValue;
-  }
-
   expandReportInsightsForPrint();
 }
 
