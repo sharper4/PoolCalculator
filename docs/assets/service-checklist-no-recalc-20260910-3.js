@@ -1,6 +1,4 @@
 (() => {
-  let reportSectionsEnabled = false;
-
   const asciiReplacements = [
     [/â€”/g, '-'],
     [/â€“/g, '-'],
@@ -56,7 +54,7 @@
     const serviceChecklist = document.getElementById('report-service-checklist');
     const serviceDetails = document.getElementById('service-details-section');
     const reportOpenedByUi = serviceDetails ? serviceDetails.hidden === false : false;
-    const hideSections = !(reportSectionsEnabled || reportOpenedByUi);
+    const hideSections = !reportOpenedByUi;
 
     if (techInsights) techInsights.hidden = hideSections;
     if (serviceChecklist) serviceChecklist.hidden = hideSections;
@@ -89,15 +87,8 @@
   const openReportButton = document.getElementById('open-report');
   if (openReportButton) {
     openReportButton.addEventListener('click', () => {
-      reportSectionsEnabled = true;
-      applyReportSectionsVisibility();
       [0, 40, 120, 300].forEach((delay) => {
-        setTimeout(() => {
-          const techInsights = document.getElementById('report-tech-insights');
-          const serviceChecklist = document.getElementById('report-service-checklist');
-          if (techInsights) techInsights.hidden = false;
-          if (serviceChecklist) serviceChecklist.hidden = false;
-        }, delay);
+        setTimeout(applyReportSectionsVisibility, delay);
       });
     });
   }

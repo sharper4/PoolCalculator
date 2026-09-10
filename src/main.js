@@ -2440,10 +2440,8 @@ function init() {
   setupUsageCounter();
 
   refs.openReport.addEventListener('click', () => {
-    customerSectionsVisible = true;
+    customerSectionsVisible = !customerSectionsVisible;
     applyCustomerSectionsVisibility();
-    if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
-    if (refs.reportServiceChecklist) refs.reportServiceChecklist.hidden = false;
     updateReport();
   });
 
