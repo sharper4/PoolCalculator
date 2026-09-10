@@ -7,7 +7,6 @@
   let lastSignature = '';
   let listObserver = null;
   let observedForecastList = null;
-  let retryTimer = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -114,61 +113,49 @@
     const cyaValue = parseFirstNumber(cyaResult.textContent);
     const chValue = parseFirstNumber(chResult.textContent);
 
+    let items = current.filter((item) => {
+      return !/^CYA:\s*High at .*Choose one option below\.$/i.test(item.text)
+        && !/^CH:\s*High at .*Choose one option below\.$/i.test(item.text)
+        && !/^CYA\s*-\s*Option\s*\d+:/i.test(item.text)
+        && !/^CH\s*-\s*Option\s*\d+:/i.test(item.text);
+    });
+
+    if (Number.isFinite(cyaValue) && Number.isFinite(cyaMax) && cyaValue > cyaMax) {
+      items = items.filter((item) => !/^CYA:/i.test(item.text));
+      const cyaTreatment = findTreatmentLine(treatmentList, 'CYA:');
+      const cyaOption2 = cyaTreatment
+        ? `CYA - Option 2: ${cyaTreatment.replace(/^CYA:\s*/, '')}`
+        : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
+      items.push(
+        { text: `CYA: High at ${Math.round(cyaValue)} ppm (target: ${Math.round(cyaMin)}-${Math.round(cyaMax)} ppm). Choose one option below.`, checkable: false },
+        { text: 'CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.', checkable: true },
+        { text: cyaOption2, checkable: true }
+      );
+    }
+
+    if (Number.isFinite(chValue) && Number.isFinite(chMax) && chValue > chMax) {
+      items = items.filter((item) => !/^CH:/i.test(item.text));
+      const chTreatment = findTreatmentLine(treatmentList, 'CH:');
+      const chOption1 = chTreatment
+        ? `CH - Option 1: ${chTreatment.replace(/^CH:\s*/, '')}`
+        : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
+      items.push(
+        { text: `CH: High at ${Math.round(chValue)} ppm (target: ${Math.round(chMin)}-${Math.round(chMax)} ppm). Choose one option below.`, checkable: false },
+        { text: chOption1, checkable: true },
+        { text: 'CH - Option 2: Delay remediation for now when appropriate, since water replacement is often better served during the off season.', checkable: true }
+      );
+    }
+
+    const signature = JSON.stringify(items.map((item) => [item.text, item.checkable]));
+    if (signature === lastSignature) return;
+
+    applying = true;
     try {
-      let items = current.filter((item) => {
-        return !/^CYA:\s*High at .*Choose one option below\.$/i.test(item.text)
-          && !/^CH:\s*High at .*Choose one option below\.$/i.test(item.text)
-          && !/^CYA\s*-\s*Option\s*\d+:/i.test(item.text)
-          && !/^CH\s*-\s*Option\s*\d+:/i.test(item.text);
-      });
-
-      if (Number.isFinite(cyaValue) && Number.isFinite(cyaMax) && cyaValue > cyaMax) {
-        items = items.filter((item) => !/^CYA:/i.test(item.text));
-        const cyaTreatment = findTreatmentLine(treatmentList, 'CYA:');
-        const cyaOption2 = cyaTreatment
-          ? `CYA - Option 2: ${cyaTreatment.replace(/^CYA:\s*/, '')}`
-          : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
-        items.push(
-          { text: `CYA: High at ${Math.round(cyaValue)} ppm (target: ${Math.round(cyaMin)}-${Math.round(cyaMax)} ppm). Choose one option below.`, checkable: false },
-          { text: 'CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.', checkable: true },
-          { text: cyaOption2, checkable: true }
-        );
-      }
-
-      if (Number.isFinite(chValue) && Number.isFinite(chMax) && chValue > chMax) {
-        items = items.filter((item) => !/^CH:/i.test(item.text));
-        const chTreatment = findTreatmentLine(treatmentList, 'CH:');
-        const chOption1 = chTreatment
-          ? `CH - Option 1: ${chTreatment.replace(/^CH:\s*/, '')}`
-          : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
-        items.push(
-          { text: `CH: High at ${Math.round(chValue)} ppm (target: ${Math.round(chMin)}-${Math.round(chMax)} ppm). Choose one option below.`, checkable: false },
-          { text: chOption1, checkable: true },
-          { text: 'CH - Option 2: Delay remediation for now when appropriate, since water replacement is often better served during the off season.', checkable: true }
-        );
-      }
-
-      const signature = JSON.stringify(items.map((item) => [item.text, item.checkable]));
-      if (signature === lastSignature) return;
-
-      applying = true;
-      try {
-        setItems(forecastList, items, checkedState);
-        lastSignature = signature;
-      } finally {
-        applying = false;
-      }
-    } catch {
+      setItems(forecastList, items, checkedState);
+      lastSignature = signature;
+    } finally {
       applying = false;
     }
-  }
-
-  function normalizeWithRetries(attempts = 0) {
-    ensureObservers();
-    scheduleNormalize();
-    if (attempts >= 12) return;
-    if (retryTimer) clearTimeout(retryTimer);
-    retryTimer = setTimeout(() => normalizeWithRetries(attempts + 1), 80);
   }
 
   function scheduleNormalize() {
@@ -201,14 +188,17 @@
     const target = event.target;
     if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
     if (target.id === 'cya-from' || target.id === 'cya-to' || target.id === 'ch-from' || target.id === 'ch-to' || target.id === 'size' || target.id === 'ch-fill') {
-      normalizeWithRetries(0);
+      scheduleNormalize();
     }
   });
 
   const openReport = byId('open-report');
   if (openReport) {
     openReport.addEventListener('click', () => {
-      normalizeWithRetries(0);
+      ensureObservers();
+      scheduleNormalize();
+      setTimeout(scheduleNormalize, 0);
+      setTimeout(scheduleNormalize, 60);
     });
   }
 
