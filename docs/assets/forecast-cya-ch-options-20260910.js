@@ -103,6 +103,31 @@
     });
   }
 
+  function getOptionGroup(text) {
+    if (/^CYA\s*-\s*Option\s*\d+:/i.test(text)) return 'CYA';
+    if (/^CH\s*-\s*Option\s*\d+:/i.test(text)) return 'CH';
+    return '';
+  }
+
+  function enforceExclusiveOptionSelection(changedBox) {
+    const changedLi = changedBox.closest('li');
+    if (!changedLi) return;
+    const changedText = String(changedLi.querySelector('span')?.textContent || changedLi.textContent || '').trim();
+    const group = getOptionGroup(changedText);
+    if (!group || !changedBox.checked) return;
+
+    const forecastList = byId('r-forecast-list');
+    if (!forecastList) return;
+
+    forecastList.querySelectorAll('li input[type="checkbox"]').forEach((box) => {
+      if (box === changedBox) return;
+      const li = box.closest('li');
+      if (!li) return;
+      const text = String(li.querySelector('span')?.textContent || li.textContent || '').trim();
+      if (getOptionGroup(text) === group) box.checked = false;
+    });
+  }
+
   function normalize() {
     window.__forecastOptionsPatch.normalizeCount += 1;
     if (applying) return;
@@ -194,7 +219,7 @@
   function normalizeWithRetries(attempts = 0) {
     ensureObservers();
     scheduleNormalize();
-    if (attempts >= 12) return;
+    if (attempts >= 4) return;
     if (retryTimer) clearTimeout(retryTimer);
     retryTimer = setTimeout(() => normalizeWithRetries(attempts + 1), 80);
   }
@@ -227,11 +252,14 @@
 
   document.addEventListener('change', (event) => {
     const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+    if (!target.closest('#r-forecast-list')) return;
+    enforceExclusiveOptionSelection(target);
+  }, true);
+
+  document.addEventListener('change', (event) => {
+    const target = event.target;
     if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
-    if (target.closest('#report-view')) {
-      normalizeWithRetries(0);
-      return;
-    }
     if (target.id === 'cya-from' || target.id === 'cya-to' || target.id === 'ch-from' || target.id === 'ch-to' || target.id === 'size' || target.id === 'ch-fill') {
       normalizeWithRetries(0);
     }
