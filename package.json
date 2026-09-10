@@ -1,6 +1,6 @@
 {
   "name": "vs-code-copilot",
-  "version": "0.0.19",
+  "version": "0.0.18",
   "private": true,
   "type": "module",
   "scripts": {

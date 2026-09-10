@@ -342,11 +342,11 @@
   }
 
   function runPatchSoon() {
-    setTimeout(() => {
+    window.requestAnimationFrame(() => {
       patchForecastFcLine();
       patchForecastCyaLine();
       patchForecastAlkLine();
-    }, 0);
+    });
   }
 
   document.addEventListener('input', (event) => {
