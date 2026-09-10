@@ -1281,9 +1281,11 @@ function updateReport() {
       const cyaOption2 = cyaAction
         ? `CYA - Option 2: ${cyaAction.replace(/^CYA:\s*/, '')}`
         : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
-      forecastItems.push(`CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`);
-      forecastItems.push('CYA - Option 1: Reduce CYA via CYA filtration. Do not remove the sponge located in your skimmer. It costs $200 to replace and should remain in place for 2-3 weeks while reducing CYA in the pool.');
-      forecastItems.push(cyaOption2);
+      forecastItems.push(
+        `CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). ` +
+        'CYA - Option 1: Reduce CYA via CYA filtration. Do not remove the sponge located in your skimmer. It costs $200 to replace and should remain in place for 2-3 weeks while reducing CYA in the pool. ' +
+        `${cyaOption2}`
+      );
     } else if (cyaProjected >= cyaMin) {
       forecastItems.push(
         `CYA: No addition today. Projected ~${cyaProjected} ppm at next visit (min: ${cyaMin} ppm; ~${cyaWeeklyLoss} ppm/week at ${Math.round(tempF)}\u00b0F).`
@@ -1393,9 +1395,11 @@ function updateReport() {
       const chOption1 = chAction
         ? `CH - Option 1: ${chAction.replace(/^CH:\s*/, '')}`
         : 'CH - Option 1: Reduce water as already programmed to lower calcium hardness.';
-      forecastItems.push(`CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). Choose one option below.`);
-      forecastItems.push(chOption1);
-      forecastItems.push('CH - Option 2: Delay remediation for now when appropriate, since water replacement is often better served during the off season.');
+      forecastItems.push(
+        `CH: High at ${Math.round(ch)} ppm (target: ${chMin}-${chMax} ppm). ` +
+        `${chOption1} ` +
+        'CH - Option 2: You can delay remediation when appropriate because water replacement is often better served during the off season.'
+      );
     } else if (ch >= chMin && ch <= chMax) {
       forecastItems.push(
         `CH: Stable \u2014 no calcium dose needed today. Projected to hold near ${Math.round(ch)} ppm at next visit (target: ${chMin}\u2013${chMax} ppm).`
@@ -1530,7 +1534,6 @@ function stripAutoInsightLines(text) {
     /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
     /^-\s*Calcium hardness adjustments were not needed today\. Levels are expected to remain near target until our next visit\.$/i,
     /^-\s*Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment\.$/i,
-    /^-\s*Calcium hardness remediation was deferred for now because water replacement is often more effective during the off season\.$/i,
     /^-\s*Salt levels were adjusted to support proper chlorination performance\.$/i,
     /^-\s*Borate levels were adjusted to support pH stability\.$/i,
     /^The following service checklist items were completed during this visit:/i,
@@ -1561,7 +1564,6 @@ function buildChemicalInsightLinesFromChecks() {
     ch: false,
     chNoAction: false,
     chWaterReplace: false,
-    chDeferred: false,
     salt: false,
     borate: false
   };
@@ -1570,7 +1572,7 @@ function buildChemicalInsightLinesFromChecks() {
     const normalized = text.toLowerCase();
     if (/no immediate chemical balancing action required today/.test(normalized)) flags.none = true;
     if (/^fc:|chlorine|bleach|trichlor|dichlor|shock|slam/.test(normalized)) flags.fc = true;
-    if (/^cya(?:\s*-\s*option\s*\d+)?\s*:|stabilizer/.test(normalized)) {
+    if (/^cya:|stabilizer/.test(normalized)) {
       if (/replace .*water|with new water|to lower cya/.test(normalized)) {
         flags.cyaWaterReplace = true;
       } else if (/no addition today|no cya adjustment required|no cya action required/.test(normalized)) {
@@ -1581,10 +1583,7 @@ function buildChemicalInsightLinesFromChecks() {
     }
     if (/^ph:|muriatic acid|dry acid|acid/.test(normalized)) flags.ph = true;
     if (/^alk:|alkalinity|baking soda/.test(normalized)) flags.ta = true;
-    if (/^ch(?:\s*-\s*option\s*\d+)?\s*:|calcium/.test(normalized)) {
-      if (/delay remediation|off season/.test(normalized)) {
-        flags.chDeferred = true;
-      }
+    if (/^ch:|calcium/.test(normalized)) {
       if (/replace .*water|to lower ch/.test(normalized)) {
         flags.chWaterReplace = true;
       } else if (/no calcium dose needed today|no ch adjustment required|stable/.test(normalized)) {
@@ -1612,7 +1611,6 @@ function buildChemicalInsightLinesFromChecks() {
   if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
   if (flags.ta) lines.push('Total alkalinity was adjusted to support overall water stability.');
   if (flags.chWaterReplace) lines.push('Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment.');
-  else if (flags.chDeferred) lines.push('Calcium hardness remediation was deferred for now because water replacement is often more effective during the off season.');
   else if (flags.ch) lines.push('Calcium hardness was adjusted to help protect pool surfaces and equipment.');
   else if (flags.chNoAction) lines.push('Calcium hardness adjustments were not needed today. Levels are expected to remain near target until our next visit.');
   if (flags.salt) lines.push('Salt levels were adjusted to support proper chlorination performance.');
