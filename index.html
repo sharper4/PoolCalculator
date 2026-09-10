@@ -20,9 +20,6 @@
           <img class="brand-logo" src="/PrimaryLogo.png" alt="North Texas Elite Pool Care logo" />
           <div class="brand-title-actions">
             <h1>Pool Calculator</h1>
-            <div class="hero-actions">
-              <button id="open-report" type="button" class="action-btn">Customer Report</button>
-            </div>
           </div>
         </div>
         <div class="hero-detail-row">
@@ -290,7 +287,7 @@
 
       <section id="report-view" class="report-view">
         <div class="report-toolbar">
-          <button type="button" class="action-btn subtle" onclick="document.getElementById('open-report')?.click()">Customer Report</button>
+          <button id="open-report" type="button" class="action-btn subtle">Customer Report</button>
           <button id="back-to-app" type="button" class="action-btn subtle">Back to Top</button>
           <button id="print-report" type="button" class="action-btn">Print Report</button>
           <button id="send-report-email" type="button" class="action-btn" style="background-color: #0ea5e9; cursor: pointer;">Send via Email</button>
@@ -409,7 +406,6 @@
       </section>
 
       <div class="report-toolbar report-toolbar-bottom no-print">
-        <button type="button" class="action-btn subtle" onclick="document.getElementById('open-report')?.click()">Customer Report</button>
         <button type="button" class="action-btn subtle" onclick="document.getElementById('back-to-app')?.click()">Back to Top</button>
         <button type="button" class="action-btn" onclick="document.getElementById('print-report')?.click()">Print Report</button>
         <button type="button" class="action-btn" style="background-color: #0ea5e9; cursor: pointer;" onclick="document.getElementById('send-report-email')?.click()">Send via Email</button>

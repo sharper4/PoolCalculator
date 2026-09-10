@@ -1468,6 +1468,37 @@ function expandReportInsightsForPrint() {
   updateServiceChecklistState();
 }
 
+function ensureTechInsightsEditable() {
+  if (!refs.rInsights) return;
+  refs.rInsights.readOnly = false;
+  refs.rInsights.disabled = false;
+  refs.rInsights.removeAttribute('readonly');
+  refs.rInsights.removeAttribute('disabled');
+  refs.rInsights.style.pointerEvents = 'auto';
+}
+
+function requestStablePrintFrame() {
+  const hadReportMode = document.body.classList.contains('report-mode');
+  if (!hadReportMode) document.body.classList.add('report-mode');
+
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    restoreServiceChecklistAfterOutput();
+    if (!hadReportMode) document.body.classList.remove('report-mode');
+  };
+
+  window.addEventListener('afterprint', cleanup, { once: true });
+  window.setTimeout(cleanup, 3000);
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.print();
+    });
+  });
+}
+
 function updateServiceChecklistState(root = document) {
   const checklist = root.getElementById('r-service-checklist');
   const checklistSection = root.getElementById('report-service-checklist');
@@ -2443,6 +2474,11 @@ function init() {
     customerSectionsVisible = !customerSectionsVisible;
     applyCustomerSectionsVisibility();
     updateReport();
+    ensureTechInsightsEditable();
+    if (customerSectionsVisible && refs.rInsights) {
+      refs.rInsights.focus({ preventScroll: true });
+      refs.rInsights.setSelectionRange(refs.rInsights.value.length, refs.rInsights.value.length);
+    }
   });
 
   refs.backToApp.addEventListener('click', () => {
@@ -2450,9 +2486,12 @@ function init() {
   });
 
   refs.printReport.addEventListener('click', () => {
+    applyCustomerSectionsVisibility();
+    updateReport();
+    ensureTechInsightsEditable();
     expandReportInsightsForPrint();
     hideServiceChecklistForOutput();
-    window.print();
+    requestStablePrintFrame();
   });
 
   refs.rServiceChecklist?.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
@@ -3016,6 +3055,7 @@ function init() {
   }
 
   if (refs.rInsights) {
+    ensureTechInsightsEditable();
     refs.rInsights.addEventListener('input', expandReportInsightsForPrint);
   }
 
