@@ -18,6 +18,7 @@
     /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
     /^-\s*Calcium hardness adjustments were not needed today\. Levels are expected to remain near target until our next visit\.$/i,
     /^-\s*Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment\.$/i,
+    /^-\s*Calcium hardness remediation was deferred for now because water replacement is often more effective during the off season\.$/i,
     /^-\s*Salt levels were adjusted to support proper chlorination performance\.$/i,
     /^-\s*Borate levels were adjusted to support pH stability\.$/i,
     /^The following service checklist items were completed during this visit:/i,
@@ -60,6 +61,7 @@
       ch: false,
       chNoAction: false,
       chWaterReplace: false,
+      chDeferred: false,
       salt: false,
       borate: false
     };
@@ -68,7 +70,7 @@
       const normalized = text.toLowerCase();
       if (/no immediate chemical balancing action required today/.test(normalized)) flags.none = true;
       if (/^fc:|chlorine|bleach|trichlor|dichlor|shock|slam/.test(normalized)) flags.fc = true;
-      if (/^cya:|stabilizer/.test(normalized)) {
+      if (/^cya(?:\s*-\s*option\s*\d+)?\s*:|stabilizer/.test(normalized)) {
         if (/replace .*water|with new water|to lower cya/.test(normalized)) {
           flags.cyaWaterReplace = true;
         } else if (/no addition today|no cya adjustment required|no cya action required/.test(normalized)) {
@@ -79,7 +81,10 @@
       }
       if (/^ph:|muriatic acid|dry acid|acid/.test(normalized)) flags.ph = true;
       if (/^alk:|alkalinity|baking soda/.test(normalized)) flags.ta = true;
-      if (/^ch:|calcium/.test(normalized)) {
+      if (/^ch(?:\s*-\s*option\s*\d+)?\s*:|calcium/.test(normalized)) {
+        if (/delay remediation|off season/.test(normalized)) {
+          flags.chDeferred = true;
+        }
         if (/replace .*water|to lower ch/.test(normalized)) {
           flags.chWaterReplace = true;
         } else if (/no calcium dose needed today|no ch adjustment required|stable/.test(normalized)) {
@@ -107,6 +112,7 @@
     if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');
     if (flags.ta) lines.push('Total alkalinity was adjusted to support overall water stability.');
     if (flags.chWaterReplace) lines.push('Calcium hardness was adjusted by replacing some water to help protect pool surfaces and equipment.');
+    else if (flags.chDeferred) lines.push('Calcium hardness remediation was deferred for now because water replacement is often more effective during the off season.');
     else if (flags.ch) lines.push('Calcium hardness was adjusted to help protect pool surfaces and equipment.');
     else if (flags.chNoAction) lines.push('Calcium hardness adjustments were not needed today. Levels are expected to remain near target until our next visit.');
     if (flags.salt) lines.push('Salt levels were adjusted to support proper chlorination performance.');
