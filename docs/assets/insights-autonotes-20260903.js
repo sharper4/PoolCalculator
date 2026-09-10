@@ -87,7 +87,7 @@
           flags.cya = true;
         }
       }
-      if (/^ph:|muriatic acid|dry acid|acid/.test(normalized)) flags.ph = true;
+      if (/^ph:|muriatic acid|dry acid|soda ash|borax|caustic soda|raise pH|lower pH/.test(normalized)) flags.ph = true;
       if (/^alk:|alkalinity|baking soda/.test(normalized)) flags.ta = true;
       if (/^ch(?:\s*-\s*option\s*\d+)?\s*:|calcium/.test(normalized)) {
         if (/replace .*water|to lower ch/.test(normalized)) {
