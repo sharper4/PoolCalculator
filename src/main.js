@@ -2442,6 +2442,8 @@ function init() {
   refs.openReport.addEventListener('click', () => {
     customerSectionsVisible = true;
     applyCustomerSectionsVisibility();
+    if (refs.reportTechInsights) refs.reportTechInsights.hidden = false;
+    if (refs.reportServiceChecklist) refs.reportServiceChecklist.hidden = false;
     updateReport();
   });
 
