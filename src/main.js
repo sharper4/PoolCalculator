@@ -560,11 +560,23 @@ function setChecklist(listEl, items) {
     if (after) textEl.appendChild(document.createTextNode(after));
   };
 
+  const getOptionKey = (itemText) => {
+    const match = String(itemText || '').match(/^(CYA|CH)\s*-\s*Option\s*(\d+)\s*:/i);
+    if (!match) return '';
+    return `${match[1].toUpperCase()}-${match[2]}`;
+  };
+
   const checkedMap = new Map();
+  const checkedOptionMap = new Map();
   listEl.querySelectorAll('li').forEach((li) => {
     const labelText = li.querySelector('span')?.textContent?.trim();
-    const checked = li.querySelector('input[type="checkbox"]')?.checked;
-    if (labelText) checkedMap.set(labelText, Boolean(checked));
+    const box = li.querySelector('input[type="checkbox"]');
+    const checked = box?.checked;
+    if (labelText) {
+      checkedMap.set(labelText, Boolean(checked));
+      const optionKey = box?.dataset.optionKey || getOptionKey(labelText);
+      if (optionKey && checked) checkedOptionMap.set(optionKey, true);
+    }
   });
 
   listEl.innerHTML = '';
@@ -577,7 +589,13 @@ function setChecklist(listEl, items) {
       const label = document.createElement('label');
       const box = document.createElement('input');
       box.type = 'checkbox';
-      box.checked = checkedMap.get(item.text) === true;
+      const optionKey = getOptionKey(item.text);
+      if (optionKey) {
+        box.dataset.optionKey = optionKey;
+        box.checked = checkedOptionMap.get(optionKey) === true;
+      } else {
+        box.checked = checkedMap.get(item.text) === true;
+      }
       label.append(box, text);
       li.appendChild(label);
     } else {
