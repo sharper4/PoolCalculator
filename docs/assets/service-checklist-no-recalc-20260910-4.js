@@ -79,6 +79,27 @@
     applyReportSectionsVisibility();
   }
 
+  function injectCustomerReportToolbarButtons() {
+    document.querySelectorAll('.report-toolbar').forEach((toolbar) => {
+      const existing = Array.from(toolbar.querySelectorAll('button')).find((button) => button.dataset.customerReportCopy === '1');
+      if (existing) return;
+
+      const backButton = Array.from(toolbar.querySelectorAll('button')).find((button) => (button.textContent || '').trim() === 'Back to Top');
+      if (!backButton) return;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'action-btn subtle';
+      button.textContent = 'Customer Report';
+      button.dataset.customerReportCopy = '1';
+      button.addEventListener('click', () => {
+        document.getElementById('open-report')?.click();
+      });
+
+      toolbar.insertBefore(button, backButton);
+    });
+  }
+
   function stripRecalcListenersFromServiceChecklist() {
     const checklist = document.getElementById('r-service-checklist');
     if (!checklist) return;
@@ -124,11 +145,13 @@
   });
 
   setCustomerVisibility(customerFieldsVisible);
+  injectCustomerReportToolbarButtons();
 
   const observer = new MutationObserver(() => {
     applyReportSectionsVisibility();
     applyCustomerRowsVisibility();
     normalizeVisibleText(document.body);
+    injectCustomerReportToolbarButtons();
   });
   observer.observe(document.documentElement, {
     childList: true,
