@@ -133,8 +133,7 @@
         items.push(
           { text: `CYA: High at ${Math.round(cyaValue)} ppm (target: ${Math.round(cyaMin)}-${Math.round(cyaMax)} ppm). Choose one option below.`, checkable: false },
           { text: 'CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.', checkable: true },
-          { text: cyaOption2, checkable: true },
-          { text: 'CYA - Option 3: Defer treatment until after the swimming season to address water replacement.', checkable: true }
+          { text: cyaOption2, checkable: true }
         );
       }
 
