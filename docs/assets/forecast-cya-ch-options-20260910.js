@@ -6,7 +6,6 @@
   let applying = false;
   let lastSignature = '';
   let listObserver = null;
-  let observedForecastList = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -170,18 +169,10 @@
   function ensureObservers() {
     const els = getEls();
     if (!els) return;
+    if (listObserver) return;
 
-    if (!listObserver) {
-      listObserver = new MutationObserver(() => scheduleNormalize());
-    }
-
-    if (observedForecastList !== els.forecastList) {
-      if (observedForecastList) {
-        listObserver.disconnect();
-      }
-      observedForecastList = els.forecastList;
-      listObserver.observe(observedForecastList, { childList: true });
-    }
+    listObserver = new MutationObserver(() => scheduleNormalize());
+    listObserver.observe(els.forecastList, { childList: true });
   }
 
   document.addEventListener('change', (event) => {
