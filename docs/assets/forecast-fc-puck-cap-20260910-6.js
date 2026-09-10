@@ -151,6 +151,24 @@
     listEl.appendChild(li);
   }
 
+  function regroupOptionRows(listEl, headerPrefix, optionPrefixes) {
+    const rows = Array.from(listEl.querySelectorAll('li'));
+    const header = rows.find((li) => rowText(li).startsWith(headerPrefix));
+    if (!header) return;
+
+    let insertAfter = header;
+    optionPrefixes.forEach((prefix) => {
+      const optionRow = Array.from(listEl.querySelectorAll('li')).find((li) => rowText(li).startsWith(prefix));
+      if (!optionRow) return;
+      if (optionRow === insertAfter.nextSibling) {
+        insertAfter = optionRow;
+        return;
+      }
+      listEl.insertBefore(optionRow, insertAfter.nextSibling);
+      insertAfter = optionRow;
+    });
+  }
+
   function ensureForecastOptionRows() {
     const forecast = document.getElementById('r-forecast-list');
     if (!forecast) return;
@@ -192,6 +210,10 @@
       if (!hasRowWithPrefix(forecast, 'CH - Option 1:')) appendChecklistOption(forecast, chOption1);
       if (!hasRowWithPrefix(forecast, 'CH - Option 2:')) appendChecklistOption(forecast, 'CH - Option 2: Defer water replacement until the swimming season is over.');
     }
+
+    // Keep each chemistry block contiguous without rebuilding rows or touching checkbox handlers.
+    regroupOptionRows(forecast, 'CYA:', ['CYA - Option 1:', 'CYA - Option 2:', 'CYA - Option 3:']);
+    regroupOptionRows(forecast, 'CH:', ['CH - Option 1:', 'CH - Option 2:']);
   }
 
   function patchForecastFcLine() {
