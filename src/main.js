@@ -1282,7 +1282,7 @@ function updateReport() {
         ? `CYA - Option 2: ${cyaAction.replace(/^CYA:\s*/, '')}`
         : 'CYA - Option 2: Some water was replaced to help reduce CYA in the pool.';
       forecastItems.push(`CYA: High at ${Math.round(cya)} ppm (target: ${cyaMin}-${cyaMax} ppm). Choose one option below.`);
-      forecastItems.push('CYA - Option 1: Reduce CYA via CYA filtration. Do not remove the sponge located in your skimmer. It costs $200 to replace and should remain in place for 2-3 weeks while reducing CYA in the pool.');
+      forecastItems.push('CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.');
       forecastItems.push(cyaOption2);
     } else if (cyaProjected >= cyaMin) {
       forecastItems.push(
@@ -1525,6 +1525,7 @@ function stripAutoInsightLines(text) {
     /^-\s*Stabilizer \(CYA\) adjustments were made to support chlorine retention\.$/i,
     /^-\s*Stabilizer adjustments were not made\. CYA is expected to remain in range between now and our next visit\.$/i,
     /^-\s*Some water was replaced to help reduce CYA in the pool\.$/i,
+    /^-\s*CYA remover filtration is in progress\. Do not remove the sponge from the skimmer basket; a \$200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA\.$/i,
     /^-\s*pH was adjusted with muriatic acid to support water balance and comfort\.$/i,
     /^-\s*Total alkalinity was adjusted to support overall water stability\.$/i,
     /^-\s*Calcium hardness was adjusted to help protect pool surfaces and equipment\.$/i,
@@ -1556,6 +1557,7 @@ function buildChemicalInsightLinesFromChecks() {
     cya: false,
     cyaNoAction: false,
     cyaWaterReplace: false,
+    cyaFiltration: false,
     ph: false,
     ta: false,
     ch: false,
@@ -1571,6 +1573,9 @@ function buildChemicalInsightLinesFromChecks() {
     if (/no immediate chemical balancing action required today/.test(normalized)) flags.none = true;
     if (/^fc:|chlorine|bleach|trichlor|dichlor|shock|slam/.test(normalized)) flags.fc = true;
     if (/^cya(?:\s*-\s*option\s*\d+)?\s*:|stabilizer/.test(normalized)) {
+      if (/cyanuric acid remover filtration|cya filtration/.test(normalized)) {
+        flags.cyaFiltration = true;
+      }
       if (/replace .*water|with new water|to lower cya/.test(normalized)) {
         flags.cyaWaterReplace = true;
       } else if (/no addition today|no cya adjustment required|no cya action required/.test(normalized)) {
@@ -1607,6 +1612,7 @@ function buildChemicalInsightLinesFromChecks() {
 
   if (flags.fc) lines.push('Chlorine was added to help keep the pool properly sanitized.');
   if (flags.cyaWaterReplace) lines.push('Some water was replaced to help reduce CYA in the pool.');
+  else if (flags.cyaFiltration) lines.push('CYA remover filtration is in progress. Do not remove the sponge from the skimmer basket; a $200 replacement fee applies if it goes missing, and it is expected to remain in place for 2-3 weeks while reducing CYA.');
   else if (flags.cya) lines.push('Stabilizer (CYA) adjustments were made to support chlorine retention.');
   else if (flags.cyaNoAction) lines.push('Stabilizer adjustments were not made. CYA is expected to remain in range between now and our next visit.');
   if (flags.ph) lines.push('pH was adjusted with muriatic acid to support water balance and comfort.');

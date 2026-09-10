@@ -78,7 +78,7 @@
         items = items.filter((item) => !/^CYA:/i.test(item.text) && !/^CYA\s*-\s*Option\s*\d+:/i.test(item.text));
         items.push(
           { text: `CYA: High at ${Math.round(cyaValue)} ppm (target: ${Math.round(cyaMin)}-${Math.round(cyaMax)} ppm). Choose one option below.`, checked: false },
-          { text: 'CYA - Option 1: Reduce CYA via CYA filtration. Do not remove the sponge located in your skimmer. It costs $200 to replace and should remain in place for 2-3 weeks while reducing CYA in the pool.', checked: false },
+          { text: 'CYA - Option 1: Reduce CYA via Cyanuric Acid Remover filtration in skimmer basket.', checked: false },
           { text: cyaOption2, checked: false }
         );
       }
