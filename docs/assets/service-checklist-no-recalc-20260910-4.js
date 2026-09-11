@@ -77,6 +77,11 @@
     if (serviceDetails) serviceDetails.hidden = !visible;
     applyCustomerRowsVisibility();
     applyReportSectionsVisibility();
+    const checklist = document.getElementById('report-service-checklist');
+    if (checklist && visible) {
+      checklist.hidden = false;
+      checklist.style.removeProperty('display');
+    }
   }
 
   function protectInsightsTyping() {

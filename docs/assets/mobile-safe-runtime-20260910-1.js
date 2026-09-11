@@ -63,6 +63,24 @@
     insights.style.pointerEvents = 'auto';
   }
 
+  function restoreChecklistWhenCustomerVisible() {
+    const openButton = document.getElementById('open-report');
+    if (!openButton || openButton.dataset.checklistRestoreBound === '1') return;
+
+    openButton.dataset.checklistRestoreBound = '1';
+    openButton.addEventListener('click', () => {
+      window.setTimeout(() => {
+        const serviceDetails = document.getElementById('service-details-section');
+        const checklist = document.getElementById('report-service-checklist');
+        if (!serviceDetails || !checklist) return;
+        if (!serviceDetails.hidden) {
+          checklist.hidden = false;
+          checklist.style.removeProperty('display');
+        }
+      }, 120);
+    });
+  }
+
   function bindStablePrint() {
     const printButtons = Array.from(document.querySelectorAll('button')).filter((button) => button.id === 'print-report' || text(button) === 'Print Report');
     if (!printButtons.length) return;
@@ -118,6 +136,7 @@
   function init() {
     ensureThreeCustomerButtons();
     ensureTechInsightsEditable();
+    restoreChecklistWhenCustomerVisible();
     bindStablePrint();
   }
 

@@ -1704,6 +1704,9 @@ function applyCustomerSectionsVisibility() {
   if (refs.rRowEmailAddress) refs.rRowEmailAddress.hidden = !customerSectionsVisible;
   if (refs.reportTechInsights) refs.reportTechInsights.hidden = !customerSectionsVisible;
   if (refs.reportServiceChecklist) refs.reportServiceChecklist.hidden = !customerSectionsVisible;
+  if (refs.reportServiceChecklist && customerSectionsVisible) {
+    refs.reportServiceChecklist.style.removeProperty('display');
+  }
   if (refs.reportEliteDifference) refs.reportEliteDifference.hidden = false;
 }
 
