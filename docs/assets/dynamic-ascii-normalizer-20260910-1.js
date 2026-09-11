@@ -1,5 +1,5 @@
-(function () {
-  const targetSelectors = [
+(() => {
+  const TEXT_SELECTORS = [
     '#goal-result',
     '#passive-outlook',
     '#r-treatment-list',
@@ -30,11 +30,11 @@
 
   function normalizeText(value) {
     if (typeof value !== 'string' || !value) return value;
-    let next = value;
+    let out = value;
     for (const [pattern, replacement] of replacements) {
-      next = next.replace(pattern, replacement);
+      out = out.replace(pattern, replacement);
     }
-    return next;
+    return out;
   }
 
   function normalizeTextNodes(root) {
@@ -42,9 +42,9 @@
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let node = walker.nextNode();
     while (node) {
-      const normalized = normalizeText(node.nodeValue);
-      if (normalized !== node.nodeValue) {
-        node.nodeValue = normalized;
+      const next = normalizeText(node.nodeValue);
+      if (next !== node.nodeValue) {
+        node.nodeValue = next;
       }
       node = walker.nextNode();
     }
@@ -52,76 +52,50 @@
 
   function normalizeInputValue(el) {
     if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
-    const normalized = normalizeText(el.value);
-    if (normalized === el.value) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    el.value = normalized;
-    try {
-      if (typeof start === 'number' && typeof end === 'number') {
-        el.setSelectionRange(start, end);
+    const next = normalizeText(el.value);
+    if (next !== el.value) {
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      el.value = next;
+      try {
+        if (typeof start === 'number' && typeof end === 'number') {
+          el.setSelectionRange(start, end);
+        }
+      } catch (_) {
+        // Ignore non-text inputs that do not support selection range.
       }
-    } catch (_) {
-      // Non-text inputs can throw here.
     }
   }
 
-  function normalizeNodeAttributes(root) {
-    if (!root || !(root instanceof Element)) return;
-    root.querySelectorAll('input, textarea, option').forEach((el) => {
-      if (el.placeholder) {
-        const normalized = normalizeText(el.placeholder);
-        if (normalized !== el.placeholder) el.placeholder = normalized;
-      }
-      if (el.tagName === 'OPTION' && el.value) {
-        const normalized = normalizeText(el.value);
-        if (normalized !== el.value) el.value = normalized;
-      }
-      if (el.title) {
-        const normalized = normalizeText(el.title);
-        if (normalized !== el.title) el.title = normalized;
-      }
-      const ariaLabel = el.getAttribute('aria-label');
-      if (ariaLabel) {
-        const normalized = normalizeText(ariaLabel);
-        if (normalized !== ariaLabel) el.setAttribute('aria-label', normalized);
-      }
-      normalizeInputValue(el);
-    });
-  }
-
-  function normalizeTargets() {
-    targetSelectors.forEach((selector) => {
+  function normalizeRegions() {
+    TEXT_SELECTORS.forEach((selector) => {
       document.querySelectorAll(selector).forEach((el) => {
         normalizeTextNodes(el);
-        normalizeNodeAttributes(el);
         normalizeInputValue(el);
       });
     });
   }
 
-  function bindLiveNormalization() {
+  function bindInputNormalization() {
     document.addEventListener('input', (event) => {
       const target = event.target;
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
         normalizeInputValue(target);
       }
     });
+  }
 
+  function bindMutationNormalization() {
     const observer = new MutationObserver(() => {
-      normalizeTargets();
+      normalizeRegions();
     });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
 
   function init() {
-    normalizeTargets();
-    bindLiveNormalization();
+    normalizeRegions();
+    bindInputNormalization();
+    bindMutationNormalization();
   }
 
   if (document.readyState === 'loading') {

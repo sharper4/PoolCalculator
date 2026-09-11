@@ -1,4 +1,4 @@
-import { buildGmailMessageRaw, buildHtmlEmailDocument } from './emailUtil.js';
+﻿import { buildGmailMessageRaw, buildHtmlEmailDocument } from './emailUtil.js';
 
 const refs = {
   units: document.getElementById('units'),
@@ -616,7 +616,7 @@ function parseRange(text, fallbackMin, fallbackMax) {
 
 // Forecast average temperature and UV from the next 5 days.
 // Used to project chlorine demand instead of the current momentary conditions.
-let weeklyAvgTemp = 80; // default 80°F
+let weeklyAvgTemp = 80; // default 80Â deg F
 let weeklyAvgUV = 7;    // default UV index
 let weatherModelSource = 'baseline'; // forecast | current | baseline
 
@@ -714,12 +714,12 @@ function dominantWeatherLabel(codes, count) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
-// Parse current temperature (°F) from the weather conditions field.
+// Parse current temperature (deg F) from the weather conditions field.
 // Weather string format: "Clear, 85F (feels 83F), wind 5 mph"
 function parseWeatherTemp() {
-  const w = (refs.weatherConditions.value || '').replace(/°/g, '');
+  const w = (refs.weatherConditions.value || '').replace(/Â deg |\u00b0|\sdeg\s/gi, '');
   const m = w.match(/(\d+)F/);
-  return m ? parseInt(m[1], 10) : 80; // default 80°F if weather not loaded
+  return m ? parseInt(m[1], 10) : 80; // default 80 deg F if weather not loaded
 }
 
 function getPoolTempF() {
@@ -739,7 +739,7 @@ function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
   else if (tempF >= 70) base = 1.3;
   else if (tempF >= 60) base = 0.8;
   else base = 0.4;
-  // UV index drives photolysis — primary outdoor chlorine loss mechanism (TFP)
+  // UV index drives photolysis â€” primary outdoor chlorine loss mechanism (TFP)
   // Scale: 0-2 Low, 3-5 Moderate, 6-7 High (baseline), 8-10 Very High, 11+ Extreme
   const uvFactor =
     uvIndex >= 11 ? 1.3  :
@@ -749,7 +749,7 @@ function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
                     0.65;
   // CYA protects FC from UV by binding it as reserve chlorine (TFP)
   const cyaFactor =
-    cyaPpm <= 0  ? 1.45 : // no stabilizer — very rapid UV burn-off
+    cyaPpm <= 0  ? 1.45 : // no stabilizer â€” very rapid UV burn-off
     cyaPpm <= 30 ? 1.0  :
     cyaPpm <= 50 ? 0.85 :
     cyaPpm <= 70 ? 0.72 :
@@ -758,7 +758,7 @@ function fcDailyLossRate(tempF, cyaPpm, uvIndex) {
   return Math.round(base * uvFactor * cyaFactor * 10) / 10;
 }
 
-// Weekly pH rise estimate from CO2 off-gassing (Henry's Law — Orenda Tech).
+// Weekly pH rise estimate from CO2 off-gassing (Henry's Law â€” Orenda Tech).
 // Aeration accelerates CO2 loss: SWG H2 bubbles, waterfalls, jets all force CO2 out.
 // TA level sets the ceiling; aeration level amplifies how fast we climb toward it.
 function phWeeklyRise(taPpm, aeration) {
@@ -777,7 +777,7 @@ function phWeeklyRise(taPpm, aeration) {
   return Math.round(base * aerFactor * 100) / 100;
 }
 
-// ── Forecast chemical quantity helpers ──────────────────────────────────────
+// â”€â”€ Forecast chemical quantity helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Returns the oz of liquid bleach needed to raise a pool by doseNeeded ppm.
 function bleachOzForDose(doseNeeded, gallons, percent) {
   if (doseNeeded <= 0) return 0;
@@ -805,7 +805,7 @@ function clamp(value, min, max) {
 
 function buildSwgRecommendation(gallons, cyaPpm, tempF, uvIndex, runtimeHours) {
   if (gallons <= 0) return '';
-  // fcDailyLossRate is calibrated for typical residential pools — no additional bather factor.
+  // fcDailyLossRate is calibrated for typical residential pools â€” no additional bather factor.
   const demandPpmPerDay = fcDailyLossRate(tempF, cyaPpm, uvIndex);
   const swgCapacityPpmPerDay24h = (1.25 * 16 * 7489.4) / gallons;
   if (swgCapacityPpmPerDay24h <= 0) return '';
@@ -1102,7 +1102,7 @@ function updateReport() {
 
   refs.sFc.textContent = tested.fc ? statusMark(fc, fcMin, fcMax) : 'Not tested';
   refs.sCya.textContent = tested.cya ? statusMark(cya, cyaMin, cyaMax) : 'Not tested';
-  // pH uses absolute ±0.2 tolerance for Monitor (not % of span)
+  // pH uses absolute Â±0.2 tolerance for Monitor (not % of span)
   refs.sPh.textContent = tested.ph ? (() => {
     if (!Number.isFinite(ph)) return '--';
     if (ph >= phMin && ph <= phMax) return 'OK';
@@ -1122,7 +1122,7 @@ function updateReport() {
   setRangeState(refs.fcCard, fc, fcMin, fcMax);
   setRangeState(refs.tclCard, tcl, tclMin, tclMax);
   setRangeState(refs.cyaCard, cya, cyaMin, cyaMax);
-  // pH card uses absolute ±0.2 tolerance for near-range
+  // pH card uses absolute Â±0.2 tolerance for near-range
   if (refs.phCard && Number.isFinite(ph) && Number.isFinite(phMin) && Number.isFinite(phMax)) {
     const hasNow = String(refs.phFrom.value ?? '').trim() !== '';
     if (!hasNow) {
@@ -1189,7 +1189,7 @@ function updateReport() {
     treatmentItems.push('No immediate chemical balancing action required today.');
   }
 
-  // ── Elite Pool Forecast Plan ─────────────────────────────────────────────
+  // â”€â”€ Elite Pool Forecast Plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Goal: add chemicals TODAY to reach the BOTTOM of each target range after 7 days.
   // No mid-week adjustments assumed. One dose, one week.
   // Sources:
@@ -1208,7 +1208,7 @@ function updateReport() {
     forecastItems.push('Weather model note: Weather inputs are unavailable, so this forecast plan is using baseline assumptions (80F, UV 7).');
   }
 
-  // ── FC ──────────────────────────────────────────────────────────────────
+  // â”€â”€ FC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (tested.fc) {
     const dailyLoss  = fcDailyLossRate(tempF, cya, weeklyAvgUV);
     const weeklyLoss = Math.round(dailyLoss * 7 * 10) / 10;
@@ -1273,8 +1273,8 @@ function updateReport() {
     }
   }
 
-  // ── CYA ─────────────────────────────────────────────────────────────────
-  // CYA degrades ~1-2 ppm/week (faster above 85°F per TFP). Dose today if projected low.
+  // â”€â”€ CYA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // CYA degrades ~1-2 ppm/week (faster above 85Â deg F per TFP). Dose today if projected low.
   if (tested.cya) {
     const cyaWeeklyLoss = tempF >= 85 ? 2 : 1;
     const cyaProjected  = Math.round(cya - cyaWeeklyLoss);
@@ -1299,7 +1299,7 @@ function updateReport() {
     }
   }
 
-  // ── pH ──────────────────────────────────────────────────────────────────
+  // â”€â”€ pH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Strategy: lower pH today toward the BOTTOM of range so natural CO2 off-gassing
   // (driven by aeration) rises through the week. Aeration level selected in pH card.
   if (tested.ph) {
@@ -1311,7 +1311,7 @@ function updateReport() {
     const bor = i(refs.borFrom, 0);
 
     if (ph < phMin) {
-      // pH is below minimum — recommend raising with borax or soda ash.
+      // pH is below minimum â€” recommend raising with borax or soda ash.
       // Use the same polynomial model as calcPH().
       const phr_raw = (phMin - ph) * gallons;
       const phr_mid = (ph + phMin) / 2;
@@ -1361,7 +1361,7 @@ function updateReport() {
     }
   }
 
-  // ── Alk ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Alk â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Alk (Total Alkalinity) is influenced by acid additions for pH and can be corrected with baking soda when low.
   if (tested.ta) {
     const taWeeklyDrop = forecastUsesAcid ? 8 : 3;
@@ -1389,8 +1389,8 @@ function updateReport() {
     }
   }
 
-  // ── CH ──────────────────────────────────────────────────────────────────
-  // CH is stable over 7 days — no dose needed for the forecast window.
+  // â”€â”€ CH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // CH is stable over 7 days â€” no dose needed for the forecast window.
   if (tested.ch) {
     if (ch > chMax) {
       const chOption1 = chAction
@@ -1412,7 +1412,7 @@ function updateReport() {
     }
   }
 
-  // ── Salt ────────────────────────────────────────────────────────────────
+  // â”€â”€ Salt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Salt is stable week-to-week; only rainfall or water replacement changes it.
   if (tested.salt) {
     if (salt >= saltMin && salt <= saltMax) {
@@ -1428,7 +1428,7 @@ function updateReport() {
     }
   }
 
-  // ── Borate ──────────────────────────────────────────────────────────────
+  // â”€â”€ Borate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (tested.bor) {
     forecastItems.push(
       borAction
@@ -2007,13 +2007,13 @@ function calcTCL() {
   const hasFc = refs.fcFrom.value.trim() !== '';
   const fcNow = n(refs.fcFrom);
 
-  // Target range is the FC target up to +0.5 ppm — the maximum allowed Combined Chlorine
+  // Target range is the FC target up to +0.5 ppm - the maximum allowed Combined Chlorine
   // before shock is recommended. This gives the card a real range (like the other cards)
   // so the Monitor/near-range status can apply instead of only OK/Needs attention.
   refs.tclTargetRange.textContent = `Target range: ${round2(to)}-${round2(to + 0.5)} ppm`;
 
   if (!hasFc) {
-    refs.tclResult.innerHTML = 'No Total Chlorine action required — enter Free Chlorine to calculate Combined Chlorine.';
+    refs.tclResult.innerHTML = 'No Total Chlorine action required - enter Free Chlorine to calculate Combined Chlorine.';
     return;
   }
 
@@ -2700,10 +2700,11 @@ function init() {
     const normalizeEmailTextToAscii = (value) => {
       if (!value) return value;
       return String(value)
-        .replace(/â€”/g, '-')
-        .replace(/â€“/g, '-')
-        .replace(/â†’/g, '->')
-        .replace(/Â°/g, ' deg ')
+        .replace(/Ã¢â‚¬â€|â€”|\u2014/g, '-')
+        .replace(/Ã¢â‚¬â€œ|â€“|\u2013/g, '-')
+        .replace(/âˆ’|\u2212/g, '-')
+        .replace(/Ã¢â€ â€™|â†’|\u2192/g, '->')
+        .replace(/Ã‚Â deg |Â deg |Â°|\u00b0/g, ' deg ')
         .replace(/\u2212/g, '-')
         .replace(/[\u2013\u2014]/g, '-')
         .replace(/\u2192/g, '->')
@@ -3236,3 +3237,5 @@ function init() {
 }
 
 init();
+
+
