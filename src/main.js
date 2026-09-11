@@ -1739,41 +1739,11 @@ async function loadWeather() {
             timeout: 6000,
             maximumAge: 300000
           });
-
-          function extractManualInsightsBase(value) {
-            const text = String(value || '').trimEnd();
-            if (!text) return '';
-
-            if (lastAutoInsightsBlock && text.endsWith(lastAutoInsightsBlock)) {
-              return text.slice(0, text.length - lastAutoInsightsBlock.length).replace(/\n+$/, '').trimEnd();
-            }
-
-            return stripAutoInsightLines(text);
-          }
         });
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
-
-            const manualBase = extractManualInsightsBase(refs.rInsights.value);
-            const autoLines = buildChemicalInsightLinesFromChecks().map((line) => `- ${line}`);
-            const serviceLine = buildServiceChecklistCompletedLine();
-            if (serviceLine) autoLines.push(serviceLine);
-
-            const autoBlock = autoLines.join('\n').trim();
-            const nextValue = autoBlock
-              ? `${manualBase ? `${manualBase}\n` : ''}${autoBlock}`
-              : manualBase;
-
-            lastAutoInsightsBlock = autoBlock;
       } catch {
-            if (refs.rInsights.value !== nextValue) {
-              suppressInsightsManualCapture = true;
-              refs.rInsights.value = nextValue;
-              suppressInsightsManualCapture = false;
-            }
-
-            refs.rInsights.dataset.manualBase = manualBase;
-            expandReportInsightsForPrint();
+        refs.weatherConditions.value = '';
         weatherModelSource = 'baseline';
         if (refs.weatherForecast) {
           refs.weatherForecast.value = 'Forecast unavailable (location blocked).';
