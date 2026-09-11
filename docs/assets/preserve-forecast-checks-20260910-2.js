@@ -1,4 +1,6 @@
 (() => {
+  let planListenersStripped = false;
+
   function keyFromText(text) {
     const normalized = String(text || '').trim();
     const optionMatch = normalized.match(/^([A-Z]+\s*-\s*Option\s*\d+:)/i);
@@ -51,6 +53,34 @@
     });
   }
 
+  function stripPlanCheckboxRecalcListeners() {
+    if (planListenersStripped) return;
+    const targets = ['r-forecast-list', 'r-treatment-list'];
+    targets.forEach((listId) => {
+      const list = document.getElementById(listId);
+      if (!list) return;
+      Array.from(list.querySelectorAll('input[type="checkbox"]')).forEach((box) => {
+        const replacement = box.cloneNode(true);
+        replacement.checked = box.checked;
+        box.replaceWith(replacement);
+      });
+    });
+    planListenersStripped = true;
+  }
+
+  function bindPlanMutationReapply() {
+    ['r-forecast-list', 'r-treatment-list'].forEach((listId) => {
+      const list = document.getElementById(listId);
+      if (!list) return;
+      const observer = new MutationObserver(() => {
+        // If rows are rebuilt later, strip listeners again from new checkbox nodes.
+        planListenersStripped = false;
+        stripPlanCheckboxRecalcListeners();
+      });
+      observer.observe(list, { childList: true, subtree: true });
+    });
+  }
+
   document.addEventListener('change', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
@@ -77,4 +107,14 @@
       observer.disconnect();
     }, 1800);
   }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      stripPlanCheckboxRecalcListeners();
+      bindPlanMutationReapply();
+    }, { once: true });
+  } else {
+    stripPlanCheckboxRecalcListeners();
+    bindPlanMutationReapply();
+  }
 })();
