@@ -45,6 +45,55 @@
       .filter(Boolean);
   }
 
+  function textKey(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  function snapshotCheckedMap(listEl) {
+    const map = new Map();
+    if (!listEl) return map;
+    listEl.querySelectorAll('li').forEach((li) => {
+      const box = li.querySelector('input[type="checkbox"]');
+      const labelText = getCheckboxLabelText(box) || String(li.textContent || '').trim();
+      if (!labelText) return;
+      map.set(textKey(labelText), Boolean(box?.checked));
+    });
+    return map;
+  }
+
+  function restoreChecklistStructure(listEl, checkedMap) {
+    if (!listEl) return;
+    listEl.querySelectorAll('li').forEach((li) => {
+      let label = li.querySelector('label');
+      let box = li.querySelector('input[type="checkbox"]');
+      let span = li.querySelector('span');
+
+      if (!label || !box) {
+        const text = String(li.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!text) return;
+
+        li.textContent = '';
+        label = document.createElement('label');
+        box = document.createElement('input');
+        box.type = 'checkbox';
+        span = document.createElement('span');
+        span.textContent = text;
+        label.append(box, span);
+        li.appendChild(label);
+      } else if (!span) {
+        const text = String(label.textContent || '').replace(/\s+/g, ' ').trim();
+        span = document.createElement('span');
+        span.textContent = text;
+        label.appendChild(span);
+      }
+
+      const key = textKey(getCheckboxLabelText(box) || span?.textContent || li.textContent);
+      if (checkedMap.has(key)) {
+        box.checked = checkedMap.get(key);
+      }
+    });
+  }
+
   function stripAutoLines(text) {
     return String(text || '')
       .split(/\r?\n/)
@@ -179,6 +228,12 @@
   }
 
   function syncInsightsFromChecklist() {
+    const treatmentSnapshot = snapshotCheckedMap(treatmentList);
+    const forecastSnapshot = snapshotCheckedMap(forecastList);
+
+    restoreChecklistStructure(treatmentList, treatmentSnapshot);
+    restoreChecklistStructure(forecastList, forecastSnapshot);
+
     const currentText = String(insights.value || '').trimEnd();
     const manualBase = extractManualBase(currentText);
     const generatedChemical = buildChemicalLines().map((line) => `- ${line}`).join('\n').trim();
