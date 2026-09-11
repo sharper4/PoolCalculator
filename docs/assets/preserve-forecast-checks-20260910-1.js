@@ -1,5 +1,6 @@
 (() => {
-  let planListenersStripped = false;
+  let stripScheduled = false;
+  let stripInProgress = false;
 
   function keyFromText(text) {
     const normalized = String(text || '').trim();
@@ -54,18 +55,30 @@
   }
 
   function stripPlanCheckboxRecalcListeners() {
-    if (planListenersStripped) return;
+    if (stripInProgress) return;
+    stripInProgress = true;
     const targets = ['r-forecast-list', 'r-treatment-list'];
     targets.forEach((listId) => {
       const list = document.getElementById(listId);
       if (!list) return;
       Array.from(list.querySelectorAll('input[type="checkbox"]')).forEach((box) => {
+        if (box.dataset.planGuard === '1') return;
         const replacement = box.cloneNode(true);
         replacement.checked = box.checked;
+        replacement.dataset.planGuard = '1';
         box.replaceWith(replacement);
       });
     });
-    planListenersStripped = true;
+    stripInProgress = false;
+  }
+
+  function scheduleStrip() {
+    if (stripScheduled) return;
+    stripScheduled = true;
+    setTimeout(() => {
+      stripScheduled = false;
+      stripPlanCheckboxRecalcListeners();
+    }, 0);
   }
 
   function bindPlanMutationReapply() {
@@ -73,9 +86,7 @@
       const list = document.getElementById(listId);
       if (!list) return;
       const observer = new MutationObserver(() => {
-        // If rows are rebuilt later, strip listeners again from new checkbox nodes.
-        planListenersStripped = false;
-        stripPlanCheckboxRecalcListeners();
+        scheduleStrip();
       });
       observer.observe(list, { childList: true, subtree: true });
     });
