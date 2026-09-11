@@ -227,7 +227,7 @@
     }
   }
 
-  function syncInsightsFromChecklist() {
+  function syncInsightsFromChecklist(source = 'unknown') {
     const treatmentSnapshot = snapshotCheckedMap(treatmentList);
     const forecastSnapshot = snapshotCheckedMap(forecastList);
 
@@ -237,6 +237,7 @@
     const currentText = String(insights.value || '').trimEnd();
     const manualBase = extractManualBase(currentText);
     const generatedChemical = buildChemicalLines().map((line) => `- ${line}`).join('\n').trim();
+    const planCheckedCount = getCheckedLabels(treatmentList).length + getCheckedLabels(forecastList).length;
     let previousAutoBlock = '';
     if (lastAutoBlock && currentText.endsWith(lastAutoBlock)) {
       previousAutoBlock = lastAutoBlock;
@@ -244,7 +245,8 @@
       previousAutoBlock = currentText.slice(manualBase.length).replace(/^\n+/, '').trim();
     }
     const preservedChemical = stripServiceLine(previousAutoBlock);
-    const chemicalBlock = generatedChemical || preservedChemical;
+    const allowPreserveFallback = (source === 'service' || source === 'mutation') && planCheckedCount > 0;
+    const chemicalBlock = generatedChemical || (allowPreserveFallback ? preservedChemical : '');
 
     const lines = [];
     if (chemicalBlock) lines.push(chemicalBlock);
@@ -282,13 +284,13 @@
     const target = event.target;
     if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
     if (target.closest('#r-treatment-list') || target.closest('#r-forecast-list') || target.closest('#r-service-checklist')) {
-      syncInsightsFromChecklist();
+      syncInsightsFromChecklist(target.closest('#r-service-checklist') ? 'service' : 'plan');
     }
   });
 
   const watchList = (listEl) => {
     if (!listEl) return;
-    const observer = new MutationObserver(() => syncInsightsFromChecklist());
+    const observer = new MutationObserver(() => syncInsightsFromChecklist('mutation'));
     observer.observe(listEl, { childList: true, subtree: true });
   };
 
