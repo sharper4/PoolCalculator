@@ -3165,14 +3165,21 @@ function init() {
     });
   });
 
+  const skipGlobalRecalc = (el) => {
+    if (!(el instanceof HTMLElement)) return false;
+    return Boolean(el.closest('#r-treatment-list, #r-forecast-list, #r-service-checklist'));
+  };
+
   document.querySelectorAll('input,select').forEach((el) => {
     el.addEventListener('input', () => {
+      if (skipGlobalRecalc(el)) return;
       if (el === refs.units) {
         calcUnits();
       }
       calcAll();
     });
     el.addEventListener('change', () => {
+      if (skipGlobalRecalc(el)) return;
       if (el === refs.units) {
         calcUnits();
       }
