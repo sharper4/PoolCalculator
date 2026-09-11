@@ -53,6 +53,14 @@
       .trim();
   }
 
+  function stripServiceLine(text) {
+    return String(text || '')
+      .split(/\r?\n/)
+      .filter((line) => !/^\s*-?\s*The following service checklist items were completed during this visit:/i.test(line.trim()))
+      .join('\n')
+      .trim();
+  }
+
   function extractManualBase(value) {
     const text = String(value || '').trimEnd();
     if (!text) return '';
@@ -171,8 +179,20 @@
   }
 
   function syncInsightsFromChecklist() {
-    const manualBase = extractManualBase(insights.value);
-    const lines = buildChemicalLines().map((line) => `- ${line}`);
+    const currentText = String(insights.value || '').trimEnd();
+    const manualBase = extractManualBase(currentText);
+    const generatedChemical = buildChemicalLines().map((line) => `- ${line}`).join('\n').trim();
+    let previousAutoBlock = '';
+    if (lastAutoBlock && currentText.endsWith(lastAutoBlock)) {
+      previousAutoBlock = lastAutoBlock;
+    } else if (currentText && currentText !== manualBase) {
+      previousAutoBlock = currentText.slice(manualBase.length).replace(/^\n+/, '').trim();
+    }
+    const preservedChemical = stripServiceLine(previousAutoBlock);
+    const chemicalBlock = generatedChemical || preservedChemical;
+
+    const lines = [];
+    if (chemicalBlock) lines.push(chemicalBlock);
     const serviceLine = buildServiceLine();
     if (serviceLine) lines.push(serviceLine);
     const autoBlock = lines.join('\n').trim();

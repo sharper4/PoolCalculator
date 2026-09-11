@@ -1,6 +1,49 @@
 (() => {
+  let printInFlight = false;
+
   function text(button) {
     return String(button?.textContent || '').trim();
+  }
+
+  function ensureMobilePrintStyle() {
+    if (document.getElementById('mobile-print-single-sheet-20260911-1')) return;
+    const style = document.createElement('style');
+    style.id = 'mobile-print-single-sheet-20260911-1';
+    style.textContent = `
+      @media print {
+        html.mobile-print-capture,
+        body.mobile-print-capture {
+          height: auto !important;
+          min-height: 0 !important;
+          overflow: visible !important;
+          background: #fff !important;
+        }
+
+        body.mobile-print-capture .layout > * {
+          display: none !important;
+        }
+
+        body.mobile-print-capture #report-view,
+        body.mobile-print-capture #report-view .report-sheet {
+          display: block !important;
+          visibility: visible !important;
+        }
+
+        body.mobile-print-capture #report-view {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        body.mobile-print-capture #report-view .report-sheet {
+          margin: 0 !important;
+          break-after: auto !important;
+          page-break-after: auto !important;
+          break-before: auto !important;
+          page-break-before: auto !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function ensureThreeCustomerButtons() {
@@ -82,6 +125,7 @@
   }
 
   function bindStablePrint() {
+    ensureMobilePrintStyle();
     const printButtons = Array.from(document.querySelectorAll('button')).filter((button) => button.id === 'print-report' || text(button) === 'Print Report');
     if (!printButtons.length) return;
 
@@ -91,6 +135,9 @@
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
+
+        if (printInFlight) return;
+        printInFlight = true;
 
         const reportView = document.getElementById('report-view');
         const checklist = document.getElementById('report-service-checklist');
@@ -103,6 +150,8 @@
         }
         if (checklist) checklist.style.display = 'none';
         if (!hadReportMode) document.body.classList.add('report-mode');
+        document.documentElement.classList.add('mobile-print-capture');
+        document.body.classList.add('mobile-print-capture');
 
         const insights = document.getElementById('r-insights');
         const printMirror = document.getElementById('r-insights-print');
@@ -119,6 +168,9 @@
             else checklist.style.display = priorChecklistDisplay;
           }
           if (!hadReportMode) document.body.classList.remove('report-mode');
+          document.documentElement.classList.remove('mobile-print-capture');
+          document.body.classList.remove('mobile-print-capture');
+          printInFlight = false;
         };
 
         window.addEventListener('afterprint', cleanup, { once: true });
