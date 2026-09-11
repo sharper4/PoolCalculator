@@ -1,4 +1,11 @@
 (() => {
+  const serviceDetails = document.getElementById('service-details-section');
+  const customerInput = document.getElementById('customer-name');
+  const addressInput = document.getElementById('customer-address');
+  const emailInput = document.getElementById('email-address');
+  const rowCustomer = document.getElementById('r-row-customer');
+  const rowAddress = document.getElementById('r-row-address');
+  const rowEmail = document.getElementById('r-row-email-address');
   const asciiReplacements = [
     [/â€”/g, '-'],
     [/â€“/g, '-'],
@@ -49,6 +56,48 @@
     section.dataset.hasChecked = hasNonChemicalChecked ? '1' : '0';
   }
 
+  function applyReportSectionsVisibility() {
+    const techInsights = document.getElementById('report-tech-insights');
+    const serviceChecklist = document.getElementById('report-service-checklist');
+    const reportOpenedByUi = serviceDetails ? serviceDetails.hidden === false : false;
+    const hideSections = !reportOpenedByUi;
+
+    if (techInsights) techInsights.hidden = hideSections;
+    if (serviceChecklist) serviceChecklist.hidden = hideSections;
+  }
+
+  function applyCustomerRowsVisibility() {
+    const showRows = serviceDetails ? serviceDetails.hidden === false : false;
+    if (rowCustomer) rowCustomer.hidden = !showRows || !(customerInput?.value || '').trim();
+    if (rowAddress) rowAddress.hidden = !showRows || !(addressInput?.value || '').trim();
+    if (rowEmail) rowEmail.hidden = !showRows || !(emailInput?.value || '').trim();
+  }
+
+  function setCustomerVisibility(visible) {
+    if (serviceDetails) serviceDetails.hidden = !visible;
+    applyCustomerRowsVisibility();
+    applyReportSectionsVisibility();
+    const checklist = document.getElementById('report-service-checklist');
+    if (checklist && visible) {
+      checklist.hidden = false;
+      checklist.style.removeProperty('display');
+    }
+  }
+
+  function ensureInsightsEditable() {
+    const insights = document.getElementById('r-insights');
+    if (!insights) return;
+    insights.readOnly = false;
+    insights.disabled = false;
+    insights.removeAttribute('readonly');
+    insights.removeAttribute('disabled');
+    insights.style.pointerEvents = 'auto';
+  }
+
+  function injectCustomerReportToolbarButtons() {
+    return;
+  }
+
   function stripRecalcListenersFromServiceChecklist() {
     const checklist = document.getElementById('r-service-checklist');
     if (!checklist) return;
@@ -63,22 +112,36 @@
     checklist.querySelectorAll('.service-check-item input[type="checkbox"]').forEach((box) => {
       box.addEventListener('change', () => {
         refreshServiceChecklistState();
-        normalizeVisibleText(document.body);
       });
     });
 
     refreshServiceChecklistState();
-    normalizeVisibleText(document.body);
   }
 
   stripRecalcListenersFromServiceChecklist();
 
-  const observer = new MutationObserver(() => {
-    normalizeVisibleText(document.body);
+  const openReportButton = document.getElementById('open-report');
+  let customerFieldsVisible = serviceDetails ? serviceDetails.hidden === false : false;
+
+  if (openReportButton) {
+    openReportButton.addEventListener('click', () => {
+      customerFieldsVisible = !customerFieldsVisible;
+      [0, 40, 120, 300].forEach((delay) => {
+        setTimeout(() => {
+          setCustomerVisibility(customerFieldsVisible);
+        }, delay);
+      });
+    });
+  }
+
+  [customerInput, addressInput, emailInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', applyCustomerRowsVisibility);
+    input.addEventListener('change', applyCustomerRowsVisibility);
   });
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true
-  });
+
+  setCustomerVisibility(customerFieldsVisible);
+  injectCustomerReportToolbarButtons();
+  ensureInsightsEditable();
+  normalizeVisibleText(document.body);
 })();
