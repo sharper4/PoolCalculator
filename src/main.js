@@ -213,6 +213,21 @@ const TRICHLOR_FC_OZMUL = 6854.95;
 const TRICHLOR_CYA_OZMUL = 4159.41;
 const ALK_MONITOR_BUFFER = 0.20;
 const SALT_MONITOR_BUFFER = 0.20;
+const BUILD_NUMBER = '2026.09.20.1521';
+const customerShortcuts = {
+  '!Joy': {
+    name: 'Joy Roberson',
+    address: '7017 Livingston Drive; 76210',
+    email: 'roberson0702@gmail.com',
+    poolSize: 10200
+  },
+  '!Louis': {
+    name: 'Louis & Stacy Winsett',
+    address: '8740 Canyon Crossing; Lantana 76226',
+    email: 'stacywinsett@yahoo.com',
+    poolSize: 12300
+  }
+};
 
 let oldUnit = 0;
 let suppressTargetOverrideCapture = false;
@@ -238,6 +253,18 @@ function n(el, fallback = 0) {
 function i(el, fallback = 0) {
   const v = Number.parseInt(el.value, 10);
   return Number.isFinite(v) ? v : fallback;
+}
+
+function applyCustomerShortcut() {
+  const shortcut = customerShortcuts[refs.customerName.value.trim()];
+  if (!shortcut) return;
+
+  refs.customerName.value = shortcut.name;
+  refs.customerAddress.value = shortcut.address;
+  refs.emailAddress.value = shortcut.email;
+  refs.size.value = String(shortcut.poolSize);
+  applyCustomerSectionsVisibility();
+  calcAll();
 }
 
 function round2(x) {
@@ -990,19 +1017,7 @@ function updatePassiveOutlook() {
 function updateBuildBadge() {
   const badge = document.getElementById('build-badge');
   if (!badge) return;
-
-  const modified = new Date(document.lastModified);
-  if (Number.isNaN(modified.getTime())) {
-    badge.textContent = 'Build live';
-    return;
-  }
-
-  const year = modified.getFullYear();
-  const month = String(modified.getMonth() + 1).padStart(2, '0');
-  const day = String(modified.getDate()).padStart(2, '0');
-  const hour = String(modified.getHours()).padStart(2, '0');
-  const minute = String(modified.getMinutes()).padStart(2, '0');
-  badge.textContent = `Build ${year}.${month}.${day}.${hour}${minute}`;
+  badge.textContent = `Build ${BUILD_NUMBER}`;
 }
 
 function setupUsageCounter() {
@@ -3060,6 +3075,8 @@ function init() {
   refs.sendReportEmail.addEventListener('click', () => {
     sendPoolCalcReport();
   });
+
+  refs.customerName.addEventListener('blur', applyCustomerShortcut);
 
   // Initialize token client when page loads
   if (document.readyState === 'loading') {
